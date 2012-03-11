@@ -4,8 +4,6 @@ import com.google.common.collect.Lists;
 import de.uniluebeck.itm.wisebed.cmdlineclient.BeanShellHelper;
 import de.uniluebeck.itm.wisebed.cmdlineclient.protobuf.ProtobufControllerClient;
 import de.uniluebeck.itm.wisebed.cmdlineclient.wrapper.WSNAsyncWrapper;
-import eu.uberdust.controller.communication.SocketServer;
-import eu.uberdust.controller.protobuf.CommandProtocol;
 import eu.uberdust.uberlogger.UberLogger;
 import eu.uberdust.util.PropertyReader;
 import eu.wisebed.api.common.Message;
@@ -23,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 
 
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  * Time: 2:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TestbedController {
+public class TestbedController implements Observer {
 
     private static final Logger LOGGER = Logger.getLogger(TestbedController.class);
     private static final byte PAYLOAD_PREFIX = 0xb;
@@ -44,7 +44,6 @@ public class TestbedController {
     private String nodeUrnsToListen;
     private String pccHost;
     private Integer pccPort;
-    private final SocketServer socketServer;
 
     private WSNAsyncWrapper wsn;
     private List<String> nodeURNs = new ArrayList<String>();
@@ -78,9 +77,6 @@ public class TestbedController {
         PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
         readProperties();
         connectToRuntime();
-        socketServer = new SocketServer();
-        //Start the Socket Server
-        socketServer.start();
     }
 
     private void readProperties() {
@@ -123,18 +119,18 @@ public class TestbedController {
 
     }
 
-    public void sendCommand(CommandProtocol.Command.Builder protoCommand) {
+    public void sendCommand(final String destination, final String payloadIn) {
 
         // Send a message to nodes via uart (to receive them enable RX_UART_MSGS in the fronts_config.h-file)
         final Message msg = new Message();
-        if (protoCommand.getDestination().contains("494")) {
-            final String pl = protoCommand.getPayload().replaceAll(",", "");
+        if (destination.contains("494")) {
+            final String pl = payloadIn.replaceAll(",", "");
             final String nodeId = pl.substring(3);
             UberLogger.getInstance().log(nodeId, "T91");
         }
 
-        final String macAddress = protoCommand.getDestination().
-                substring(protoCommand.getDestination().indexOf("0x") + 2);
+        final String macAddress = destination.
+                substring(destination.indexOf("0x") + 2);
         final byte[] macBytes = new byte[2];
         if (macAddress.length() == 4) {
             macBytes[0] = Integer.valueOf(macAddress.substring(0, 2), 16).byteValue();
@@ -144,7 +140,7 @@ public class TestbedController {
             macBytes[1] = Integer.valueOf(macAddress.substring(1, 3), 16).byteValue();
         }
 
-        final String[] strPayload = protoCommand.getPayload().split(",");
+        final String[] strPayload = payloadIn.split(",");
         final byte[] payload = new byte[strPayload.length];
         for (int i = 0; i < payload.length; i++) {
             payload[i] = Integer.valueOf(strPayload[i], 16).byteValue();
@@ -166,15 +162,15 @@ public class TestbedController {
             LOGGER.error(e);
         }
 
-        if (protoCommand.getDestination().contains("494")) {
-            final String pl = protoCommand.getPayload().replaceAll(",", "");
+        if (destination.contains("494")) {
+            final String pl = payloadIn.replaceAll(",", "");
             final String nodeId = pl.substring(3);
             UberLogger.getInstance().log(nodeId, "T10");
         }
 
         wsn.send(nodeURNs, msg, 10, TimeUnit.SECONDS);
-        if (protoCommand.getDestination().contains("494")) {
-            final String pl = protoCommand.getPayload().replaceAll(",", "");
+        if (destination.contains("494")) {
+            final String pl = payloadIn.replaceAll(",", "");
             final String nodeId = pl.substring(3);
             UberLogger.getInstance().log(nodeId, "T101");
         }
@@ -184,4 +180,13 @@ public class TestbedController {
         TestbedController.getInstance();
     }
 
+    @Override
+    public void update(final Observable observable, final Object o) {
+        final String[] commandParts = o.toString().split("@");
+        if (commandParts.length == 2) {
+            final String nodeId = commandParts[0];
+            final String bytes = commandParts[1];
+            sendCommand(nodeId, bytes);
+        }
+    }
 }

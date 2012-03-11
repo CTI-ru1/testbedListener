@@ -1,6 +1,5 @@
 package eu.uberdust.datacollector;
 
-import eu.uberdust.communication.websocket.InsertReadingWebSocketClient;
 import eu.uberdust.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -69,19 +68,6 @@ public class DataCollector implements Runnable {
 
         readProperties();
 
-        connectWS();
-    }
-
-    /**
-     * For WS implementation.
-     * Connects to the WS server.
-     */
-    private void connectWS() {
-        try {
-            InsertReadingWebSocketClient.getInstance().connect(ws_url);
-        } catch (Exception e) {
-            LOGGER.fatal(e);
-        }
     }
 
     /**

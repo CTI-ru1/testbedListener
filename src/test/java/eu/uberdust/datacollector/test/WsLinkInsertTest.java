@@ -1,6 +1,6 @@
 package eu.uberdust.datacollector.test;
 
-import eu.uberdust.communication.websocket.InsertReadingWebSocketClient;
+import eu.uberdust.communication.websocket.insert.InsertReadingWebSocketClient;
 import eu.uberdust.reading.LinkReading;
 import junit.framework.Test;
 import junit.framework.TestCase;

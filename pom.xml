@@ -68,6 +68,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>uberdust</groupId>
+            <artifactId>NetworkManager</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
             <groupId>hudson.plugins.sloccount</groupId>
             <artifactId>sloccount</artifactId>
             <version>1.4</version>

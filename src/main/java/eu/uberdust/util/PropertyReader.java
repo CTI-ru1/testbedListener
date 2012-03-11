@@ -7,10 +7,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- * Created by IntelliJ IDEA.
- * User: amaxilatis
- * Date: 1/17/12
- * Time: 11:08 AM
+ * Reads Properties from a master property file and offers them to Applications.
  */
 public class PropertyReader {
     /**
@@ -18,10 +15,22 @@ public class PropertyReader {
      */
     private static final Logger LOGGER = Logger.getLogger(PropertyReader.class);
 
+    /**
+     * Singleton instance.
+     */
     private static PropertyReader instance = null;
+    /**
+     * The property file.
+     */
     final Properties properties;
+    /**
+     * The name of the property File.
+     */
     private static final String PROPERTY_FILE = "testbedlistener.properties";
 
+    /**
+     * Default Constructor.
+     */
     private PropertyReader() {
         PropertyConfigurator.configure(Thread.currentThread().getContextClassLoader().getResource("log4j.properties"));
 
@@ -35,15 +44,23 @@ public class PropertyReader {
         LOGGER.info("Loaded properties from file: " + PROPERTY_FILE);
     }
 
-
-    public static PropertyReader getInstance() {
+    /**
+     * Get Singleton instance
+     *
+     * @return the unique Property Reader Instance.
+     */
+    public synchronized static PropertyReader getInstance() {
         if (instance == null) {
             instance = new PropertyReader();
         }
         return instance;
     }
 
-
+    /**
+     * Retruns a the property file so that applications can access the file contents.
+     *
+     * @return the Property File Object.
+     */
     public Properties getProperties() {
         LOGGER.debug("getProperties()");
         return properties;

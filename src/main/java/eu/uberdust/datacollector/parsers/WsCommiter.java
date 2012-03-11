@@ -1,6 +1,6 @@
 package eu.uberdust.datacollector.parsers;
 
-import eu.uberdust.communication.websocket.InsertReadingWebSocketClient;
+import eu.uberdust.network.NetworkManager;
 import eu.uberdust.reading.LinkReading;
 import eu.uberdust.reading.NodeReading;
 import eu.uberdust.uberlogger.UberLogger;
@@ -30,7 +30,7 @@ public class WsCommiter {
                 UberLogger.getInstance().log(nodeReading.getTimestamp(), "Τ22");
             }
             LOGGER.debug("adding " + nodeReading);
-            InsertReadingWebSocketClient.getInstance().sendNodeReading(nodeReading);
+            NetworkManager.getInstance().sendNodeReading(nodeReading);
             LOGGER.debug("added " + nodeReading);
         } catch (Exception e) {
             LOGGER.error("InsertReadingWebSocketClient -node-" + e);
@@ -45,7 +45,7 @@ public class WsCommiter {
     public WsCommiter(final LinkReading linkReading) {
         try {
             LOGGER.debug("adding " + linkReading);
-            InsertReadingWebSocketClient.getInstance().sendLinkReading(linkReading);
+            NetworkManager.getInstance().sendLinkReading(linkReading);
             LOGGER.info("added " + linkReading);
         } catch (Exception e) {
             LOGGER.error("InsertReadingWebSocketClient -link- " + e);
