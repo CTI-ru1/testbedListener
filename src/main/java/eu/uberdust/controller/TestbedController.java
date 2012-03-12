@@ -77,6 +77,7 @@ public class TestbedController implements Observer {
         PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
         readProperties();
         connectToRuntime();
+
     }
 
     private void readProperties() {
@@ -143,7 +144,7 @@ public class TestbedController implements Observer {
         final String[] strPayload = payloadIn.split(",");
         final byte[] payload = new byte[strPayload.length];
         for (int i = 0; i < payload.length; i++) {
-            payload[i] = Integer.valueOf(strPayload[i], 16).byteValue();
+            payload[i] = Integer.valueOf(strPayload[i].replaceAll("\n", ""), 16).byteValue();
         }
 
         final byte[] newPayload = new byte[macBytes.length + payload.length + 1 + PAYLOAD_HEADERS.length];
@@ -182,10 +183,15 @@ public class TestbedController implements Observer {
 
     @Override
     public void update(final Observable observable, final Object o) {
+        LOGGER.info("called update ");
+
         final String[] commandParts = o.toString().split("@");
         if (commandParts.length == 2) {
+
             final String nodeId = commandParts[0];
             final String bytes = commandParts[1];
+            LOGGER.info("sending to " + nodeId);
+            LOGGER.info("sending bytes " + bytes);
             sendCommand(nodeId, bytes);
         }
     }
