@@ -1,8 +1,7 @@
-package eu.uberdust.controller;
+package eu.uberdust.testbedcontroller;
 
 import com.google.common.collect.Lists;
 import de.uniluebeck.itm.wisebed.cmdlineclient.BeanShellHelper;
-import de.uniluebeck.itm.wisebed.cmdlineclient.protobuf.ProtobufControllerClient;
 import de.uniluebeck.itm.wisebed.cmdlineclient.wrapper.WSNAsyncWrapper;
 import eu.uberdust.util.PropertyReader;
 import eu.wisebed.api.common.Message;
@@ -11,7 +10,7 @@ import eu.wisebed.api.sm.SessionManagement;
 import eu.wisebed.api.sm.UnknownReservationIdException_Exception;
 import eu.wisebed.api.wsn.WSN;
 import eu.wisebed.testbed.api.wsn.WSNServiceHelper;
-import org.apache.log4j.Logger;
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.PropertyConfigurator;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -20,21 +19,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * Created by IntelliJ IDEA.
  * User: akribopo
- * Date: 10/3/11
- * Time: 2:59 PM
+ * Date: 3/12/12
+ * Time: 1:32 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TestbedController implements Observer {
+public class SendCommandTest {
 
-    private static final Logger LOGGER = Logger.getLogger(TestbedController.class);
     private static final byte PAYLOAD_PREFIX = 0xb;
     private static final byte[] PAYLOAD_HEADERS = new byte[]{0x7f, 0x69, 0x70};
 
@@ -44,6 +39,7 @@ public class TestbedController implements Observer {
     private String pccHost;
     private Integer pccPort;
 
+
     private WSNAsyncWrapper wsn;
     private List<String> nodeURNs = new ArrayList<String>();
 
@@ -51,7 +47,7 @@ public class TestbedController implements Observer {
     /**
      * static instance(ourInstance) initialized as null.
      */
-    private static TestbedController ourInstance = null;
+    private static SendCommandTest ourInstance = null;
 
     /**
      * TestbedController is loaded on the first execution of TestbedController.getInstance()
@@ -59,10 +55,10 @@ public class TestbedController implements Observer {
      *
      * @return ourInstance
      */
-    public static TestbedController getInstance() {
-        synchronized (TestbedController.class) {
+    public static SendCommandTest getInstance() {
+        synchronized (SendCommandTest.class) {
             if (ourInstance == null) {
-                ourInstance = new TestbedController();
+                ourInstance = new SendCommandTest();
             }
         }
 
@@ -72,11 +68,10 @@ public class TestbedController implements Observer {
     /**
      * Private constructor suppresses generation of a (public) default constructor.
      */
-    private TestbedController() {
-        PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
+    private SendCommandTest() {
+        PropertyConfigurator.configure("/home/akribopo/Projects/uberdust/testbedListener/src/main/resources/log4j.properties");
         readProperties();
         connectToRuntime();
-
     }
 
     private void readProperties() {
@@ -91,7 +86,8 @@ public class TestbedController implements Observer {
             throw new RuntimeException("No node Urns To Listen");
         } else {
             for (String nodeURN : nodeURNs) {
-                LOGGER.info(nodeURN);
+                System.out.println(nodeURN);
+                System.out.println(nodeURN);
             }
         }
     }
@@ -103,29 +99,57 @@ public class TestbedController implements Observer {
         try {
             wsnEndpointURL = sessionManagement.getInstance(BeanShellHelper.parseSecretReservationKeys(secretReservationKeys), "NONE");
         } catch (final ExperimentNotRunningException_Exception e) {
-            LOGGER.error(e);
+            e.printStackTrace();
         } catch (final UnknownReservationIdException_Exception e) {
-            LOGGER.error(e);
+            e.printStackTrace();
         }
-        LOGGER.info("Got a WSN instance URL, endpoint is: " + wsnEndpointURL);
+        System.out.println("Got a WSN instance URL, endpoint is: " + wsnEndpointURL);
 
         final WSN wsnService = WSNServiceHelper.getWSNService(wsnEndpointURL);
         wsn = WSNAsyncWrapper.of(wsnService);
-        LOGGER.info("Retrieved the following node URNs: {}" + nodeURNs);
+        System.out.println("Retrieved the following node URNs: {}" + nodeURNs);
+    }
 
-        final ProtobufControllerClient pcc = ProtobufControllerClient.create(pccHost, pccPort, BeanShellHelper.parseSecretReservationKeys(secretReservationKeys));
-        pcc.connect();
-        //pcc.addListener(new ControllerClientListener());
+    public static String setValue(String a) {
+        return "0,0,0,0,1,ff,4,b5,47,1,0,fc,0,#".replaceAll("#", a);
+    }
+
+
+    public void Send(Message msg) {
+        System.out.println(nodeURNs);
+        wsn.send(nodeURNs, msg, 100, TimeUnit.SECONDS);
+        System.out.println("send");
+    }
+
+
+    public static void main(final String[] args) throws InterruptedException {
+
+        BasicConfigurator.configure();
+        SendCommandTest.getInstance();
+
+        //final String macAddress = "4ec";
+        //final String command = "0,0,f,f,89,0,1,FF,0";
+
+        final String macAddress = "c56f";
+        //turn on Led 1
+
+        //turn on Led 2
+        final String command = "0,0,0,1,ff,4,b5,47,5,0,fc,0,0,0,8,0,8,0,8,0,8";
+
+
+        //SendCommandTest.getInstance().Send(getMessage(macAddress, command, true));
+        SendCommandTest.getInstance().Send(getMessage(macAddress, setValue("14"),false));
+        Thread.sleep(1000);
 
     }
 
-    public void sendCommand(final String destination, final String payloadIn) {
+    public static Message getMessage(String macAddress, String command, boolean isForiSenseNetwork) {
+        final String[] strPayload = command.split(",");
+        final byte[] payload = new byte[strPayload.length];
+        for (int i = 0; i < payload.length; i++) {
+            payload[i] = Integer.valueOf(strPayload[i], 16).byteValue();
+        }
 
-        // Send a message to nodes via uart (to receive them enable RX_UART_MSGS in the fronts_config.h-file)
-        final Message msg = new Message();
-
-        final String macAddress = destination.
-                substring(destination.indexOf("0x") + 2);
         final byte[] macBytes = new byte[2];
         if (macAddress.length() == 4) {
             macBytes[0] = Integer.valueOf(macAddress.substring(0, 2), 16).byteValue();
@@ -135,48 +159,29 @@ public class TestbedController implements Observer {
             macBytes[1] = Integer.valueOf(macAddress.substring(1, 3), 16).byteValue();
         }
 
-        final String[] strPayload = payloadIn.split(",");
-        final byte[] payload = new byte[strPayload.length];
-        for (int i = 0; i < payload.length; i++) {
-            payload[i] = Integer.valueOf(strPayload[i].replaceAll("\n", ""), 16).byteValue();
+        payload[0] = PAYLOAD_PREFIX;
+        payload[1] = macBytes[0];
+        payload[2] = macBytes[1];
+
+        if (isForiSenseNetwork) {
+            payload[3] = 0x7f;
+            payload[4] = 0x69;
+            payload[5] = 0x70;
         }
 
-        final byte[] newPayload = new byte[macBytes.length + payload.length + 1 + PAYLOAD_HEADERS.length];
-        newPayload[0] = PAYLOAD_PREFIX;
-        System.arraycopy(macBytes, 0, newPayload, 1, macBytes.length);
-        System.arraycopy(PAYLOAD_HEADERS, 0, newPayload, 3, PAYLOAD_HEADERS.length);
-        System.arraycopy(payload, 0, newPayload, 6, payload.length);
-        msg.setBinaryData(newPayload);
+        System.out.println(Arrays.toString(payload));
+        final Message msg = new Message();
+        msg.setBinaryData(payload);
         msg.setSourceNodeId("urn:wisebed:ctitestbed:0x1");
-
-        LOGGER.info("Sending message - " + Arrays.toString(newPayload));
         try {
             msg.setTimestamp(DatatypeFactory.newInstance().newXMLGregorianCalendar(
                     (GregorianCalendar) GregorianCalendar.getInstance()));
         } catch (final DatatypeConfigurationException e) {
-            LOGGER.error(e);
+            System.out.println(e);
         }
-
-        wsn.send(nodeURNs, msg, 10, TimeUnit.SECONDS);
-
+        return msg;
     }
 
-    public static void main(final String[] args) {
-        TestbedController.getInstance();
-    }
-
-    @Override
-    public void update(final Observable observable, final Object o) {
-        LOGGER.info("called update ");
-
-        final String[] commandParts = o.toString().split("@");
-        if (commandParts.length == 2) {
-
-            final String nodeId = commandParts[0];
-            final String bytes = commandParts[1];
-            LOGGER.info("sending to " + nodeId);
-            LOGGER.info("sending bytes " + bytes);
-            sendCommand(nodeId, bytes);
-        }
-    }
 }
+
+

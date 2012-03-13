@@ -3,7 +3,6 @@ package eu.uberdust.datacollector.parsers;
 import eu.uberdust.datacollector.DataCollector;
 import eu.uberdust.reading.LinkReading;
 import eu.uberdust.reading.NodeReading;
-import eu.uberdust.uberlogger.UberLogger;
 import org.apache.log4j.Logger;
 
 import java.util.Locale;
@@ -82,11 +81,6 @@ public class MessageParser implements Runnable { //NOPMD
     public final void parse() {
 
         LOGGER.debug(strLine);
-
-        if (strLine.contains("id::0x1ccd EM_E 1")) {
-            final String milliseconds = strLine.split(" ")[TIMESTAMP_POS];
-            UberLogger.getInstance().log(milliseconds, "Τ21");
-        }
 
         //get the node id
         final String nodeId = extractNodeId(strLine);

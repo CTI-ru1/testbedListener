@@ -3,7 +3,6 @@ package eu.uberdust.datacollector.parsers;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.reading.LinkReading;
 import eu.uberdust.reading.NodeReading;
-import eu.uberdust.uberlogger.UberLogger;
 import org.apache.log4j.Logger;
 
 /**
@@ -25,10 +24,6 @@ public class WsCommiter {
      */
     public WsCommiter(final NodeReading nodeReading) {
         try {
-            if (nodeReading.getNodeId().contains("1ccd")
-                    && nodeReading.getCapabilityName().contains("pir")) {
-                UberLogger.getInstance().log(nodeReading.getTimestamp(), "Τ22");
-            }
             LOGGER.debug("adding " + nodeReading);
             NetworkManager.getInstance().sendNodeReading(nodeReading);
             LOGGER.debug("added " + nodeReading);

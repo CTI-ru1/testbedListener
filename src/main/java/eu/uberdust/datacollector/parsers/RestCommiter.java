@@ -2,7 +2,6 @@ package eu.uberdust.datacollector.parsers;
 
 import eu.uberdust.reading.LinkReading;
 import eu.uberdust.reading.NodeReading;
-import eu.uberdust.uberlogger.UberLogger;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -34,11 +33,6 @@ public class RestCommiter {
      * @param nodeReading the node reading to add
      */
     public RestCommiter(final NodeReading nodeReading) {
-
-        if ("urn:wisebed:ctitestbed:0x1ccd".equals(nodeReading.getNodeId())
-                && "urn:wisebed:node:capability:pir".equals(nodeReading.getCapabilityName())) {
-            UberLogger.getInstance().log(nodeReading.getTimestamp(), "Τ22");
-        }
         final StringBuilder urlBuilder = new StringBuilder(TESTBED_SERVER);
         urlBuilder.append(nodeReading.toRestString());
         final String insertReadingUrl = urlBuilder.toString();
