@@ -4,6 +4,7 @@ import eu.uberdust.communication.protobuf.Message;
 import eu.uberdust.network.NetworkManager;
 import org.apache.log4j.Logger;
 
+
 /**
  * Created by IntelliJ IDEA.
  * User: amaxilatis
@@ -23,6 +24,7 @@ public class WsCommiter {
      */
     public WsCommiter(final Message.NodeReadings.Reading nodeReading) {
         try {
+
             Message.NodeReadings readings = Message.NodeReadings.newBuilder().addReading(nodeReading).build();
 
             LOGGER.debug("adding " + nodeReading);

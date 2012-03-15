@@ -153,11 +153,6 @@
             <version>2.0</version>
         </dependency>
         <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.jboss.netty</groupId>
             <artifactId>netty</artifactId>
             <version>3.2.4.Final</version>
@@ -165,11 +160,6 @@
         <dependency>
             <groupId>uberdust</groupId>
             <artifactId>WebSocketsLibrary</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>uberdust</groupId>
-            <artifactId>UberLogger</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
@@ -197,8 +187,6 @@
             <artifactId>jcl-over-slf4j</artifactId>
             <version>1.6.1</version>
         </dependency>
-
-
         <dependency>
             <groupId>quartz</groupId>
             <artifactId>quartz</artifactId>
