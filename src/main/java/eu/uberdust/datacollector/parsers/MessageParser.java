@@ -1,9 +1,7 @@
 package eu.uberdust.datacollector.parsers;
 
+import eu.uberdust.communication.protobuf.Message;
 import eu.uberdust.datacollector.DataCollector;
-import eu.uberdust.reading.LinkReading;
-import eu.uberdust.reading.NodeReading;
-import eu.uberdust.uberlogger.UberLogger;
 import org.apache.log4j.Logger;
 
 import java.util.Locale;
@@ -42,9 +40,9 @@ public class MessageParser implements Runnable { //NOPMD
      * @param msg    the message received from the testbed
      * @param senses the Map containing the sensor codenames on testbed , capability names
      */
-    public MessageParser(final String msg, final Map<String, String> senses,String testbedPrefix,int testbedId) {
-        this.testbedPrefix =testbedPrefix;
-        this.testbedId =testbedId;
+    public MessageParser(final String msg, final Map<String, String> senses, String testbedPrefix, int testbedId) {
+        this.testbedPrefix = testbedPrefix;
+        this.testbedId = testbedId;
         strLine = msg.substring(msg.indexOf("binaryData:") + "binaryData:".length());
         sensors = senses;
     }
@@ -82,11 +80,6 @@ public class MessageParser implements Runnable { //NOPMD
     public final void parse() {
 
         LOGGER.debug(strLine);
-
-        if (strLine.contains("id::0x1ccd EM_E 1")) {
-            final String milliseconds = strLine.split(" ")[TIMESTAMP_POS];
-            UberLogger.getInstance().log(milliseconds, "Τ21");
-        }
 
         //get the node id
         final String nodeId = extractNodeId(strLine);
@@ -131,14 +124,14 @@ public class MessageParser implements Runnable { //NOPMD
             try {
                 final int value = Integer.parseInt(strLine.substring(start, end));
                 LOGGER.debug(sensors.get(sensor) + " value " + value + " node " + nodeId);
-                final String milliseconds = String.valueOf(System.currentTimeMillis());
+//                final String milliseconds = String.valueOf(System.currentTimeMillis());
 
 //                if ((nodeId.contains("1ccd")) && (sensor.contains("EM_E"))) {
 //                    milliseconds = strLine.split(" ")[TIMESTAMP_POS];
 //                    LOGGER.info("setting eventt to " + milliseconds);
 //
 //                }
-                commitNodeReading(nodeId, sensors.get(sensor), value, milliseconds);
+                commitNodeReading(nodeId, sensors.get(sensor), value, System.currentTimeMillis());
             } catch (Exception e) {
                 LOGGER.error("Parse Error" + sensor + "'" + strLine.substring(start, end) + "'");
             }
@@ -187,19 +180,19 @@ public class MessageParser implements Runnable { //NOPMD
      * @param value      the value of the reading
      * @param msec       timestamp in milliseconds
      */
-    private void commitNodeReading(final String nodeId, final String capability, final int value, final String msec) {
+    private void commitNodeReading(final String nodeId, final String capability, final int value, final long msec) {
 
         final String nodeUrn = testbedPrefix + nodeId;
         final String capabilityName = (CAPABILITY_PREFIX + capability).toLowerCase(Locale.US);
 
-        final NodeReading nodeReading = new NodeReading();
-        nodeReading.setTestbedId(String.valueOf(testbedId));
-        nodeReading.setNodeId(nodeUrn);
-        nodeReading.setCapabilityName(capabilityName);
-        nodeReading.setTimestamp(msec);
-        nodeReading.setReading(String.valueOf(value));
+        Message.NodeReadings.Reading reading = Message.NodeReadings.Reading.newBuilder()
+                .setNode(nodeUrn)
+                .setCapability(capabilityName)
+                .setTimestamp(msec)
+                .setDoubleReading(value)
+                .build();
 
-        new WsCommiter(nodeReading);
+        new WsCommiter(reading);
     }
 
     /**
@@ -215,15 +208,15 @@ public class MessageParser implements Runnable { //NOPMD
         final String targetUrn = testbedPrefix + target;
 
         LOGGER.debug("LinkReading" + sourceUrn + "<->" + targetUrn + " " + testbedCap + " " + value);
-        final long milliseconds = System.currentTimeMillis();
-        final LinkReading linkReading = new LinkReading();
-        linkReading.setTestbedId(String.valueOf(testbedId));
-        linkReading.setLinkSource(sourceUrn);
-        linkReading.setLinkTarget(targetUrn);
-        linkReading.setCapabilityName(testbedCap);
-        linkReading.setTimestamp(String.valueOf(milliseconds));
-        linkReading.setReading(String.valueOf(value));
 
-        new WsCommiter(linkReading);
+        Message.LinkReadings.Reading reading = Message.LinkReadings.Reading.newBuilder()
+                .setSource(sourceUrn)
+                .setTarget(targetUrn)
+                .setCapability(testbedCap)
+                .setTimestamp(System.currentTimeMillis())
+                .setDoubleReading(value)
+                .build();
+
+        new WsCommiter(reading);
     }
 }
