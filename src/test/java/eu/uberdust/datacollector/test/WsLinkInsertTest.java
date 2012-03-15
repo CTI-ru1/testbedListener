@@ -1,15 +1,13 @@
 package eu.uberdust.datacollector.test;
 
+import eu.uberdust.communication.protobuf.Message;
 import eu.uberdust.communication.websocket.insert.InsertReadingWebSocketClient;
-import eu.uberdust.reading.LinkReading;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-
-import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -51,16 +49,14 @@ public class WsLinkInsertTest extends TestCase {
         BasicConfigurator.configure();
         LOGGER.setLevel(Level.ALL);
 
-        LinkReading linkReading = new LinkReading();
-        linkReading.setTestbedId("1");
-        linkReading.setLinkSource("urn:wisebed:ctitestbed:0x1ccd");
-        linkReading.setLinkTarget("urn:wisebed:ctitestbed:0x842f");
-        linkReading.setCapabilityName("command");
-        linkReading.setTimestamp(String.valueOf((new Date()).getTime()));
-        linkReading.setReading("141");
-        LOGGER.info(linkReading.toString());
+        Message.LinkReadings.Reading reading = Message.LinkReadings.Reading.newBuilder()
+                .setSource("urn:wisebed:ctitestbed:0x1ccd")
+                .setTarget("urn:wisebed:ctitestbed:0x842f")
+                .setCapability("command")
+                .setTimestamp(System.currentTimeMillis())
+                .setDoubleReading(141).build();
 
-
+        Message.LinkReadings readings = Message.LinkReadings.newBuilder().addReading(reading).build();
         /**
          * WebSocket Call
          */
@@ -72,8 +68,8 @@ public class WsLinkInsertTest extends TestCase {
 
             InsertReadingWebSocketClient.getInstance().connect(WS_URL);
             LOGGER.info("Calling sendNodeReading(nodeReading1)");
-            InsertReadingWebSocketClient.getInstance().sendLinkReading(linkReading);
-            LOGGER.info("Rest Equivalent " + linkReading.toRestString());
+            InsertReadingWebSocketClient.getInstance().sendLinkReading(readings);
+//            LOGGER.info("Rest Equivalent " + linkReading.toRestString());
             LOGGER.info("Test Finished");
 
             assertTrue(true);
