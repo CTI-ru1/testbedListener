@@ -1,7 +1,7 @@
 package eu.uberdust.datacollector.test;
 
 import eu.uberdust.communication.protobuf.Message;
-import eu.uberdust.communication.websocket.insert.InsertReadingWebSocketClient;
+import eu.uberdust.communication.websocket.readings.WSReadingsClient;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -66,9 +66,9 @@ public class WsLinkInsertTest extends TestCase {
         LOGGER.info("Calling WebSocket at (" + WS_URL + ") connecting");
         try {
 
-            InsertReadingWebSocketClient.getInstance().connect(WS_URL);
+            WSReadingsClient.getInstance().setServerUrl(WS_URL);
             LOGGER.info("Calling sendNodeReading(nodeReading1)");
-            InsertReadingWebSocketClient.getInstance().sendLinkReading(readings);
+            WSReadingsClient.getInstance().sendLinkReading(readings);
 //            LOGGER.info("Rest Equivalent " + linkReading.toRestString());
             LOGGER.info("Test Finished");
 
