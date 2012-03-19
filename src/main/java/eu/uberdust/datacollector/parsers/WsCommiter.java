@@ -25,7 +25,7 @@ public class WsCommiter {
     public WsCommiter(final Message.NodeReadings.Reading nodeReading) {
         try {
 
-            Message.NodeReadings readings = Message.NodeReadings.newBuilder().addReading(nodeReading).build();
+            final Message.NodeReadings readings = Message.NodeReadings.newBuilder().addReading(nodeReading).build();
 
             LOGGER.debug("adding " + nodeReading);
             NetworkManager.getInstance().sendNodeReading(readings);

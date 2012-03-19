@@ -169,14 +169,15 @@ public class TestbedController implements Observer {
     public void update(final Observable observable, final Object o) {
         LOGGER.info("called update ");
 
-        final String[] commandParts = o.toString().split("@");
-        if (commandParts.length == 2) {
+        if (o instanceof eu.uberdust.communication.protobuf.Message.Control) {
+            final eu.uberdust.communication.protobuf.Message.Control command
+                    = (eu.uberdust.communication.protobuf.Message.Control) o;
 
-            final String nodeId = commandParts[0];
-            final String bytes = commandParts[1];
-            LOGGER.info("sending to " + nodeId);
-            LOGGER.info("sending bytes " + bytes);
-            sendCommand(nodeId, bytes);
+            if (command.hasPayload()) {
+                LOGGER.info("sending to " + command.getDestination());
+                LOGGER.info("sending bytes " + command.getPayload());
+                sendCommand(command.getDestination(), command.getPayload());
+            }
         }
     }
 }

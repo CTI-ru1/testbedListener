@@ -1,7 +1,6 @@
 package eu.uberdust.datacollector.parsers;
 
-import eu.uberdust.reading.LinkReading;
-import eu.uberdust.reading.NodeReading;
+import eu.uberdust.communication.protobuf.Message;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -32,11 +31,16 @@ public class RestCommiter {
      *
      * @param nodeReading the node reading to add
      */
-    public RestCommiter(final NodeReading nodeReading) {
+    public RestCommiter(final Message.NodeReadings.Reading nodeReading) {
         final StringBuilder urlBuilder = new StringBuilder(TESTBED_SERVER);
-        urlBuilder.append(nodeReading.toRestString());
+        /**
+         * TODO: Implementation is Missing.
+         */
+        LOGGER.fatal("Not Implemented...");
+        throw new RuntimeException("Not Implemented...");
+        /*urlBuilder.append(nodeReading.toRestString());
         final String insertReadingUrl = urlBuilder.toString();
-        callUrl(insertReadingUrl);
+        callUrl(insertReadingUrl);*/
     }
 
     /**
@@ -44,11 +48,19 @@ public class RestCommiter {
      *
      * @param linkReading the link reading to add
      */
-    public RestCommiter(final LinkReading linkReading) {
+    public RestCommiter(final Message.LinkReadings.Reading linkReading) {
         final StringBuilder urlBuilder = new StringBuilder(TESTBED_SERVER);
+        /**
+         * TODO: Implementation is Missing.
+         */
+        LOGGER.fatal("Not Implemented...");
+        throw new RuntimeException("Not Implemented...");
+/*
+
         urlBuilder.append(linkReading.toRestString());
         final String insertReadingUrl = urlBuilder.toString();
         callUrl(insertReadingUrl);
+*/
 
     }
 
