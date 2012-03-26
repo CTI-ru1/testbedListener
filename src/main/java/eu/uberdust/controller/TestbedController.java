@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import de.uniluebeck.itm.wisebed.cmdlineclient.BeanShellHelper;
 import de.uniluebeck.itm.wisebed.cmdlineclient.protobuf.ProtobufControllerClient;
 import de.uniluebeck.itm.wisebed.cmdlineclient.wrapper.WSNAsyncWrapper;
+import eu.uberdust.DeviceCommand;
 import eu.uberdust.util.PropertyReader;
 import eu.wisebed.api.common.Message;
 import eu.wisebed.api.sm.ExperimentNotRunningException_Exception;
@@ -168,16 +169,24 @@ public class TestbedController implements Observer {
     @Override
     public void update(final Observable observable, final Object o) {
         LOGGER.info("called update ");
+        if (o instanceof DeviceCommand) {
 
-        if (o instanceof eu.uberdust.communication.protobuf.Message.Control) {
-            final eu.uberdust.communication.protobuf.Message.Control command
-                    = (eu.uberdust.communication.protobuf.Message.Control) o;
+            final DeviceCommand command = (DeviceCommand) o;
 
-            if (command.hasPayload()) {
-                LOGGER.info("sending to " + command.getDestination());
-                LOGGER.info("sending bytes " + command.getPayload());
-                sendCommand(command.getDestination(), command.getPayload());
-            }
+            LOGGER.info("sending to " + command.getDestination());
+            LOGGER.info("sending bytes " + command.getPayload());
+            sendCommand(command.getDestination(), command.getPayload());
+
         }
+//        if (o instanceof eu.uberdust.communication.protobuf.Message.Control) {
+//            final eu.uberdust.communication.protobuf.Message.Control command
+//                    = (eu.uberdust.communication.protobuf.Message.Control) o;
+//
+//            if (command.hasPayload()) {
+//                LOGGER.info("sending to " + command.getDestination());
+//                LOGGER.info("sending bytes " + command.getPayload());
+//                sendCommand(command.getDestination(), command.getPayload());
+//            }
+//        }
     }
 }
