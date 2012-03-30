@@ -4,7 +4,7 @@ import eu.uberdust.controller.TestbedController;
 import eu.uberdust.datacollector.DataCollector;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.nodeflasher.NodeFlasherController;
-import eu.uberdust.util.PropertyReader;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 
 /**
  * The testbed Listener Connects to Uberdust and Testbed Runtime to forward command and readings Both Ways.

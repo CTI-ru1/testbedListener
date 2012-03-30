@@ -1,6 +1,6 @@
 package eu.uberdust.datacollector;
 
-import eu.uberdust.util.PropertyReader;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -105,7 +105,7 @@ public class DataCollector implements Runnable {
         } catch (InterruptedException e) {
             LOGGER.error(e);
         }
-
+        LOGGER.info("connecting");
         // Wait until the connection is made successfully.
         if (!connectFuture.isSuccess()) {
             LOGGER.warn("Client Connect Failed!", connectFuture.getCause());

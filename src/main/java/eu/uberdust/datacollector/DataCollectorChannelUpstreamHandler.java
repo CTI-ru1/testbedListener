@@ -5,7 +5,7 @@ import de.uniluebeck.itm.gtr.messaging.Messages;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNApp;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNAppMessages;
 import eu.uberdust.datacollector.parsers.MessageParser;
-import eu.uberdust.util.PropertyReader;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -103,6 +103,7 @@ public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHa
     @Override
     public final void messageReceived(final ChannelHandlerContext ctx, final MessageEvent messageEvent)
             throws InvalidProtocolBufferException {
+        LOGGER.debug("message received");
         final Messages.Msg message = (Messages.Msg) messageEvent.getMessage();
         if (WSNApp.MSG_TYPE_LISTENER_MESSAGE.equals(message.getMsgType())) {
             final WSNAppMessages.Message wsnAppMessage = WSNAppMessages.Message.parseFrom(message.getPayload());

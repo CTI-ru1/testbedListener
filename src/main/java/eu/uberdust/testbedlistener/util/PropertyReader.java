@@ -1,4 +1,4 @@
-package eu.uberdust.util;
+package eu.uberdust.testbedlistener.util;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;

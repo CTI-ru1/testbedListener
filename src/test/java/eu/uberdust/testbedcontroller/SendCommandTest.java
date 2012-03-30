@@ -3,7 +3,7 @@ package eu.uberdust.testbedcontroller;
 import com.google.common.collect.Lists;
 import de.uniluebeck.itm.wisebed.cmdlineclient.BeanShellHelper;
 import de.uniluebeck.itm.wisebed.cmdlineclient.wrapper.WSNAsyncWrapper;
-import eu.uberdust.util.PropertyReader;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.wisebed.api.common.Message;
 import eu.wisebed.api.sm.ExperimentNotRunningException_Exception;
 import eu.wisebed.api.sm.SessionManagement;

@@ -3,7 +3,7 @@ package eu.uberdust.nodeflasher.helper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import eu.uberdust.util.PropertyReader;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.wisebed.api.rs.RS;
 import eu.wisebed.api.rs.RSExceptionException;
 import eu.wisebed.api.sm.SessionManagement;

@@ -27,11 +27,11 @@ public class NodeFlasherController {
     /**
      * Timer offset to start the first flashing check.
      */
-    private static final int TIME_OFFSET = 10000;
+    private static final int TIME_OFFSET = 120000;
     /**
      * Timer offset to start the second flashing check.
      */
-    private static final int TIME_OFFSET2 = 20000;
+    private static final int TIME_OFFSET2 = 240000;
     /**
      * Hours in a day.
      */

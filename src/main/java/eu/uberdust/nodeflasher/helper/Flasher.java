@@ -6,7 +6,7 @@ import de.uniluebeck.itm.wisebed.cmdlineclient.jobs.JobResult;
 import de.uniluebeck.itm.wisebed.cmdlineclient.protobuf.ProtobufControllerClient;
 import de.uniluebeck.itm.wisebed.cmdlineclient.wrapper.WSNAsyncWrapper;
 import eu.uberdust.nodeflasher.TestbedClient;
-import eu.uberdust.util.PropertyReader;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.wisebed.api.rs.ReservervationConflictExceptionException;
 import eu.wisebed.api.sm.ExperimentNotRunningException_Exception;
 import eu.wisebed.api.sm.SecretReservationKey;

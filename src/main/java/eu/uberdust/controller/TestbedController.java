@@ -5,7 +5,7 @@ import de.uniluebeck.itm.wisebed.cmdlineclient.BeanShellHelper;
 import de.uniluebeck.itm.wisebed.cmdlineclient.protobuf.ProtobufControllerClient;
 import de.uniluebeck.itm.wisebed.cmdlineclient.wrapper.WSNAsyncWrapper;
 import eu.uberdust.DeviceCommand;
-import eu.uberdust.util.PropertyReader;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.wisebed.api.common.Message;
 import eu.wisebed.api.sm.ExperimentNotRunningException_Exception;
 import eu.wisebed.api.sm.SessionManagement;
@@ -108,11 +108,11 @@ public class TestbedController implements Observer {
         } catch (final UnknownReservationIdException_Exception e) {
             LOGGER.error(e);
         }
-        LOGGER.info("Got a WSN instance URL, endpoint is: " + wsnEndpointURL);
+        LOGGER.debug("Got a WSN instance URL, endpoint is: " + wsnEndpointURL);
 
         final WSN wsnService = WSNServiceHelper.getWSNService(wsnEndpointURL);
         wsn = WSNAsyncWrapper.of(wsnService);
-        LOGGER.info("Retrieved the following node URNs: {}" + nodeURNs);
+        LOGGER.debug("Retrieved the following node URNs: {}" + nodeURNs);
 
         final ProtobufControllerClient pcc = ProtobufControllerClient.create(pccHost, pccPort, BeanShellHelper.parseSecretReservationKeys(secretReservationKeys));
         pcc.connect();
@@ -135,22 +135,26 @@ public class TestbedController implements Observer {
             macBytes[0] = Integer.valueOf(macAddress.substring(0, 1), 16).byteValue();
             macBytes[1] = Integer.valueOf(macAddress.substring(1, 3), 16).byteValue();
         }
-
+        LOGGER.info(payloadIn);
         final String[] strPayload = payloadIn.split(",");
         final byte[] payload = new byte[strPayload.length];
         for (int i = 0; i < payload.length; i++) {
             payload[i] = Integer.valueOf(strPayload[i].replaceAll("\n", ""), 16).byteValue();
         }
 
-        final byte[] newPayload = new byte[macBytes.length + payload.length + 1 + PAYLOAD_HEADERS.length];
+        final byte[] newPayload = new byte[macBytes.length + payload.length + 1];
         newPayload[0] = PAYLOAD_PREFIX;
         System.arraycopy(macBytes, 0, newPayload, 1, macBytes.length);
-        System.arraycopy(PAYLOAD_HEADERS, 0, newPayload, 3, PAYLOAD_HEADERS.length);
-        System.arraycopy(payload, 0, newPayload, 6, payload.length);
+//        System.arraycopy(PAYLOAD_HEADERS, 0, newPayload, 3, PAYLOAD_HEADERS.length);
+
+        LOGGER.info("sizeIs " + payload.length);
+        LOGGER.info("sizeIs " + newPayload.length);
+
+        System.arraycopy(payload, 0, newPayload, 3, payload.length);
         msg.setBinaryData(newPayload);
         msg.setSourceNodeId("urn:wisebed:ctitestbed:0x1");
 
-        LOGGER.info("Sending message - " + Arrays.toString(newPayload));
+        LOGGER.debug("Sending message - " + Arrays.toString(newPayload));
         try {
             msg.setTimestamp(DatatypeFactory.newInstance().newXMLGregorianCalendar(
                     (GregorianCalendar) GregorianCalendar.getInstance()));
@@ -168,13 +172,12 @@ public class TestbedController implements Observer {
 
     @Override
     public void update(final Observable observable, final Object o) {
-        LOGGER.info("called update ");
+        LOGGER.debug("called update ");
         if (o instanceof DeviceCommand) {
 
             final DeviceCommand command = (DeviceCommand) o;
 
-            LOGGER.info("sending to " + command.getDestination());
-            LOGGER.info("sending bytes " + command.getPayload());
+            LOGGER.info("TO:" + command.getDestination() + " BYTES:" + command.getPayload());
             sendCommand(command.getDestination(), command.getPayload());
 
         }

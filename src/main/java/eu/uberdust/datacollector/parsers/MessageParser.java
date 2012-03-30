@@ -35,6 +35,9 @@ public class MessageParser implements Runnable { //NOPMD
     private String testbedPrefix;
     private int testbedId;
 
+    private String[] capabilities = {"temperature", "light", "ir", "humidity", "co", "co2", "ch4", "pir"
+            , "batterycharge", "accelerometer", "link_up", "barometricpressure", "link_down", "pressure", "light", "", "temperature"};
+
 
     /**
      * @param msg    the message received from the testbed
@@ -91,6 +94,11 @@ public class MessageParser implements Runnable { //NOPMD
 
         LOGGER.debug("Node id is " + nodeId);
 
+        if (checkSelfDescription(nodeId)) {
+            return;
+        }
+
+
         //check for Link Readings
         if (checkLinkReading(nodeId)) {
             return;
@@ -101,6 +109,40 @@ public class MessageParser implements Runnable { //NOPMD
             if (checkSensor(sensor, nodeId)) {
                 return;
             }
+        }
+
+    }
+
+    private boolean checkSelfDescription(final String nodeId) {
+        if (strLine.contains("SELF")) {
+            LOGGER.info(strLine);
+
+            final int start = strLine.indexOf("SELF") + "SELF".length() + 1;
+            try {
+                final String[] sensors = strLine.substring(start).split(",");
+                LOGGER.info("Num of sensors:" + sensors.length);
+                int relayCount = 1;
+                long millis = System.currentTimeMillis();
+                for (int i = 0; i < sensors.length - 1; i++) {
+                    final int capIndex = Integer.parseInt(sensors[i]);
+                    if (capIndex == 14) {
+                        final String capName = CAPABILITY_PREFIX + capabilities[capIndex] + relayCount;
+                        LOGGER.info("NOde:" + nodeId + " " + capName);
+                        commitNodeReading(nodeId, "report", capName, millis);
+                        relayCount++;
+                    } else {
+                        final String capName = CAPABILITY_PREFIX + capabilities[capIndex];
+                        LOGGER.info("NOde:" + nodeId + " " + CAPABILITY_PREFIX + capabilities[capIndex]);
+                        commitNodeReading(nodeId, "report", capName, millis);
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.info(e);
+                e.printStackTrace();
+            }
+            return true;
+        } else {
+            return false;
         }
 
     }
@@ -190,6 +232,29 @@ public class MessageParser implements Runnable { //NOPMD
                 .setCapability(capabilityName)
                 .setTimestamp(msec)
                 .setDoubleReading(value)
+                .build();
+
+        new WsCommiter(reading);
+    }
+
+    /**
+     * Commits a nodeReading to the database using the REST interface.
+     *
+     * @param nodeId     the id of the node reporting the reading
+     * @param capability the name of the capability
+     * @param value      the value of the reading
+     * @param msec       timestamp in milliseconds
+     */
+    private void commitNodeReading(final String nodeId, final String capability, final String value, final long msec) {
+
+        final String nodeUrn = testbedPrefix + nodeId;
+        final String capabilityName = (CAPABILITY_PREFIX + capability).toLowerCase(Locale.US);
+
+        Message.NodeReadings.Reading reading = Message.NodeReadings.Reading.newBuilder()
+                .setNode(nodeUrn)
+                .setCapability(capabilityName)
+                .setTimestamp(msec)
+                .setStringReading(value)
                 .build();
 
         new WsCommiter(reading);
