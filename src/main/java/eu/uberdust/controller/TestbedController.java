@@ -27,11 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * Created by IntelliJ IDEA.
- * User: akribopo
- * Date: 10/3/11
- * Time: 2:59 PM
- * To change this template use File | Settings | File Templates.
+ * Sends Commands to the Testbed.
  */
 public class TestbedController implements Observer {
 

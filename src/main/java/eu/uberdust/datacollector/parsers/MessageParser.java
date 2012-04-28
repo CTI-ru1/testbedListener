@@ -16,18 +16,22 @@ public class MessageParser implements Runnable { //NOPMD
      * LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(DataCollector.class);
+
     /**
      * Text line of the message received.
      */
     private final transient String strLine;
+
     /**
      * Map of all the codeNames-capabilities.
      */
     private final transient Map<String, String> sensors;
+
     /**
      * Testbed Capability prefix.
      */
     private static final String CAPABILITY_PREFIX = "urn:wisebed:node:capability:";
+
     /**
      * Position of the timestamp in a node Reading .
      */
