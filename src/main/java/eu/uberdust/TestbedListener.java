@@ -39,10 +39,11 @@ public class TestbedListener {
         final String server = PropertyReader.getInstance().getProperties().getProperty("uberdust.server");
         final String port = PropertyReader.getInstance().getProperties().getProperty("uberdust.port");
         final String testbedId = PropertyReader.getInstance().getProperties().getProperty("wisedb.testbedid");
+        final String testbedBasePath = PropertyReader.getInstance().getProperties().getProperty("uberdust.basepath");
 
         LOGGER.info("Backend Type: " + backendType);
-        NetworkManager.getInstance().start(server + ":" + port, Integer.parseInt(testbedId));
 
+        NetworkManager.getInstance().start("192.168.1.5"+ ":" + port + testbedBasePath, Integer.parseInt(testbedId));
 
         if (backendType.equals(XBEE)) {
             final String xbeePort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
@@ -55,6 +56,8 @@ public class TestbedListener {
                 return;
             }
         }
+
+
 
         //Awaits for commands from Uberdust.
         if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1")) {

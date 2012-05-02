@@ -20,7 +20,7 @@ public class XbeeCollector implements MessageListener {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(DataCollector.class);
+    private static final Logger LOGGER = Logger.getLogger(XbeeCollector.class);
 
     /**
      * WebSocket address prefix.
@@ -44,7 +44,6 @@ public class XbeeCollector implements MessageListener {
     private String testbedPrefix;
     private int testbedId;
 
-    private final HashMap<String, String> capabilities = new HashMap<String, String>();
 
     /**
      * Default Constructor.
@@ -65,17 +64,6 @@ public class XbeeCollector implements MessageListener {
         testbedId = Integer.parseInt(PropertyReader.getInstance().getProperties().getProperty("wisedb.testbedid"));
         LOGGER.info(testbedId);
 
-        final String[] sensorCapabilities =
-                PropertyReader.getInstance().getProperties().getProperty("sensor.capabilities").split(";");
-        final String[] sensorCapabilitiesIndexes =
-                PropertyReader.getInstance().getProperties().getProperty("sensor.capabilities_index").split(";");
-
-        for (int i = 0; i < sensorCapabilities.length; i++) {
-                        capabilities.put(sensorCapabilitiesIndexes[i], sensorCapabilities[i]);
-        }
-        LOGGER.info(capabilities.toString());
-
-
         executorService = Executors.newCachedThreadPool();
         XBeeRadio.getInstance().addMessageListener(112, this);
     }
@@ -83,7 +71,20 @@ public class XbeeCollector implements MessageListener {
     @Override
     public void receive(final RxResponse16 rxResponse16) {
         executorService.submit(new XbeeMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()
-                , testbedPrefix, testbedId, capabilities));
+                , testbedPrefix, testbedId));
+    }
+
+    public static void main(String[] args) {
+        final String xbeePort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
+        final Integer rate =
+                Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
+        try {
+            XBeeRadio.getInstance().open(xbeePort, rate);
+        } catch (final Exception e) {
+            LOGGER.error(e);
+            return;
+        }
+        new XbeeCollector();
     }
 }
 

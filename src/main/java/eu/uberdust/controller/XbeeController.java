@@ -56,11 +56,12 @@ public class XbeeController implements Observer {
      */
     private XbeeController() {
         PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
+        LOGGER.info("XbeeController initialized");
     }
 
 
     public void sendCommand(final String dest, final String payloadIn) {
-        final String destination = dest.substring(dest.lastIndexOf(":")).replace("0x", "");
+        final String destination = dest.substring(dest.lastIndexOf(":") + 1).replace("0x", "");
 
         final Integer[] macAddress = new Integer[2];
 
@@ -72,13 +73,12 @@ public class XbeeController implements Observer {
             macAddress[1] = Integer.valueOf(destination.substring(1, 3), 16);
         }
         final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
-
         final String[] dataString = payloadIn.split(",");
 
-        final int[] data = new int[dataString.length];
+        final int[] data = new int[dataString.length -3];
 
-        for (int i = 0; i < dataString.length; i++) {
-            data[i] = Integer.valueOf(dataString[i], 16);
+        for (int i = 3; i < dataString.length; i++) {
+            data[i-3] = Integer.valueOf(dataString[i], 16);
         }
 
         try {
