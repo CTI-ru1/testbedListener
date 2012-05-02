@@ -4,7 +4,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import de.uniluebeck.itm.gtr.messaging.Messages;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNApp;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNAppMessages;
-import eu.uberdust.datacollector.parsers.MessageParser;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -16,8 +15,6 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import java.net.ConnectException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,11 +42,6 @@ public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHa
      * saves the last time 1000 messages were received - stats.
      */
     private transient long lastTime;
-
-    /**
-     * executors for handling incoming messages.
-     */
-    private final transient ExecutorService executorService;
 
     /**
      * map that contains the sensors monitored.
@@ -89,8 +81,8 @@ public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHa
         LOGGER.info(testbedPrefix);
         testbedId = Integer.parseInt(PropertyReader.getInstance().getProperties().getProperty("wisedb.testbedid"));
         LOGGER.info(testbedId);
-
-        executorService = Executors.newCachedThreadPool();
+        TestbedMessageHandler.getInstance().setTestbedPrefix(testbedPrefix);
+        TestbedMessageHandler.getInstance().setTestbedId(testbedId);
     }
 
     @Override
@@ -108,6 +100,7 @@ public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHa
         if (WSNApp.MSG_TYPE_LISTENER_MESSAGE.equals(message.getMsgType())) {
             final WSNAppMessages.Message wsnAppMessage = WSNAppMessages.Message.parseFrom(message.getPayload());
             parse(wsnAppMessage.toString());
+
 //            messageCounter++;
 //            if (messageCounter == REPORT_LIMIT) {
 //                final long milliseconds = System.currentTimeMillis() - lastTime;
@@ -168,7 +161,8 @@ public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHa
      * @param toString the string to parse
      */
     private void parse(final String toString) {
-        executorService.submit(new MessageParser(toString, sensors, testbedPrefix, testbedId));
+        TestbedMessageHandler.getInstance().handle(toString);
+
     }
 
 }

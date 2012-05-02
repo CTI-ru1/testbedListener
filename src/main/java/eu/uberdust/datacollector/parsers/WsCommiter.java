@@ -29,7 +29,7 @@ public class WsCommiter {
 
 
             NetworkManager.getInstance().sendNodeReading(readings);
-            LOGGER.info("added nodeReading");
+            LOGGER.info(readings);
         } catch (Exception e) {
             LOGGER.error("InsertReadingWebSocketClient -node-" + e);
         }
@@ -45,7 +45,7 @@ public class WsCommiter {
             Message.LinkReadings readings = Message.LinkReadings.newBuilder().addReading(linkReading).build();
 
             NetworkManager.getInstance().sendLinkReading(readings);
-            LOGGER.info("added linkReading");
+            LOGGER.info(readings);
         } catch (Exception e) {
             LOGGER.error("InsertReadingWebSocketClient -link- " + e);
         }
