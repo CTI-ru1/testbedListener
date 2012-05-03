@@ -9,6 +9,8 @@ import eu.uberdust.network.NetworkManager;
 import eu.uberdust.nodeflasher.NodeFlasherController;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 
+import java.io.File;
+
 /**
  * The testbed Listener Connects to Uberdust and Testbed Runtime to forward command and readings Both Ways.
  */
@@ -43,20 +45,43 @@ public class TestbedListener {
 
         LOGGER.info("Backend Type: " + backendType);
 
-        NetworkManager.getInstance().start("192.168.1.5"+ ":" + port + testbedBasePath, Integer.parseInt(testbedId));
+        NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, Integer.parseInt(testbedId));
 
         if (backendType.equals(XBEE)) {
-            final String xbeePort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
-            final Integer rate =
-                    Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
-            try {
-                XBeeRadio.getInstance().open(xbeePort, rate);
-            } catch (final Exception e) {
-                LOGGER.error(e);
-                return;
+
+            final int xbeeMsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.msb"), 16);
+            final int xbeeLsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.lsb"), 16);
+            final Integer rate = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
+
+            File devices = new File("/dev/");
+            File[] files = devices.listFiles();
+            boolean connected = false;
+            for (File file : files) {
+                if (file.getName().contains("ttyUSB") || file.getName().contains("ttyACM")) {
+                    final String xbeePort = file.getAbsolutePath();
+
+
+                    try {
+                        LOGGER.info("trying " + xbeePort);
+                        XBeeRadio.getInstance().open(xbeePort, rate);
+                        LOGGER.info(XBeeRadio.getInstance().getMyXbeeAddress());
+                        if ((XBeeRadio.getInstance().getMyXbeeAddress().getMsb() == xbeeMsb)
+                                && (XBeeRadio.getInstance().getMyXbeeAddress().getLsb() == xbeeLsb)) {
+                            LOGGER.info("connected");
+                            connected = true;
+                            break;
+                        }
+
+                    } catch (final Exception e) {
+                        LOGGER.error(e);
+
+                    }
+                }
+            }
+            if (!connected) {
+                LOGGER.error("Could not connect to xbee device!");
             }
         }
-
 
 
         //Awaits for commands from Uberdust.

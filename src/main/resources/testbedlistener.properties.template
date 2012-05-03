@@ -4,6 +4,8 @@ backend.type=tr
 #XBee Configutation
 xbee.baudrate=
 xbee.port=
+xbee.msb=6c
+xbee.lsb=c3
 
 #change to 1 to start the application
 use.datacollector=0
@@ -16,6 +18,7 @@ use.controller=0
 testbed.hostname=hercules.cti.gr
 testbed.overlay=1234
 testbed.prefix=urn:wisebed:ctitestbed:
+testbed.capability.prefix=urn:wisebed:node:capability:
 testbed.passwords=passwords.text
 testbed.snaa.endpointurl=http://hercules.cti.gr:8890/snaa
 testbed.rs.endpointurl=http://hercules.cti.gr:8889/rs

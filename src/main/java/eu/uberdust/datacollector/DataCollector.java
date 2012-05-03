@@ -116,5 +116,9 @@ public class DataCollector implements Runnable {
         if (!start()) {
             restart();
         }
+//        else {
+//            TestbedController.getInstance().connectToRuntime();
+//        }
+
     }
 }

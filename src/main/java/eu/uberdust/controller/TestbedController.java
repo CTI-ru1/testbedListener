@@ -93,7 +93,7 @@ public class TestbedController implements Observer {
         }
     }
 
-    private void connectToRuntime() {
+    public void connectToRuntime() {
 
         String wsnEndpointURL = null;
         final SessionManagement sessionManagement = WSNServiceHelper.getSessionManagementService(sessionManagementEndpointURL);

@@ -8,7 +8,6 @@ import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -43,6 +42,7 @@ public class XbeeCollector implements MessageListener {
 
     private String testbedPrefix;
     private int testbedId;
+    private String capabilityPrefix;
 
 
     /**
@@ -60,6 +60,7 @@ public class XbeeCollector implements MessageListener {
         ws_url = wsUrlBuilder.toString();
 
         testbedPrefix = PropertyReader.getInstance().getProperties().getProperty("testbed.prefix");
+        capabilityPrefix = PropertyReader.getInstance().getProperties().getProperty("testbed.capability.prefix");
         LOGGER.info(testbedPrefix);
         testbedId = Integer.parseInt(PropertyReader.getInstance().getProperties().getProperty("wisedb.testbedid"));
         LOGGER.info(testbedId);
@@ -71,7 +72,7 @@ public class XbeeCollector implements MessageListener {
     @Override
     public void receive(final RxResponse16 rxResponse16) {
         executorService.submit(new XbeeMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()
-                , testbedPrefix, testbedId));
+                , testbedPrefix, testbedId, capabilityPrefix));
     }
 
     public static void main(String[] args) {
