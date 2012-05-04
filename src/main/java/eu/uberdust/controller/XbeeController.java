@@ -64,6 +64,7 @@ public class XbeeController implements Observer {
 
 
     public void sendCommand(final String dest, final String payloadIn) {
+        if (payloadIn.contains(",,")) return;
         final String tDestination = dest.substring(dest.lastIndexOf(":") + 1).replace("0x", "");
         final String destination;
         if (routingTable.containsKey(tDestination)) {
