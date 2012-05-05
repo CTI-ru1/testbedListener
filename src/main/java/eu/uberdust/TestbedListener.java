@@ -43,6 +43,7 @@ public class TestbedListener {
         final String port = PropertyReader.getInstance().getProperties().getProperty("uberdust.port");
         final String testbedId = PropertyReader.getInstance().getProperties().getProperty("wisedb.testbedid");
         final String testbedBasePath = PropertyReader.getInstance().getProperties().getProperty("uberdust.basepath");
+        final String usbPort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
 
         LOGGER.info("Backend Type: " + backendType);
 
@@ -54,37 +55,45 @@ public class TestbedListener {
             final int xbeeLsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.lsb"), 16);
             final Integer rate = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
 
-            File devices = new File("/dev/");
-            File[] files = devices.listFiles();
-            boolean connected = false;
-            for (File file : files) {
-                if (file.getName().contains("ttyUSB") || file.getName().contains("ttyACM")) {
-                    final String xbeePort = file.getAbsolutePath();
+            if (usbPort.contains("/")) {
+                try {
+                    XBeeRadio.getInstance().open(usbPort, rate);
+                } catch (final Exception e) {
+                    LOGGER.fatal(e);
+                }
+            } else {
+                File devices = new File("/dev/");
+                File[] files = devices.listFiles();
+                boolean connected = false;
+                for (File file : files) {
+                    if (file.getName().contains("ttyUSB") || file.getName().contains("ttyACM")) {
+                        final String xbeePort = file.getAbsolutePath();
+
+                        try {
+                            LOGGER.info("trying " + xbeePort);
+                            XBeeAddress16 address = XBeeRadio.getInstance().checkXbeeAddress(xbeePort, rate);
+
+                            //wait to unlock the xbee
+                            Thread.sleep(1000);
+                            LOGGER.info(address);
+                            if ((address.getMsb() == xbeeMsb)
+                                    && (address.getLsb() == xbeeLsb)) {
+                                LOGGER.info("connected");
+                                XBeeRadio.getInstance().open(xbeePort, rate);
+                                connected = true;
+                                break;
+                            }
 
 
-                    try {
-                        LOGGER.info("trying " + xbeePort);
-                        XBeeAddress16 address = XBeeRadio.getInstance().checkXbeeAddress(xbeePort, rate);
-                        //wait to unlock the xbee
-                        Thread.sleep(1000);
-                        LOGGER.info(address);
-                        if ((address.getMsb() == xbeeMsb)
-                                && (address.getLsb() == xbeeLsb)) {
-                            LOGGER.info("connected");
-                            XBeeRadio.getInstance().open(xbeePort, rate);
-                            connected = true;
-                            break;
+                        } catch (final Exception e) {
+                            LOGGER.error(e);
+                            e.printStackTrace();
                         }
-
-
-                    } catch (final Exception e) {
-                        LOGGER.error(e);
-
                     }
                 }
-            }
-            if (!connected) {
-                LOGGER.error("Could not connect to xbee device!");
+                if (!connected) {
+                    LOGGER.error("Could not connect to xbee device!");
+                }
             }
         }
 
