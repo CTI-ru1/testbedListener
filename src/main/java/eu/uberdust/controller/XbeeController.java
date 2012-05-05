@@ -63,13 +63,16 @@ public class XbeeController implements Observer {
     }
 
 
-    public void sendCommand(final String dest, final String payloadIn) {
+    public void sendCommand(final String dest, final String capability, final String payloadIn) {
+        LOGGER.info("new command->" + dest + "," + capability + "," + payloadIn);
         if (payloadIn.contains(",,")) return;
         final String tDestination = dest.substring(dest.lastIndexOf(":") + 1).replace("0x", "");
         final String destination;
-        if (routingTable.containsKey(tDestination)) {
-            destination = routingTable.get(tDestination);
-            LOGGER.info("changing end point " + tDestination + "--" + destination);
+        LOGGER.info("checking key " + tDestination + "-" + capability);
+        final String routingKey = tDestination + "-" + capability;
+        if (routingTable.containsKey(routingKey)) {
+            destination = routingTable.get(routingKey).replace("0x", "");
+            LOGGER.info("changing end point " + destination);
         } else {
             destination = tDestination;
         }
@@ -85,7 +88,7 @@ public class XbeeController implements Observer {
         }
         final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
         final String[] dataString = payloadIn.split(",");
-
+        LOGGER.info("here");
         final int[] data = new int[dataString.length - 3];
 
         for (int i = 3; i < dataString.length; i++) {
@@ -115,7 +118,7 @@ public class XbeeController implements Observer {
             final DeviceCommand command = (DeviceCommand) o;
 
             LOGGER.info("TO:" + command.getDestination() + " BYTES:" + command.getPayload());
-            sendCommand(command.getDestination(), command.getPayload());
+            sendCommand(command.getDestination(), command.getCapability(), command.getPayload());
 
         }
     }
@@ -142,10 +145,10 @@ public class XbeeController implements Observer {
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 
                     Element eElement = (Element) nNode;
-                    routingTable.put(getTagValue("source", eElement), getTagValue("destination", eElement));
-                    LOGGER.info("Source : " + getTagValue("source", eElement));
+                    routingTable.put(getTagValue("source", eElement) + "-" + getTagValue("capability", eElement), getTagValue("destination", eElement));
+                    LOGGER.info("Key" + getTagValue("source", eElement) + "-" + getTagValue("capability", eElement));
                     LOGGER.info("Destination : " + getTagValue("destination", eElement));
-
+                    LOGGER.info("value is :" + routingTable.get(getTagValue("source", eElement) + "-" + getTagValue("capability", eElement)));
 
                 }
             }

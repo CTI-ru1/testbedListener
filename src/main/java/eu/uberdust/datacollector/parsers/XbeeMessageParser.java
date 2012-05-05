@@ -97,7 +97,6 @@ public class XbeeMessageParser implements Runnable {
         if ("".equals(nodeId)) {
             return;
         }
-        LOGGER.info("Node id is " + nodeId + "," + targetId);
 
 
         final String capability = extractCapabilityName();
@@ -113,6 +112,7 @@ public class XbeeMessageParser implements Runnable {
             return;
         }
 
+        LOGGER.info("Node:" + nodeId + "," + targetId + " Capability:" + capability);
 
         Double capabilityValue;
         try {

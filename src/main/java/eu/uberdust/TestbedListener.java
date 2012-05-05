@@ -1,5 +1,6 @@
 package eu.uberdust;
 
+import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.controller.TestbedController;
 import eu.uberdust.controller.XbeeController;
@@ -63,14 +64,18 @@ public class TestbedListener {
 
                     try {
                         LOGGER.info("trying " + xbeePort);
-                        XBeeRadio.getInstance().open(xbeePort, rate);
-                        LOGGER.info(XBeeRadio.getInstance().getMyXbeeAddress());
-                        if ((XBeeRadio.getInstance().getMyXbeeAddress().getMsb() == xbeeMsb)
-                                && (XBeeRadio.getInstance().getMyXbeeAddress().getLsb() == xbeeLsb)) {
+                        XBeeAddress16 address = XBeeRadio.getInstance().checkXbeeAddress(xbeePort, rate);
+                        //wait to unlock the xbee
+                        Thread.sleep(1000);
+                        LOGGER.info(address);
+                        if ((address.getMsb() == xbeeMsb)
+                                && (address.getLsb() == xbeeLsb)) {
                             LOGGER.info("connected");
+                            XBeeRadio.getInstance().open(xbeePort, rate);
                             connected = true;
                             break;
                         }
+
 
                     } catch (final Exception e) {
                         LOGGER.error(e);

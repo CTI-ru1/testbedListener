@@ -1,23 +1,18 @@
 <?xml version="1.0"?>
 <routings>
     <route>
-        <source>0.I.9</source>
-        <destination>0x4ec</destination>
+        <source>ROOM1</source>
+	<capability>urn:node:capability:lamp1</capability>
+        <destination>0x473</destination>
     </route>
     <route>
-        <source>0.I.11</source>
-        <destination>0x494</destination>
+        <source>ROOM1</source>
+	<capability>urn:node:capability:lamp2</capability>
+        <destination>0x473</destination>
     </route>
     <route>
-        <source>0.I.1</source>
-        <destination>0x99c</destination>
-    </route>
-    <route>
-        <source>0.I.2</source>
-        <destination>0x2df</destination>
-    </route>
-    <route>
-        <source>0.I.3</source>
-        <destination>0x42f</destination>
+        <source>ROOM1</source>
+	<capability>urn:node:capability:light1</capability>
+        <destination>0x2eb</destination>
     </route>
 </routings>
