@@ -4,6 +4,7 @@ import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.controller.TestbedController;
 import eu.uberdust.controller.XbeeController;
+import eu.uberdust.datacollector.CoapCollector;
 import eu.uberdust.datacollector.DataCollector;
 import eu.uberdust.datacollector.XbeeCollector;
 import eu.uberdust.network.NetworkManager;
@@ -31,6 +32,7 @@ public class TestbedListener {
      * Testbed Runtime backend identifier.
      */
     private static final String TESTBED_RUNTIME = "tr";
+    private static final String COAP = "coap";
 
     /**
      * Starts the application.
@@ -49,7 +51,7 @@ public class TestbedListener {
 
         NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, Integer.parseInt(testbedId));
 
-        if (backendType.equals(XBEE)) {
+        if (backendType.equals(XBEE)||backendType.equals(COAP)) {
 
             final int xbeeMsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.msb"), 16);
             final int xbeeLsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.lsb"), 16);
@@ -97,6 +99,7 @@ public class TestbedListener {
             }
         }
 
+        LOGGER.info("Listening on channel :"+XBeeRadio.getInstance().getChannel());
 
         //Awaits for commands from Uberdust.
         if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1")) {
@@ -108,6 +111,9 @@ public class TestbedListener {
             } else if (backendType.equals(XBEE)) {
                 NetworkManager.getInstance().addObserver(XbeeController.getInstance());
             }
+//            else if (backendType.equals(COAP)) {
+//                NetworkManager.getInstance().addObserver(CoapController.getInstance());
+//            }
         }
 
         if (backendType.equals(TESTBED_RUNTIME)) {
@@ -127,6 +133,8 @@ public class TestbedListener {
             } else if (backendType.equals(XBEE)) {
                 LOGGER.info("Starting XbeeDataCollector");
                 new XbeeCollector();
+            } else if (backendType.equals(COAP)) {
+                new CoapCollector();
             }
         }
         LOGGER.info("up and running");
