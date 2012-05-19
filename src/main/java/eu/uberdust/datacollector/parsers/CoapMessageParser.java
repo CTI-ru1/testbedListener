@@ -134,13 +134,19 @@ public class CoapMessageParser implements Runnable {
                 for(int i=2; i<temp.length; i++)
                 {
                     String[] temp2 = temp[i].split(">");
-                    LOGGER.info(temp2[0]);
+                    String[] temp3 = new String[temp2[0].length()+1];
+                    temp3[0] = "/"+temp2[0];
+                    LOGGER.info(temp3);
                     Random mid = new Random();
                     URI uri = null;
+                    StringBuilder temp4 = new StringBuilder();
+                    for (String s : temp3) {
+                        temp4.append(s);
+                    }
                     try {
-                        uri = new URI(temp2[0]);
+                        uri = new URI(temp4.toString());
                     } catch (URISyntaxException e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        e.printStackTrace();//To change body of catch statement use File | Settings | File Templates.
                     }
                     Message request = new Message(uri, Message.messageType.NON, METHOD_GET, mid.nextInt() % 65535, null);
                     //request.addOption(new Option(OptionNumberRegistry.OBSERVE));
