@@ -207,6 +207,13 @@
             <artifactId>protobuf-java</artifactId>
             <version>2.4.1</version>
         </dependency>
+        <dependency>
+            <groupId>californium</groupId>
+            <artifactId>californium</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/ExampleClient.jar</systemPath>
+        </dependency>
     </dependencies>
     <build>
         <resources>
