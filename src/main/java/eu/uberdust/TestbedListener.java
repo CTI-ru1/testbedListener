@@ -5,6 +5,7 @@ import eu.mksense.XBeeRadio;
 import eu.uberdust.controller.TestbedController;
 import eu.uberdust.controller.XbeeController;
 import eu.uberdust.datacollector.CoapCollector;
+import eu.uberdust.datacollector.CoapServer;
 import eu.uberdust.datacollector.DataCollector;
 import eu.uberdust.datacollector.XbeeCollector;
 import eu.uberdust.network.NetworkManager;
@@ -137,6 +138,8 @@ public class TestbedListener {
                 new CoapCollector();
             }
         }
+
+        CoapServer.getInstance();
         LOGGER.info("up and running");
     }
 }
