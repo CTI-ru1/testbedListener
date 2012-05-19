@@ -2,6 +2,8 @@ package eu.uberdust.datacollector.parsers;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import org.apache.log4j.Logger;
@@ -140,7 +142,9 @@ public class CoapMessageParser implements Runnable {
                     } catch (URISyntaxException e) {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }
-                    Message request = new Message(uri, Message.messageType.NON, METHOD_GET, mid.nextInt(), null);
+                    Message request = new Message(uri, Message.messageType.NON, METHOD_GET, mid.nextInt() % 65535, null);
+                    //request.addOption(new Option(OptionNumberRegistry.OBSERVE));
+
                     byte[] toSend = request.toByteArray();
                     int len = toSend.length;
                     int[] bytes = new int[len+ 1];
