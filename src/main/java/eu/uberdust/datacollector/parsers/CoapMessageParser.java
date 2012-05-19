@@ -1,11 +1,17 @@
 package eu.uberdust.datacollector.parsers;
 
+import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import org.apache.log4j.Logger;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.Random;
+
+import static ch.ethz.inf.vs.californium.coap.CodeRegistry.METHOD_GET;
 
 /**
  * Parses an XBee message received and adds data to a wisedb database.
@@ -123,10 +129,49 @@ public class CoapMessageParser implements Runnable {
                 }
                 LOGGER.info(message.toString());
                 String[] temp = message.toString().split("<");
-                for(int i=1; i<temp.length; i++)
+                for(int i=2; i<temp.length; i++)
                 {
                     String[] temp2 = temp[i].split(">");
                     LOGGER.info(temp2[0]);
+                    Random mid = new Random();
+                    URI uri = null;
+                    try {
+                        uri = new URI(temp2[0]);
+                    } catch (URISyntaxException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
+                    Message request = new Message(uri, Message.messageType.NON, METHOD_GET, mid.nextInt(), null);
+                    byte[] toSend = request.toByteArray();
+                    int len = toSend.length;
+                    int[] bytes = new int[len+ 1];
+                    bytes[0] = 51;
+                    for (int k = 0; k < len; k++) {
+                        short read = (short) ((short) toSend[i] & 0xff);
+                        bytes[k + 1] = read;
+                    }
+
+                    StringBuilder messageINFO = new StringBuilder("Requesting:");
+                    for (int k = 0; i < len; i++) {
+                        message.append(bytes[k]).append("|");
+                    }
+
+                    LOGGER.info(messageINFO.toString());
+                    final Integer[] macAddress = new Integer[2];
+                    String destination = "472";
+                    if (destination.length() == 4) {
+                        macAddress[0] = Integer.valueOf(destination.substring(0, 2), 16);
+                        macAddress[1] = Integer.valueOf(destination.substring(2, 4), 16);
+                    } else if (destination.length() == 3) {
+                        macAddress[0] = Integer.valueOf(destination.substring(0, 1), 16);
+                        macAddress[1] = Integer.valueOf(destination.substring(1, 3), 16);
+                    }
+                    final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
+                    try {
+                        LOGGER.info("sending to device");
+                        XBeeRadio.getInstance().send(address16, 112, bytes);
+                    } catch (Exception e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
                 }
                 //Request request = new GETRequest();
                 //request.setURI();
