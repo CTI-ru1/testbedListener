@@ -113,7 +113,7 @@ public class CoapMessageParser implements Runnable {
             }
             //need to parse message
             //TODO californium parser
-            if (payload[3] == 0 && payload[4] == 0) {
+            if (payload[3] == 0 && payload[4] == 0) {  //getting .well-known/core autoconfig phase
                 Message response = Message.fromByteArray(byteArr);
                 byte[] inPayload = response.getPayload();
                 StringBuilder message = new StringBuilder("Response:");
@@ -122,9 +122,17 @@ public class CoapMessageParser implements Runnable {
 
                 }
                 LOGGER.info(message.toString());
+                String[] temp = message.toString().split("<");
+                for(int i=1; i<temp.length; i++)
+                {
+                    String[] temp2 = temp[i].split(">");
+                    LOGGER.info(temp2[0]);
+                }
                 //Request request = new GETRequest();
                 //request.setURI();
+                return;
             }
+
         }
 
     }
