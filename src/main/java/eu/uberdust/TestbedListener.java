@@ -50,9 +50,13 @@ public class TestbedListener {
 
         LOGGER.info("Backend Type: " + backendType);
 
+        if (backendType.equals(COAP)) {
+            CoapServer.getInstance();
+        }
+
         NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, Integer.parseInt(testbedId));
 
-        if (backendType.equals(XBEE)||backendType.equals(COAP)) {
+        if (backendType.equals(XBEE) || backendType.equals(COAP)) {
 
             final int xbeeMsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.msb"), 16);
             final int xbeeLsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.lsb"), 16);
@@ -100,7 +104,7 @@ public class TestbedListener {
             }
         }
 
-        LOGGER.info("Listening on channel :"+XBeeRadio.getInstance().getChannel());
+        LOGGER.info("Listening on channel :" + XBeeRadio.getInstance().getChannel());
 
         //Awaits for commands from Uberdust.
         if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1")) {
@@ -138,8 +142,6 @@ public class TestbedListener {
                 new CoapCollector();
             }
         }
-
-        CoapServer.getInstance();
         LOGGER.info("up and running");
     }
 }
