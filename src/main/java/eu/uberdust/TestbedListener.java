@@ -2,10 +2,10 @@ package eu.uberdust;
 
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
+import eu.uberdust.coap.CoapServer;
 import eu.uberdust.controller.TestbedController;
 import eu.uberdust.controller.XbeeController;
 import eu.uberdust.datacollector.CoapCollector;
-import eu.uberdust.datacollector.CoapServer;
 import eu.uberdust.datacollector.DataCollector;
 import eu.uberdust.datacollector.XbeeCollector;
 import eu.uberdust.network.NetworkManager;

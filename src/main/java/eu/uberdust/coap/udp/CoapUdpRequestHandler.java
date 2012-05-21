@@ -1,7 +1,8 @@
-package eu.uberdust.datacollector;
+package eu.uberdust.coap.udp;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import com.rapplogic.xbee.api.XBeeAddress16;
+import eu.uberdust.coap.CoapServer;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;
@@ -75,6 +76,17 @@ public class CoapUdpRequestHandler implements Runnable {
             }
         } else {
             LOGGER.info("reply from uberdust!");
+
+            Message message = new Message();
+            message.setPayload("urn:node:capability:card");
+            message.setURI(nodeUrn);
+
+            byte[] buf = message.toByteArray();
+            DatagramPacket replyPacket = new DatagramPacket(buf, buf.length);
+            replyPacket.setData(buf);
+            replyPacket.setSocketAddress(packet.getSocketAddress());
+
+            CoapServer.getInstance().sendReply(replyPacket);
         }
     }
 }
