@@ -71,8 +71,7 @@ public class CoapCollector implements MessageListener {
 
     @Override
     public void receive(final RxResponse16 rxResponse16) {
-        executorService.submit(new CoapMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()
-                , testbedPrefix, testbedId, capabilityPrefix));
+        executorService.submit(new CoapMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()));
     }
 
     public static void main(String[] args) {

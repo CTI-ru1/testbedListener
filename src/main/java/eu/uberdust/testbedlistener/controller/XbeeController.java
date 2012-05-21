@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.controller;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.DeviceCommand;
+import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Document;
@@ -77,15 +78,7 @@ public class XbeeController implements Observer {
             destination = tDestination;
         }
 
-        final Integer[] macAddress = new Integer[2];
-
-        if (destination.length() == 4) {
-            macAddress[0] = Integer.valueOf(destination.substring(0, 2), 16);
-            macAddress[1] = Integer.valueOf(destination.substring(2, 4), 16);
-        } else if (destination.length() == 3) {
-            macAddress[0] = Integer.valueOf(destination.substring(0, 1), 16);
-            macAddress[1] = Integer.valueOf(destination.substring(1, 3), 16);
-        }
+        final int[] macAddress = Converter.AddressToInteger(destination);
         final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
         final String[] dataString = payloadIn.split(",");
         LOGGER.info("here");

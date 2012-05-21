@@ -5,6 +5,7 @@ import de.uniluebeck.itm.wisebed.cmdlineclient.BeanShellHelper;
 import de.uniluebeck.itm.wisebed.cmdlineclient.protobuf.ProtobufControllerClient;
 import de.uniluebeck.itm.wisebed.cmdlineclient.wrapper.WSNAsyncWrapper;
 import eu.uberdust.DeviceCommand;
+import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.wisebed.api.common.Message;
 import eu.wisebed.api.sm.ExperimentNotRunningException_Exception;
@@ -123,14 +124,7 @@ public class TestbedController implements Observer {
 
         final String macAddress = destination.
                 substring(destination.indexOf("0x") + 2);
-        final byte[] macBytes = new byte[2];
-        if (macAddress.length() == 4) {
-            macBytes[0] = Integer.valueOf(macAddress.substring(0, 2), 16).byteValue();
-            macBytes[1] = Integer.valueOf(macAddress.substring(2, 4), 16).byteValue();
-        } else if (macAddress.length() == 3) {
-            macBytes[0] = Integer.valueOf(macAddress.substring(0, 1), 16).byteValue();
-            macBytes[1] = Integer.valueOf(macAddress.substring(1, 3), 16).byteValue();
-        }
+        final byte[] macBytes = Converter.AddressToByte(macAddress);
         LOGGER.info(payloadIn);
         final String[] strPayload = payloadIn.split(",");
         final byte[] payload = new byte[strPayload.length];

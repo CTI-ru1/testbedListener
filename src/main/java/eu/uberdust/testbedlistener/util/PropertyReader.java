@@ -28,6 +28,11 @@ public class PropertyReader {
      */
     private static final String PROPERTY_FILE = "testbedlistener.properties";
 
+    private static final String TESTBED_PREFIX = "testbed.prefix";
+    private static final String TESTBED_CAPABILITIES_PREFIX = "testbed.capability.prefix";
+    private static final String TESTBED_ID = "wisedb.testbedid";
+    private String testbedCapabilitiesPrefix;
+
     /**
      * Default Constructor.
      */
@@ -64,5 +69,17 @@ public class PropertyReader {
     public Properties getProperties() {
         LOGGER.debug("getProperties()");
         return properties;
+    }
+
+    public String getTestbedPrefix() {
+        return properties.get(TESTBED_PREFIX).toString();
+    }
+
+    public String getTestbedCapabilitiesPrefix() {
+        return properties.get(TESTBED_CAPABILITIES_PREFIX).toString();
+    }
+
+    public int getTestbedId() {
+        return Integer.valueOf(properties.get(TESTBED_ID).toString());
     }
 }

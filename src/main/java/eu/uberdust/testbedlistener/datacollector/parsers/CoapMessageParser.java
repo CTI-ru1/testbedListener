@@ -6,8 +6,10 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
-import eu.uberdust.testbedlistener.coap.ActiveRequests;
+import eu.uberdust.testbedlistener.coap.ActiveRequest;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.util.Converter;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 
 import java.net.URI;
@@ -59,24 +61,21 @@ public class CoapMessageParser implements Runnable {
      */
     private final int[] payload;
     private Random mid;
-    private ActiveRequests activeRequests;
+    private ActiveRequest activeRequests;
 
     /**
      * Default Constructor.
      *
-     * @param address       the address of the node
-     * @param payload       the payload message to be parsed.
-     * @param testbedPrefix the testbed prefix
-     * @param testbedId     the testbed id
+     * @param address the address of the node
+     * @param payload the payload message to be parsed.
      */
-    public CoapMessageParser(final XBeeAddress16 address, final int[] payload,
-                             final String testbedPrefix, final int testbedId, final String capabilityPrefix) {
+    public CoapMessageParser(final XBeeAddress16 address, final int[] payload) {
 
         this.payload = payload;
         remoteAddress = address;
-        this.testbedPrefix = testbedPrefix;
-        this.capabilityPrefix = capabilityPrefix;
-        this.testbedId = testbedId;
+        this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
+        this.capabilityPrefix = PropertyReader.getInstance().getTestbedCapabilitiesPrefix();
+        this.testbedId = PropertyReader.getInstance().getTestbedId();
         mid = new Random();
     }
 
@@ -169,15 +168,8 @@ public class CoapMessageParser implements Runnable {
                     }
 
                     LOGGER.info(messageINFO.toString());
-                    final Integer[] macAddress = new Integer[2];
                     String destination = "472";
-                    if (destination.length() == 4) {
-                        macAddress[0] = Integer.valueOf(destination.substring(0, 2), 16);
-                        macAddress[1] = Integer.valueOf(destination.substring(2, 4), 16);
-                    } else if (destination.length() == 3) {
-                        macAddress[0] = Integer.valueOf(destination.substring(0, 1), 16);
-                        macAddress[1] = Integer.valueOf(destination.substring(1, 3), 16);
-                    }
+                    final int[] macAddress = Converter.AddressToInteger(destination);
                     final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
                     try {
                         LOGGER.info("sending to device");
@@ -189,7 +181,7 @@ public class CoapMessageParser implements Runnable {
                 return;
             } else {
                 LOGGER.info("activeRequests.matchResponse");
-                String uriPath = CoapServer.getInstance().matchResponse(address, response);
+                String uriPath = CoapServer.getInstance().matchResponse(response);
                 LOGGER.info(uriPath);
                 if (uriPath != null) {
                     LOGGER.info(response.getPayloadString());
@@ -200,7 +192,7 @@ public class CoapMessageParser implements Runnable {
                     } catch (final NumberFormatException e) {
                         LOGGER.error(e);
                         LOGGER.info(address);
-                        commitNodeReading("0x" + address, uriPath.substring(uriPath.lastIndexOf("/")+1), response.getPayloadString());
+                        commitNodeReading("0x" + address, uriPath.substring(uriPath.lastIndexOf("/") + 1), response.getPayloadString());
                         return;
                     }
                     commitNodeReading(address, uriPath, capabilityValue);

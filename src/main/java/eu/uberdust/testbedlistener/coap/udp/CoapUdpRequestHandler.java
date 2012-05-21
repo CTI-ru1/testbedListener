@@ -6,6 +6,7 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;
@@ -89,15 +90,7 @@ public class CoapUdpRequestHandler implements Runnable {
             }
             LOGGER.info(messageBinary.toString());
 
-            final Integer[] macAddress = new Integer[2];
-
-            if (nodeUrn.length() == 4) {
-                macAddress[0] = Integer.valueOf(nodeUrn.substring(0, 2), 16);
-                macAddress[1] = Integer.valueOf(nodeUrn.substring(2, 4), 16);
-            } else if (nodeUrn.length() == 3) {
-                macAddress[0] = Integer.valueOf(nodeUrn.substring(0, 1), 16);
-                macAddress[1] = Integer.valueOf(nodeUrn.substring(1, 3), 16);
-            }
+            final int[] macAddress = Converter.AddressToInteger(nodeUrn);
             CoapServer.getInstance().addRequest(nodeUrn, request);
             final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
 
