@@ -1,5 +1,6 @@
 package eu.uberdust.coap;
 
+import ch.ethz.inf.vs.californium.coap.Message;
 import eu.uberdust.coap.udp.UDPhandler;
 import org.apache.log4j.Logger;
 
@@ -23,9 +24,11 @@ public class CoapServer {
     private static CoapServer instance = null;
     private Map<String, Integer> endpoints;
     private DatagramSocket socket;
+    private ActiveRequests activeRequests;
 
     public CoapServer() {
         this.endpoints = new HashMap<String, Integer>();
+        this.activeRequests = new ActiveRequests();
         try {
             socket = new DatagramSocket(5683);
         } catch (SocketException e) {
@@ -64,5 +67,13 @@ public class CoapServer {
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
+    }
+
+    public synchronized void addRequest(String address, Message request) {
+        activeRequests.addRequest(address, request);
+    }
+
+    public synchronized String matchResponse(String address, Message response) {
+        return activeRequests.matchResponse(address, response);
     }
 }

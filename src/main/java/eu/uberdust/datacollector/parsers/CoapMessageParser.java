@@ -5,6 +5,7 @@ import ch.ethz.inf.vs.californium.coap.Message;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.coap.ActiveRequests;
+import eu.uberdust.coap.CoapServer;
 import eu.uberdust.communication.protobuf.*;
 import org.apache.log4j.Logger;
 
@@ -76,7 +77,7 @@ public class CoapMessageParser implements Runnable {
         this.capabilityPrefix = capabilityPrefix;
         this.testbedId = testbedId;
         mid = new Random();
-        activeRequests = new ActiveRequests();
+        //activeRequests = new ActiveRequests();
     }
 
     /**
@@ -151,7 +152,7 @@ public class CoapMessageParser implements Runnable {
                     request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
                     request.setToken( TokenManager.getInstance().acquireToken() );
 
-                    activeRequests.addRequest(address, request);
+                    CoapServer.getInstance().addRequest(address, request);
 
 
                     byte[] toSend = request.toByteArray();
@@ -189,7 +190,7 @@ public class CoapMessageParser implements Runnable {
                 return;
             }
             else {
-                String uriPath = activeRequests.matchResponse(address, response);
+                String uriPath = CoapServer.getInstance().matchResponse(address, response);
                 if (uriPath != null)
                 {
                     Double capabilityValue;
