@@ -9,24 +9,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Created by IntelliJ IDEA.
- * User: amaxilatis
- * Date: 5/19/12
- * Time: 7:31 PM
- * To change this template use File | Settings | File Templates.
+ * UDP handler thread.
+ * Continously waits for new incoming udp connections and starts new handler threads.
  */
-public class UDPhandler extends Thread {
+public class UDPhandler extends Thread {//NOPMD
+    /**
+     * LOGGER.
+     */
     private static final Logger LOGGER = Logger.getLogger(CoapUdpRequestHandler.class);
 
-    private DatagramSocket socket;
-    private DatagramPacket packet;
+    private transient final DatagramSocket socket;
 
     /**
      * executors for handling incoming messages.
      */
     private final transient ExecutorService executorService;
 
-    public UDPhandler(DatagramSocket socket) {
+    public UDPhandler(final DatagramSocket socket) {
         this.socket = socket;
         executorService = Executors.newCachedThreadPool();
     }
@@ -34,14 +33,14 @@ public class UDPhandler extends Thread {
 
     @Override
     public void run() {
-        byte[] buf = new byte[1024];
-        packet = new DatagramPacket(buf, 1024);
+        final byte[] buf = new byte[1024];
         while (true) {
+            final DatagramPacket packet = new DatagramPacket(buf, 1024);
             try {
                 LOGGER.info("Waiting for data");
                 socket.receive(packet);
             } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                LOGGER.fatal(e.getMessage(), e);
             }
             executorService.submit(new CoapUdpRequestHandler(packet));
 
