@@ -1,11 +1,15 @@
 package eu.uberdust.coap.udp;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import com.rapplogic.xbee.api.XBeeAddress16;
+import eu.mksense.XBeeRadio;
 import eu.uberdust.coap.CoapServer;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,17 +33,46 @@ public class CoapUdpRequestHandler implements Runnable {
 
     @Override
     public void run() {
-        byte[] data = packet.getData();
-        int len = packet.getLength();
-
-        Message mess = Message.fromByteArray(data);
-
+        byte[] adata = packet.getData();
+        int myLen = adata.length;
+        for (int i = adata.length - 1; i >= 0; i--) {
+            if (adata[i] == 0) {
+                myLen = i;
+            }
+        }
+        LOGGER.info(myLen);
+        byte[] adata2 = new byte[myLen];
+        System.arraycopy(adata, 0, adata2, 0, myLen);
+        LOGGER.info(adata.length);
+        Message mess = Message.fromByteArray(adata2);
+        Message request = new Message(mess.getType(), mess.getCode());
+        request.setMID(mess.getMID());
+        request.setPayload(mess.getPayload());
+        LOGGER.info(mess.getPayload().length);
+//        for (Option option : mess.getOptions()) {
+//
+//            if (option.getIntValue() != OptionNumberRegistry.URI_PATH) {
+//                LOGGER.info("1");
+//                request.addOption(option);
+//            }
+//        }
         final String uriPath = mess.getUriPath();
         String nodeUrn = uriPath.substring(1, uriPath.indexOf("/", 1));
+        String newUri = uriPath.substring(uriPath.indexOf("/", 1));
+        LOGGER.info(newUri);
+        List<Option> uriPatha = Option.split(OptionNumberRegistry.URI_PATH, newUri, "/");
+        request.setOptions(OptionNumberRegistry.URI_PATH, uriPatha);
+        List<Option> uriPathb = Option.split(OptionNumberRegistry.URI_QUERY, mess.getQuery(), "&");
+        request.setOptions(OptionNumberRegistry.URI_QUERY, uriPathb);
+        LOGGER.info("OptionCount" + request.getOptionCount());
 
         LOGGER.info(mess.getUriPath());
         LOGGER.info(nodeUrn);
 
+        //= packet.getData();
+        //len = packet.getLength();
+        byte[] data = request.toByteArray();
+        int len = data.length;
         if (nodeUrn.contains("0x")) {
             nodeUrn = nodeUrn.substring(nodeUrn.indexOf("0x") + 2);
 
@@ -65,12 +98,12 @@ public class CoapUdpRequestHandler implements Runnable {
                 macAddress[0] = Integer.valueOf(nodeUrn.substring(0, 1), 16);
                 macAddress[1] = Integer.valueOf(nodeUrn.substring(1, 3), 16);
             }
-
+            CoapServer.getInstance().addRequest(nodeUrn, request);
             final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
 
             try {
                 LOGGER.info("sending to device");
-//            XBeeRadio.getInstance().send(address16, 112, bytes);
+                XBeeRadio.getInstance().send(address16, 112, bytes);
             } catch (Exception e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }

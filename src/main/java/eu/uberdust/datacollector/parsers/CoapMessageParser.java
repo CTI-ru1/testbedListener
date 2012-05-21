@@ -1,12 +1,13 @@
 package eu.uberdust.datacollector.parsers;
 
-import ch.ethz.inf.vs.californium.coap.*;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.TokenManager;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.coap.ActiveRequests;
 import eu.uberdust.coap.CoapServer;
-import eu.uberdust.communication.protobuf.*;
 import org.apache.log4j.Logger;
 
 import java.net.URI;
@@ -77,7 +78,6 @@ public class CoapMessageParser implements Runnable {
         this.capabilityPrefix = capabilityPrefix;
         this.testbedId = testbedId;
         mid = new Random();
-        //activeRequests = new ActiveRequests();
     }
 
     /**
@@ -121,9 +121,9 @@ public class CoapMessageParser implements Runnable {
 //            }
         } else if (payload[0] == 51) // coap message
         {
-            byte byteArr[] = new byte[payload.length];
+            byte byteArr[] = new byte[payload.length - 1];
             for (int i = 1; i < payload.length; i++) {
-                byteArr[i] = (byte) payload[i];
+                byteArr[i - 1] = (byte) payload[i];
             }
             Message response = Message.fromByteArray(byteArr);
 
@@ -136,8 +136,7 @@ public class CoapMessageParser implements Runnable {
                 }
                 LOGGER.info(message.toString());
                 String[] temp = message.toString().split("<");
-                for(int i=2; i<temp.length; i++)
-                {
+                for (int i = 2; i < temp.length; i++) {
                     String[] temp2 = temp[i].split(">");
                     URI uri = null;
                     try {
@@ -146,18 +145,18 @@ public class CoapMessageParser implements Runnable {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }
                     Message request = new Message(Message.messageType.NON, METHOD_GET);
-                    request.setMID(mid.nextInt()%65535);
+                    request.setMID(mid.nextInt() % 65535);
                     List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
                     request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
                     request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-                    request.setToken( TokenManager.getInstance().acquireToken() );
+                    request.setToken(TokenManager.getInstance().acquireToken());
 
                     CoapServer.getInstance().addRequest(address, request);
 
 
                     byte[] toSend = request.toByteArray();
                     int len = toSend.length;
-                    int[] bytes = new int[len+ 1];
+                    int[] bytes = new int[len + 1];
                     bytes[0] = 51;
                     for (int k = 0; k < len; k++) {
                         short read = (short) ((short) toSend[k] & 0xff);
@@ -188,17 +187,20 @@ public class CoapMessageParser implements Runnable {
                     }
                 }
                 return;
-            }
-            else {
+            } else {
+                LOGGER.info("activeRequests.matchResponse");
                 String uriPath = CoapServer.getInstance().matchResponse(address, response);
-                if (uriPath != null)
-                {
+                LOGGER.info(uriPath);
+                if (uriPath != null) {
+                    LOGGER.info(response.getPayloadString());
+
                     Double capabilityValue;
                     try {
                         capabilityValue = Double.valueOf(response.getPayloadString());
                     } catch (final NumberFormatException e) {
                         LOGGER.error(e);
-                        commitNodeReading(address, uriPath, response.getPayloadString());
+                        LOGGER.info(address);
+                        commitNodeReading("0x" + address, uriPath.substring(uriPath.lastIndexOf("/")+1), response.getPayloadString());
                         return;
                     }
                     commitNodeReading(address, uriPath, capabilityValue);
@@ -208,6 +210,7 @@ public class CoapMessageParser implements Runnable {
         }
 
     }
+
     private void commitNodeReading(final String nodeId, final String capability, final Double value) {
 
         final String nodeUrn = testbedPrefix + nodeId;
@@ -222,6 +225,7 @@ public class CoapMessageParser implements Runnable {
 
         new WsCommiter(reading);
     }
+
     private void commitNodeReading(final String nodeId, final String capability, final String value) {
 
         final String nodeUrn = testbedPrefix + nodeId;

@@ -28,7 +28,7 @@ public class WsCommiter {
             final Message.NodeReadings readings = Message.NodeReadings.newBuilder().addReading(nodeReading).build();
 
             NetworkManager.getInstance().sendNodeReading(readings);
-            LOGGER.debug(readings);
+            LOGGER.info(readings);
         } catch (Exception e) {
             LOGGER.error("InsertReadingWebSocketClient -node-" + e);
         }
