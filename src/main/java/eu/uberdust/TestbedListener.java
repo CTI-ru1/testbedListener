@@ -2,14 +2,14 @@ package eu.uberdust;
 
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
-import eu.uberdust.coap.CoapServer;
-import eu.uberdust.controller.TestbedController;
-import eu.uberdust.controller.XbeeController;
-import eu.uberdust.datacollector.CoapCollector;
-import eu.uberdust.datacollector.DataCollector;
-import eu.uberdust.datacollector.XbeeCollector;
 import eu.uberdust.network.NetworkManager;
-import eu.uberdust.nodeflasher.NodeFlasherController;
+import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.controller.TestbedController;
+import eu.uberdust.testbedlistener.controller.XbeeController;
+import eu.uberdust.testbedlistener.datacollector.CoapCollector;
+import eu.uberdust.testbedlistener.datacollector.DataCollector;
+import eu.uberdust.testbedlistener.datacollector.XbeeCollector;
+import eu.uberdust.testbedlistener.nodeflasher.NodeFlasherController;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 
 import java.io.File;
