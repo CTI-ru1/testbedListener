@@ -26,7 +26,7 @@ import java.util.Observer;
 /**
  * Controlls the XBee Network.
  */
-public class XbeeController implements Observer {
+public final class XbeeController implements Observer {
 
     private static final Logger LOGGER = Logger.getLogger(XbeeController.class);
 
@@ -128,9 +128,9 @@ public class XbeeController implements Observer {
             Document doc = dBuilder.parse(fXmlFile);
             doc.getDocumentElement().normalize();
 
-            System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+            LOGGER.info("Root element :" + doc.getDocumentElement().getNodeName());
             NodeList nList = doc.getElementsByTagName("route");
-            System.out.println("-----------------------");
+            LOGGER.info("-----------------------");
 
             for (int temp = 0; temp < nList.getLength(); temp++) {
 

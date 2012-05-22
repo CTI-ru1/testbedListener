@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.datacollector.parsers;
 import eu.uberdust.communication.protobuf.Message;
 import eu.uberdust.testbedlistener.datacollector.DataCollector;
 import eu.uberdust.testbedlistener.datacollector.TestbedMessageHandler;
+import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
 import java.util.Locale;

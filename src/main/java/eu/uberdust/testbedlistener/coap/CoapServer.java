@@ -143,6 +143,12 @@ public class CoapServer {
         return null;
     }
 
+    /**
+     * Responds to a UDP request using the packet received from the device.
+     *
+     * @param response      the response received.
+     * @param activeRequest the request for the response.
+     */
     private void respondToUDP(final Message response, final ActiveRequest activeRequest) {
         if (activeRequest.getSocketAddress() != null) {
             try {

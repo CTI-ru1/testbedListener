@@ -30,20 +30,11 @@ public class CoapCollector implements MessageListener {
      * WebSocket address suffix.
      */
     private static final String WS_URL_SUFFIX = "insertreading.ws";
-    /**
-     * WebSocket address url.
-     */
-    private static String ws_url = "";
 
     /**
      * executors for handling incoming messages.
      */
     private final transient ExecutorService executorService;
-
-    private String testbedPrefix;
-    private int testbedId;
-    private String capabilityPrefix;
-
 
     /**
      * Default Constructor.
@@ -57,13 +48,8 @@ public class CoapCollector implements MessageListener {
         wsUrlBuilder.append(PropertyReader.getInstance().getProperties().getProperty("uberdust.port"));
         wsUrlBuilder.append(PropertyReader.getInstance().getProperties().getProperty("uberdust.basepath"));
         wsUrlBuilder.append(WS_URL_SUFFIX);
-        ws_url = wsUrlBuilder.toString();
 
-        testbedPrefix = PropertyReader.getInstance().getProperties().getProperty("testbed.prefix");
-        capabilityPrefix = PropertyReader.getInstance().getProperties().getProperty("testbed.capability.prefix");
-        LOGGER.info(testbedPrefix);
-        testbedId = Integer.parseInt(PropertyReader.getInstance().getProperties().getProperty("wisedb.testbedid"));
-        LOGGER.info(testbedId);
+        final String ws_url = wsUrlBuilder.toString();
 
         executorService = Executors.newCachedThreadPool();
         XBeeRadio.getInstance().addMessageListener(112, this);

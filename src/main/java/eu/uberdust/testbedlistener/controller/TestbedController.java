@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Sends Commands to the Testbed.
  */
-public class TestbedController implements Observer {
+public final class TestbedController implements Observer {
 
     private static final Logger LOGGER = Logger.getLogger(TestbedController.class);
     private static final byte PAYLOAD_PREFIX = 0xb;

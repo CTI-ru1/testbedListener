@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.datacollector.parsers;
+package eu.uberdust.testbedlistener.datacollector.commiter;
 
 import eu.uberdust.communication.protobuf.Message;
 import org.apache.log4j.Logger;

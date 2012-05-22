@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.datacollector.parsers;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.uberdust.communication.protobuf.Message;
 import eu.uberdust.testbedlistener.datacollector.DataCollector;
+import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
 import java.util.Locale;

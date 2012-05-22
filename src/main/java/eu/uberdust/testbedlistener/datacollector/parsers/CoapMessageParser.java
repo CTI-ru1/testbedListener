@@ -8,6 +8,7 @@ import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.ActiveRequest;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
@@ -93,6 +94,7 @@ public class CoapMessageParser implements Runnable {
     public void run() {
         final String address = Integer.toHexString(remoteAddress.getAddress()[0]) + Integer.toHexString(remoteAddress.getAddress()[1]);
 
+        LOGGER.info("RECEIVED FROM " + address);
         if (!address.equals("472")) return;
         LOGGER.info("from " + address + " with " + payload[0] + " Length is: " + payload.length + "@ " + new Date(System.currentTimeMillis()));
         StringBuilder stringBuilder = new StringBuilder("contents:");
