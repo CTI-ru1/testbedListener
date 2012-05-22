@@ -103,9 +103,9 @@ public class CoapServer {
      * @param request       the request message.
      * @param socketAddress
      */
-    public void addRequest(final String address, final Message request, SocketAddress socketAddress) {
+    public void addRequest(final String address, final Message request, SocketAddress socketAddress, boolean hasQuery) {
         synchronized (CoapServer.class) {
-            activeRequests.add(new ActiveRequest(request.getUriPath(), request.getMID(), request.getTokenString(), address, socketAddress));
+            activeRequests.add(new ActiveRequest(request.getUriPath(), request.getMID(), request.getTokenString(), address, socketAddress, hasQuery));
         }
     }
 
@@ -127,7 +127,10 @@ public class CoapServer {
             for (ActiveRequest activeRequest : activeRequests) {
                 LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
                 if (response.getMID() == activeRequest.getMid()) {
-                    final String retVal = activeRequest.getUriPath();
+                    String retVal = activeRequest.getUriPath();
+                    if ( activeRequest.hasQuery()) {
+                        retVal = null;
+                    }
                     LOGGER.info("Found By MID");
                     respondToUDP(response, activeRequest);
                     activeRequests.remove(activeRequest);
@@ -138,7 +141,12 @@ public class CoapServer {
                 if (response.getTokenString().equals(activeRequest.getToken())) {
                     LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
                     respondToUDP(response, activeRequest);
-                    return activeRequest.getUriPath();
+                    if ( activeRequest.hasQuery()) {
+                        return null;
+                    }
+                    else {
+                        return activeRequest.getUriPath();
+                    }
                 }
             }
 

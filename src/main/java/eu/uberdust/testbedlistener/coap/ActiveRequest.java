@@ -19,6 +19,7 @@ public class ActiveRequest {
     private transient final String token;
     private transient final String host;
     private transient final SocketAddress socketAddress;
+    private boolean hasQuery;
 
     public String getUriPath() {
         return uriPath;
@@ -40,12 +41,16 @@ public class ActiveRequest {
         return socketAddress;
     }
 
-    public ActiveRequest(final String uriPath, final int mid, final String token, final String host, SocketAddress socketAddress) {
+    public boolean hasQuery() {
+        return hasQuery;
+    }
+    public ActiveRequest(final String uriPath, final int mid, final String token, final String host, SocketAddress socketAddress, boolean hasQuery) {
         LOGGER.debug("new ActiveRequest");
         this.uriPath = uriPath;
         this.mid = mid;
         this.token = token;
         this.host = host;
         this.socketAddress = socketAddress;
+        this.hasQuery = hasQuery;
     }
 }

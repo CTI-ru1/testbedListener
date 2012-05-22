@@ -127,6 +127,14 @@ public class CoapMessageParser implements Runnable {
             }
             Message response = Message.fromByteArray(byteArr);
 
+            // SEND ACK
+            if (response.getType() == Message.messageType.CON)
+            {
+                Message ack = new Message(Message.messageType.ACK, 0);
+                ack.setMID(response.getMID());
+                CoapServer.getInstance().sendRequest(ack.toByteArray(), address);
+            } // END OF SEND ACK
+
             if (payload[3] == 0 && payload[4] == 0) {  //getting .well-known/core autoconfig phase
                 byte[] inPayload = response.getPayload();
                 StringBuilder message = new StringBuilder("Response:");
@@ -151,7 +159,7 @@ public class CoapMessageParser implements Runnable {
                     request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
                     request.setToken(TokenManager.getInstance().acquireToken());
 
-                    CoapServer.getInstance().addRequest(address, request, null);
+                    CoapServer.getInstance().addRequest(address, request, null, false);
 
 
                     CoapServer.getInstance().sendRequest(request.toByteArray(), address);

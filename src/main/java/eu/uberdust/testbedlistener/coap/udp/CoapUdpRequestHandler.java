@@ -68,7 +68,8 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         if (nodeUrn.contains("0x")) {
             nodeUrn = nodeUrn.substring(nodeUrn.indexOf("0x") + 2);
 
-            CoapServer.getInstance().addRequest(nodeUrn, coapRequest, packet.getSocketAddress());
+            boolean hasQuery = coapRequest.hasOption(OptionNumberRegistry.URI_QUERY);
+            CoapServer.getInstance().addRequest(nodeUrn, coapRequest, packet.getSocketAddress(), hasQuery);
             CoapServer.getInstance().sendRequest(data,nodeUrn);
 
         } else {
