@@ -9,7 +9,6 @@ import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.ActiveRequest;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
-import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 
@@ -155,30 +154,8 @@ public class CoapMessageParser implements Runnable {
                     CoapServer.getInstance().addRequest(address, request, null);
 
 
-                    byte[] toSend = request.toByteArray();
-                    int len = toSend.length;
-                    int[] bytes = new int[len + 1];
-                    bytes[0] = 51;
-                    for (int k = 0; k < len; k++) {
-                        short read = (short) ((short) toSend[k] & 0xff);
-                        bytes[k + 1] = read;
-                    }
+                    CoapServer.getInstance().sendRequest(request.toByteArray(), address);
 
-                    StringBuilder messageINFO = new StringBuilder("Requesting:");
-                    for (int k = 0; k < len; k++) {
-                        messageINFO.append(bytes[k]).append("|");
-                    }
-
-                    LOGGER.info(messageINFO.toString());
-                    String destination = "472";
-                    final int[] macAddress = Converter.AddressToInteger(destination);
-                    final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
-                    try {
-                        LOGGER.info("sending to device");
-                        XBeeRadio.getInstance().send(address16, 112, bytes);
-                    } catch (Exception e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                    }
                 }
                 return;
             } else {

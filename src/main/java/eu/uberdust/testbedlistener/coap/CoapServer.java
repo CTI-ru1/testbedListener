@@ -2,7 +2,10 @@ package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import com.rapplogic.xbee.api.XBeeAddress16;
+import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
+import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -168,5 +171,32 @@ public class CoapServer {
      */
     public static void main(final String[] args) {
         CoapServer.getInstance();
+    }
+
+    public void sendRequest(final byte[] data, final String nodeUrn) {
+        final int[] bytes = new int[data.length + 1];
+        bytes[0] = 51;
+        for (int i = 0; i < data.length; i++) {
+            short read = (short) ((short) data[i] & 0xff);
+            bytes[i + 1] = read;
+        }
+
+        final StringBuilder messageBinary = new StringBuilder("Requesting[Bytes]:");
+        for (int i = 0; i < data.length + 1; i++) {
+            messageBinary.append(bytes[i]).append("|");
+        }
+        LOGGER.info(messageBinary.toString());
+
+        final int[] macAddress = Converter.AddressToInteger(nodeUrn);
+
+        final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
+
+        try {
+            LOGGER.info("sending to device");
+            XBeeRadio.getInstance().send(address16, 112, bytes);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
     }
 }

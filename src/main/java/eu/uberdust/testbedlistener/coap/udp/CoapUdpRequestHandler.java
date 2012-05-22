@@ -3,10 +3,7 @@ package eu.uberdust.testbedlistener.coap.udp;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
-import com.rapplogic.xbee.api.XBeeAddress16;
-import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;
@@ -71,30 +68,9 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         if (nodeUrn.contains("0x")) {
             nodeUrn = nodeUrn.substring(nodeUrn.indexOf("0x") + 2);
 
-            final int[] bytes = new int[len + 1];
-            bytes[0] = 51;
-            for (int i = 0; i < len; i++) {
-                short read = (short) ((short) data[i] & 0xff);
-                bytes[i + 1] = read;
-            }
-
-            final StringBuilder messageBinary = new StringBuilder("Requesting[Bytes]:");
-            for (int i = 0; i < len + 1; i++) {
-                messageBinary.append(bytes[i]).append("|");
-            }
-            LOGGER.info(messageBinary.toString());
-
-            final int[] macAddress = Converter.AddressToInteger(nodeUrn);
-
             CoapServer.getInstance().addRequest(nodeUrn, coapRequest, packet.getSocketAddress());
-            final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
+            CoapServer.getInstance().sendRequest(data,nodeUrn);
 
-            try {
-                LOGGER.info("sending to device");
-                XBeeRadio.getInstance().send(address16, 112, bytes);
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage(), e);
-            }
         } else {
             LOGGER.info("reply from uberdust! Device has no mac address");
 
