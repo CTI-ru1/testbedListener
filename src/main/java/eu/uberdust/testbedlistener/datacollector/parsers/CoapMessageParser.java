@@ -128,8 +128,7 @@ public class CoapMessageParser implements Runnable {
             Message response = Message.fromByteArray(byteArr);
 
             // SEND ACK
-            if (response.getType() == Message.messageType.CON)
-            {
+            if (response.getType() == Message.messageType.CON) {
                 Message ack = new Message(Message.messageType.ACK, 0);
                 ack.setMID(response.getMID());
                 CoapServer.getInstance().sendRequest(ack.toByteArray(), address);
@@ -168,7 +167,7 @@ public class CoapMessageParser implements Runnable {
                 return;
             } else {
                 LOGGER.info("activeRequests.matchResponse");
-                String uriPath = CoapServer.getInstance().matchResponse(response);
+                String uriPath = CoapServer.getInstance().matchResponse(address, response);
                 LOGGER.info(uriPath);
                 if (uriPath != null) {
                     LOGGER.info(response.getPayloadString());

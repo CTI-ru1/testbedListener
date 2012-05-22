@@ -115,7 +115,7 @@ public class CoapServer {
      * @param response The response received.
      * @return The URI of the request or null.
      */
-    public String matchResponse(final Message response) {
+    public String matchResponse(final String address, final Message response) {
         synchronized (CoapServer.class) {
             if (activeRequests.isEmpty()) {
                 LOGGER.info("no active request");
@@ -125,10 +125,24 @@ public class CoapServer {
             LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
             LOGGER.info(response.getOptionCount());
             for (ActiveRequest activeRequest : activeRequests) {
+                if (!activeRequest.getHost().equals(address))
+                    continue;
+                LOGGER.info(activeRequest.getToken() + "--" + response.getTokenString());
+                if (response.hasOption(OptionNumberRegistry.TOKEN)) {
+                    if (response.getTokenString().equals(activeRequest.getToken())) {
+                        LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
+                        respondToUDP(response, activeRequest);
+                        if (activeRequest.hasQuery()) {
+                            return null;
+                        } else {
+                            return activeRequest.getUriPath();
+                        }
+                    }
+                }
                 LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
                 if (response.getMID() == activeRequest.getMid()) {
                     String retVal = activeRequest.getUriPath();
-                    if ( activeRequest.hasQuery()) {
+                    if (activeRequest.hasQuery()) {
                         retVal = null;
                     }
                     LOGGER.info("Found By MID");
@@ -137,17 +151,7 @@ public class CoapServer {
 
                     return retVal;
                 }
-                LOGGER.info(activeRequest.getToken() + "--" + response.getTokenString());
-                if (response.getTokenString().equals(activeRequest.getToken())) {
-                    LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
-                    respondToUDP(response, activeRequest);
-                    if ( activeRequest.hasQuery()) {
-                        return null;
-                    }
-                    else {
-                        return activeRequest.getUriPath();
-                    }
-                }
+
             }
 
         }

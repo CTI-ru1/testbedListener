@@ -69,8 +69,9 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
             nodeUrn = nodeUrn.substring(nodeUrn.indexOf("0x") + 2);
 
             boolean hasQuery = coapRequest.hasOption(OptionNumberRegistry.URI_QUERY);
+            LOGGER.info(packet.getSocketAddress());
             CoapServer.getInstance().addRequest(nodeUrn, coapRequest, packet.getSocketAddress(), hasQuery);
-            CoapServer.getInstance().sendRequest(data,nodeUrn);
+            CoapServer.getInstance().sendRequest(data, nodeUrn);
 
         } else {
             LOGGER.info("reply from uberdust! Device has no mac address");
