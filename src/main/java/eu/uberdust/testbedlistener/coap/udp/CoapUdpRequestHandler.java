@@ -85,7 +85,8 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
             LOGGER.info(messageBinary.toString());
 
             final int[] macAddress = Converter.AddressToInteger(nodeUrn);
-            CoapServer.getInstance().addRequest(nodeUrn, coapRequest);
+
+            CoapServer.getInstance().addRequest(nodeUrn, coapRequest, packet.getSocketAddress());
             final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
 
             try {

@@ -150,7 +150,7 @@ public class CoapMessageParser implements Runnable {
                     request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
                     request.setToken(TokenManager.getInstance().acquireToken());
 
-                    CoapServer.getInstance().addRequest(address, request);
+                    CoapServer.getInstance().addRequest(address, request, null);
 
 
                     byte[] toSend = request.toByteArray();

@@ -2,6 +2,8 @@ package eu.uberdust.testbedlistener.coap;
 
 import org.apache.log4j.Logger;
 
+import java.net.SocketAddress;
+
 /**
  * Contains all information about an active request from a source.
  */
@@ -16,6 +18,7 @@ public class ActiveRequest {
     private transient final int mid;
     private transient final String token;
     private transient final String host;
+    private transient final SocketAddress socketAddress;
 
     public String getUriPath() {
         return uriPath;
@@ -33,11 +36,16 @@ public class ActiveRequest {
         return host;
     }
 
-    public ActiveRequest(final String uriPath, final int mid, final String token, final String host) {
+    public SocketAddress getSocketAddress() {
+        return socketAddress;
+    }
+
+    public ActiveRequest(final String uriPath, final int mid, final String token, final String host, SocketAddress socketAddress) {
         LOGGER.debug("new ActiveRequest");
         this.uriPath = uriPath;
         this.mid = mid;
         this.token = token;
         this.host = host;
+        this.socketAddress = socketAddress;
     }
 }

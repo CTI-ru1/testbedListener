@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,12 +96,13 @@ public class CoapServer {
     /**
      * Adds the request to the list of avctive requests.
      *
-     * @param address the address from which the request originated.
-     * @param request the request message.
+     * @param address       the address from which the request originated.
+     * @param request       the request message.
+     * @param socketAddress
      */
-    public void addRequest(final String address, final Message request) {
+    public void addRequest(final String address, final Message request, SocketAddress socketAddress) {
         synchronized (CoapServer.class) {
-            activeRequests.add(new ActiveRequest(request.getUriPath(), request.getMID(), request.getTokenString(), address));
+            activeRequests.add(new ActiveRequest(request.getUriPath(), request.getMID(), request.getTokenString(), address, socketAddress));
         }
     }
 
@@ -119,26 +121,38 @@ public class CoapServer {
             LOGGER.info(response.getPayloadString());
             LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
             LOGGER.info(response.getOptionCount());
-            if (response.getTokenString().isEmpty()) {
-                for (ActiveRequest activeRequest : activeRequests) {
-                    LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
-                    if (response.getMID() == activeRequest.getMid()) {
-                        final String retVal = activeRequest.getUriPath();
-                        activeRequests.remove(activeRequest);
-                        return retVal;
-                    }
+            for (ActiveRequest activeRequest : activeRequests) {
+                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
+                if (response.getMID() == activeRequest.getMid()) {
+                    final String retVal = activeRequest.getUriPath();
+                    LOGGER.info("Found By MID");
+                    respondToUDP(response, activeRequest);
+                    activeRequests.remove(activeRequest);
+
+                    return retVal;
                 }
-            } else {
-                for (ActiveRequest activeRequest : activeRequests) {
-                    LOGGER.info(activeRequest.getToken() + "--" + response.getTokenString());
-                    if (response.getTokenString().equals(activeRequest.getToken())) {
-                        LOGGER.info("found");
-                        return activeRequest.getUriPath();
-                    }
+                LOGGER.info(activeRequest.getToken() + "--" + response.getTokenString());
+                if (response.getTokenString().equals(activeRequest.getToken())) {
+                    LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
+                    respondToUDP(response, activeRequest);
+                    return activeRequest.getUriPath();
                 }
             }
+
         }
         return null;
+    }
+
+    private void respondToUDP(final Message response, final ActiveRequest activeRequest) {
+        if (activeRequest.getSocketAddress() != null) {
+            try {
+                response.setURI("/urn:pspace:0x472" + activeRequest.getUriPath());
+                LOGGER.info("Sending Response to: " + activeRequest.getSocketAddress());
+                socket.send(new DatagramPacket(response.toByteArray(), response.toByteArray().length, activeRequest.getSocketAddress()));
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
     }
 
     /**
