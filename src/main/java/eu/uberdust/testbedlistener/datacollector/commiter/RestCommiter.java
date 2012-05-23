@@ -58,18 +58,21 @@ public class RestCommiter {
      */
     public RestCommiter(final Message.LinkReadings.Reading linkReading) {
         final StringBuilder urlBuilder = new StringBuilder(TESTBED_SERVER);
-        /**
-         * TODO: Implementation is Missing.
-         */
-        LOGGER.fatal("Not Implemented...");
-//        throw new RuntimeException("Not Implemented...");
-/*
+        urlBuilder.append('/').append(PropertyReader.getInstance().getTestbedId())
+                .append("/link/").append(linkReading.getSource()).append('/').append(linkReading.getTarget())
+                .append("/capability/").append(linkReading.getCapability())
+                .append("/insert/timestamp/").append(linkReading.getTimestamp());
 
-        urlBuilder.append(linkReading.toRestString());
-        final String insertReadingUrl = urlBuilder.toString();
-        callUrl(insertReadingUrl);
-*/
-
+        if (linkReading.hasDoubleReading()) {
+            //uberdust.cti.gr/rest/testbed/1/node/urn:wisebed:ctitestbed:virtual:0.I.9/capability/light1/insert/timestamp/1/reading/1/
+            urlBuilder.append("/reading/").append(linkReading.getDoubleReading())
+                    .append("/");
+            callUrl(urlBuilder.toString());
+        } else if (linkReading.hasStringReading()) {
+            urlBuilder.append("/stringreading/").append(linkReading.getStringReading())
+                    .append("/");
+            callUrl(urlBuilder.toString());
+        }
     }
 
     /**
