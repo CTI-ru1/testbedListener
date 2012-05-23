@@ -220,7 +220,7 @@ public class CoapServer {
         }
         LOGGER.info(messageBinary.toString());
 
-        final int[] macAddress = Converter.AddressToInteger(nodeUrn);
+        final int[] macAddress = Converter.getInstance().addressToInteger(nodeUrn);
 
         final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
 

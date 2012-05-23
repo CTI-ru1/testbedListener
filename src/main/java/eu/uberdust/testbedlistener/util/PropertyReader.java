@@ -9,7 +9,7 @@ import java.util.Properties;
 /**
  * Reads Properties from a master property file and offers them to Applications.
  */
-public class PropertyReader {
+public final class PropertyReader {
     /**
      * Logger.
      */
@@ -22,16 +22,15 @@ public class PropertyReader {
     /**
      * The property file.
      */
-    final Properties properties;
+    final transient Properties properties;
     /**
      * The name of the property File.
      */
     private static final String PROPERTY_FILE = "testbedlistener.properties";
 
     private static final String TESTBED_PREFIX = "testbed.prefix";
-    private static final String TESTBED_CAPABILITIES_PREFIX = "testbed.capability.prefix";
+    private static final String CAPABILITIES_PREFIX = "testbed.capability.prefix";
     private static final String TESTBED_ID = "wisedb.testbedid";
-    private String testbedCapabilitiesPrefix;
 
     /**
      * Default Constructor.
@@ -54,9 +53,11 @@ public class PropertyReader {
      *
      * @return the unique Property Reader Instance.
      */
-    public synchronized static PropertyReader getInstance() {
-        if (instance == null) {
-            instance = new PropertyReader();
+    public static PropertyReader getInstance() {
+        synchronized (PropertyReader.class) {
+            if (instance == null) {
+                instance = new PropertyReader();
+            }
         }
         return instance;
     }
@@ -76,7 +77,7 @@ public class PropertyReader {
     }
 
     public String getTestbedCapabilitiesPrefix() {
-        return properties.get(TESTBED_CAPABILITIES_PREFIX).toString();
+        return properties.get(CAPABILITIES_PREFIX).toString();
     }
 
     public int getTestbedId() {

@@ -6,7 +6,6 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
-import eu.uberdust.testbedlistener.coap.ActiveRequest;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
@@ -34,34 +33,23 @@ public class CoapMessageParser implements Runnable {
     /**
      * Testbed Capability prefix.
      */
-    private final String capabilityPrefix;
-
-    /**
-     * Index of capability.
-     */
-    private final static int INDEX = 7;
+    private transient final String capabilityPrefix;
 
     /**
      * The testbed prefix.
      */
-    private final String testbedPrefix;
-
-    /**
-     * The testbed id.
-     */
-    private final int testbedId;
+    private transient final String testbedPrefix;
 
     /**
      * The Mac Address of the remote node.
      */
-    private final XBeeAddress16 remoteAddress;
+    private transient final XBeeAddress16 remoteAddress;
 
     /**
      * The payload of the received message.
      */
-    private final int[] payload;
-    private Random mid;
-    private ActiveRequest activeRequests;
+    private transient final int[] payload;
+    private transient final Random mid;
 
     /**
      * Default Constructor.
@@ -71,11 +59,10 @@ public class CoapMessageParser implements Runnable {
      */
     public CoapMessageParser(final XBeeAddress16 address, final int[] payload) {
 
-        this.payload = payload;
+        this.payload = payload.clone();
         remoteAddress = address;
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.capabilityPrefix = PropertyReader.getInstance().getTestbedCapabilitiesPrefix();
-        this.testbedId = PropertyReader.getInstance().getTestbedId();
         mid = new Random();
     }
 
@@ -94,9 +81,9 @@ public class CoapMessageParser implements Runnable {
         final String address = Integer.toHexString(remoteAddress.getAddress()[0]) + Integer.toHexString(remoteAddress.getAddress()[1]);
 
         LOGGER.info("RECEIVED FROM " + address);
-        if (!address.equals("472")) return;
+
         LOGGER.info("from " + address + " with " + payload[0] + " Length is: " + payload.length + "@ " + new Date(System.currentTimeMillis()));
-        StringBuilder stringBuilder = new StringBuilder("contents:");
+        final StringBuilder stringBuilder = new StringBuilder("contents:");
         for (int i : payload) {
             stringBuilder.append(Integer.toHexString(i)).append("|");
         }
@@ -115,8 +102,8 @@ public class CoapMessageParser implements Runnable {
             try {
                 LOGGER.info("Sending to arduino");
                 XBeeRadio.getInstance().send(remoteAddress, 112, mpayload);
-            } catch (Exception e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            } catch (Exception e) {     //NOPMD
+                LOGGER.error(e.getMessage(), e);
             }
 //            }
         } else if (payload[0] == 51) // coap message
@@ -129,29 +116,29 @@ public class CoapMessageParser implements Runnable {
 
             // SEND ACK
             if (response.getType() == Message.messageType.CON) {
-                Message ack = new Message(Message.messageType.ACK, 0);
+                final Message ack = new Message(Message.messageType.ACK, 0);
                 ack.setMID(response.getMID());
                 CoapServer.getInstance().sendRequest(ack.toByteArray(), address);
             } // END OF SEND ACK
 
             if (payload[3] == 0 && payload[4] == 0) {  //getting .well-known/core autoconfig phase
-                byte[] inPayload = response.getPayload();
-                StringBuilder message = new StringBuilder("Response:");
+                final byte[] inPayload = response.getPayload();
+                final StringBuilder message = new StringBuilder("Response:");
                 for (int i = 0; i < inPayload.length; i++) {
                     message.append((char) inPayload[i]);
 
                 }
                 LOGGER.info(message.toString());
-                String[] temp = message.toString().split("<");
+                final String[] temp = message.toString().split("<");
                 for (int i = 2; i < temp.length; i++) {
-                    String[] temp2 = temp[i].split(">");
+                    final String[] temp2 = temp[i].split(">");
                     URI uri = null;
                     try {
                         uri = new URI(new StringBuilder().append("/").append(temp2[0]).toString());
                     } catch (URISyntaxException e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        LOGGER.error(e.getLocalizedMessage(), e);
                     }
-                    Message request = new Message(Message.messageType.NON, METHOD_GET);
+                    final Message request = new Message(Message.messageType.NON, METHOD_GET);
                     request.setMID(mid.nextInt() % 65535);
                     List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
                     request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
@@ -167,7 +154,7 @@ public class CoapMessageParser implements Runnable {
                 return;
             } else {
                 LOGGER.info("activeRequests.matchResponse");
-                String uriPath = CoapServer.getInstance().matchResponse(address, response);
+                final String uriPath = CoapServer.getInstance().matchResponse(address, response);
                 LOGGER.info(uriPath);
                 if (uriPath != null) {
                     LOGGER.info(response.getPayloadString());
@@ -178,7 +165,7 @@ public class CoapMessageParser implements Runnable {
                     } catch (final NumberFormatException e) {
                         LOGGER.error(e);
                         LOGGER.info(address);
-                        commitNodeReading("0x" + address, uriPath.substring(uriPath.lastIndexOf("/") + 1), response.getPayloadString());
+                        commitNodeReading("0x" + address, uriPath.substring(uriPath.lastIndexOf('/') + 1), response.getPayloadString());
                         return;
                     }
                     commitNodeReading(address, uriPath, capabilityValue);
@@ -209,7 +196,7 @@ public class CoapMessageParser implements Runnable {
         final String nodeUrn = testbedPrefix + nodeId;
         final String capabilityName = (capabilityPrefix + capability).toLowerCase(Locale.US);
 
-        eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
+        final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
                 .setNode(nodeUrn)
                 .setCapability(capabilityName)
                 .setTimestamp(System.currentTimeMillis())

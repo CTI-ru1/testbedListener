@@ -124,7 +124,7 @@ public final class TestbedController implements Observer {
 
         final String macAddress = destination.
                 substring(destination.indexOf("0x") + 2);
-        final byte[] macBytes = Converter.AddressToByte(macAddress);
+        final byte[] macBytes = Converter.getInstance().addressToByte(macAddress);
         LOGGER.info(payloadIn);
         final String[] strPayload = payloadIn.split(",");
         final byte[] payload = new byte[strPayload.length];

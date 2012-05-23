@@ -78,7 +78,7 @@ public final class XbeeController implements Observer {
             destination = tDestination;
         }
 
-        final int[] macAddress = Converter.AddressToInteger(destination);
+        final int[] macAddress = Converter.getInstance().addressToInteger(destination);
         final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
         final String[] dataString = payloadIn.split(",");
         LOGGER.info("here");

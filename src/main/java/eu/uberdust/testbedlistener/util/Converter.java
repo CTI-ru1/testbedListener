@@ -8,7 +8,18 @@ package eu.uberdust.testbedlistener.util;
  * To change this template use File | Settings | File Templates.
  */
 public class Converter {
-    public static int[] AddressToInteger(final String address) {
+    private static Converter instance = null;
+
+    public static Converter getInstance() {
+        synchronized (Converter.class) {
+            if (instance == null) {
+                instance = new Converter();
+            }
+        }
+        return instance;
+    }
+
+    public int[] addressToInteger(final String address) {
         final int[] macAddress = new int[2];
         if (address.length() == 4) {
             macAddress[0] = Integer.valueOf(address.substring(0, 2), 16);
@@ -20,7 +31,7 @@ public class Converter {
         return macAddress;
     }
 
-    public static byte[] AddressToByte(final String address) {
+    public byte[] addressToByte(final String address) {
         final byte[] macAddress = new byte[2];
         if (address.length() == 4) {
             macAddress[0] = Integer.valueOf(address.substring(0, 2), 16).byteValue();
