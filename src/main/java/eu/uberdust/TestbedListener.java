@@ -33,6 +33,10 @@ public class TestbedListener {
      * Testbed Runtime backend identifier.
      */
     private static final String TESTBED_RUNTIME = "tr";
+
+    /**
+     * Coap backend identifier.
+     */
     private static final String COAP = "coap";
 
     /**

@@ -45,13 +45,13 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
 
         //set URI_PATH
         final String uriPath = updRequest.getUriPath();
-        String nodeUrn = uriPath.substring(1, uriPath.indexOf("/", 1));
-        String newUri = uriPath.substring(uriPath.indexOf("/", 1));
-        List<Option> uriPatha = Option.split(OptionNumberRegistry.URI_PATH, newUri, "/");
+        String nodeUrn = uriPath.substring(1, uriPath.indexOf('/', 1));
+        final String newUri = uriPath.substring(uriPath.indexOf('/', 1));
+        final List<Option> uriPatha = Option.split(OptionNumberRegistry.URI_PATH, newUri, "/");
         coapRequest.setOptions(OptionNumberRegistry.URI_PATH, uriPatha);
 
         //SET URI_QUERY
-        List<Option> uriPathb = Option.split(OptionNumberRegistry.URI_QUERY, updRequest.getQuery(), "&");
+        final List<Option> uriPathb = Option.split(OptionNumberRegistry.URI_QUERY, updRequest.getQuery(), "&");
         coapRequest.setOptions(OptionNumberRegistry.URI_QUERY, uriPathb);
 
         LOGGER.info("UDP uriPath: " + updRequest.getUriPath());
@@ -64,11 +64,10 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         //= packet.getData();
         //len = packet.getLength();
         final byte[] data = coapRequest.toByteArray();
-        int len = data.length;
         if (nodeUrn.contains("0x")) {
             nodeUrn = nodeUrn.substring(nodeUrn.indexOf("0x") + 2);
 
-            boolean hasQuery = coapRequest.hasOption(OptionNumberRegistry.URI_QUERY);
+            final boolean hasQuery = coapRequest.hasOption(OptionNumberRegistry.URI_QUERY);
             LOGGER.info(packet.getSocketAddress());
             CoapServer.getInstance().addRequest(nodeUrn, coapRequest, packet.getSocketAddress(), hasQuery);
             CoapServer.getInstance().sendRequest(data, nodeUrn);
@@ -76,16 +75,11 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         } else {
             LOGGER.info("reply from uberdust! Device has no mac address");
 
-            Message message = new Message();
+            final Message message = new Message();
             message.setPayload("urn:node:capability:card");
             message.setURI(nodeUrn);
 
-            byte[] buf = message.toByteArray();
-            DatagramPacket replyPacket = new DatagramPacket(buf, buf.length);
-            replyPacket.setData(buf);
-            replyPacket.setSocketAddress(packet.getSocketAddress());
-
-            CoapServer.getInstance().sendReply(replyPacket);
+            CoapServer.getInstance().sendReply(message.toByteArray(), packet.getSocketAddress());
         }
     }
 

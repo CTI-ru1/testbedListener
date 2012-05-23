@@ -42,8 +42,18 @@ public class UDPhandler extends Thread {//NOPMD
             } catch (IOException e) {
                 LOGGER.fatal(e.getMessage(), e);
             }
-            executorService.submit(new CoapUdpRequestHandler(packet));
+            processNewRequest(packet);
+
 
         }
+    }
+
+    /**
+     * Adds the new request to the executorService.
+     *
+     * @param packet the request as a UDP packet.
+     */
+    private void processNewRequest(final DatagramPacket packet) {
+        executorService.submit(new CoapUdpRequestHandler(packet));
     }
 }
