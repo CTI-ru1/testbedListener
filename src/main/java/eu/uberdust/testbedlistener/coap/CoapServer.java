@@ -123,7 +123,7 @@ public class CoapServer {
      * @param req      the req message.
      * @param sAddress the socket address of the sender if any
      */
-    public void addRequest(final String address, final Message req, final SocketAddress sAddress, boolean hasQuery) {
+    public void addRequest(final String address, final Message req, final SocketAddress sAddress, final boolean hasQuery) {
         synchronized (CoapServer.class) {
             activeRequests.add(new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, sAddress, hasQuery));
         }

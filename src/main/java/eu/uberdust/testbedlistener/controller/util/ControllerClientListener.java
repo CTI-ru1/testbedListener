@@ -32,17 +32,17 @@ public class ControllerClientListener implements ProtobufControllerClientListene
     }
 
     @Override
-    public void receive(@WebParam(name = "msg", targetNamespace = "") List<Message> messages) {
+    public void receive(@WebParam(name = "msg", targetNamespace = "") final List<Message> messages) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public void receiveNotification(@WebParam(name = "msg", targetNamespace = "") List<String> strings) {
+    public void receiveNotification(@WebParam(name = "msg", targetNamespace = "") final List<String> strings) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public void receiveStatus(@WebParam(name = "status", targetNamespace = "") List<RequestStatus> requestStatuses) {
+    public void receiveStatus(@WebParam(name = "status", targetNamespace = "") final List<RequestStatus> requestStatuses) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 }

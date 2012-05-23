@@ -1,6 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector.commiter;
 
 import eu.uberdust.communication.protobuf.Message;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -33,14 +34,21 @@ public class RestCommiter {
      */
     public RestCommiter(final Message.NodeReadings.Reading nodeReading) {
         final StringBuilder urlBuilder = new StringBuilder(TESTBED_SERVER);
-        /**
-         * TODO: Implementation is Missing.
-         */
-        LOGGER.fatal("Not Implemented...");
-        throw new RuntimeException("Not Implemented...");
-        /*urlBuilder.append(nodeReading.toRestString());
-        final String insertReadingUrl = urlBuilder.toString();
-        callUrl(insertReadingUrl);*/
+        urlBuilder.append('/').append(PropertyReader.getInstance().getTestbedId())
+                .append("/node/").append(nodeReading.getNode())
+                .append("/capability/").append(nodeReading.getCapability())
+                .append("/insert/timestamp/").append(nodeReading.getTimestamp());
+
+        if (nodeReading.hasDoubleReading()) {
+            //uberdust.cti.gr/rest/testbed/1/node/urn:wisebed:ctitestbed:virtual:0.I.9/capability/light1/insert/timestamp/1/reading/1/
+            urlBuilder.append("/reading/").append(nodeReading.getDoubleReading())
+                    .append("/");
+            callUrl(urlBuilder.toString());
+        } else if (nodeReading.hasStringReading()) {
+            urlBuilder.append("/stringreading/").append(nodeReading.getStringReading())
+                    .append("/");
+            callUrl(urlBuilder.toString());
+        }
     }
 
     /**
@@ -54,7 +62,7 @@ public class RestCommiter {
          * TODO: Implementation is Missing.
          */
         LOGGER.fatal("Not Implemented...");
-        throw new RuntimeException("Not Implemented...");
+//        throw new RuntimeException("Not Implemented...");
 /*
 
         urlBuilder.append(linkReading.toRestString());
@@ -69,6 +77,7 @@ public class RestCommiter {
      *
      * @param urlString the string url that describes the event
      */
+
     private void callUrl(final String urlString) {
         HttpURLConnection httpURLConnection = null;
 
