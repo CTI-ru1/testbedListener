@@ -97,15 +97,35 @@ public class CoapServer {
     }
 
     /**
-     * Adds the request to the list of avctive requests.
+     * Sends a reply to a packet using the socket.
      *
-     * @param address       the address from which the request originated.
-     * @param request       the request message.
-     * @param socketAddress
+     * @param buf           the bytes to send as a reply
+     * @param socketAddress the address of the udp client
      */
-    public void addRequest(final String address, final Message request, SocketAddress socketAddress, boolean hasQuery) {
+    public void sendReply(final byte[] buf, final SocketAddress socketAddress) {
+        final DatagramPacket replyPacket = new DatagramPacket(buf, buf.length);
+        replyPacket.setData(buf);
+        replyPacket.setSocketAddress(socketAddress);
+
         synchronized (CoapServer.class) {
-            activeRequests.add(new ActiveRequest(request.getUriPath(), request.getMID(), request.getTokenString(), address, socketAddress, hasQuery));
+            try {
+                socket.send(replyPacket);
+            } catch (IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Adds the req to the list of active requests.
+     *
+     * @param address  the address from which the req originated.
+     * @param req      the req message.
+     * @param sAddress the socket address of the sender if any
+     */
+    public void addRequest(final String address, final Message req, final SocketAddress sAddress, final boolean hasQuery) {
+        synchronized (CoapServer.class) {
+            activeRequests.add(new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, sAddress, hasQuery));
         }
     }
 
@@ -125,18 +145,18 @@ public class CoapServer {
             LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
             LOGGER.info(response.getOptionCount());
             for (ActiveRequest activeRequest : activeRequests) {
-                if (!activeRequest.getHost().equals(address))
+                if (!activeRequest.getHost().equals(address)) {
                     continue;
+                }
                 LOGGER.info(activeRequest.getToken() + "--" + response.getTokenString());
-                if (response.hasOption(OptionNumberRegistry.TOKEN)) {
-                    if (response.getTokenString().equals(activeRequest.getToken())) {
-                        LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
-                        respondToUDP(response, activeRequest);
-                        if (activeRequest.hasQuery()) {
-                            return null;
-                        } else {
-                            return activeRequest.getUriPath();
-                        }
+                if ((response.hasOption(OptionNumberRegistry.TOKEN))
+                        && (response.getTokenString().equals(activeRequest.getToken()))) {
+                    LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
+                    respondToUDP(response, activeRequest);
+                    if (activeRequest.hasQuery()) {
+                        return null;
+                    } else {
+                        return activeRequest.getUriPath();
                     }
                 }
                 LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
@@ -155,6 +175,7 @@ public class CoapServer {
             }
 
         }
+
         return null;
     }
 
@@ -171,7 +192,7 @@ public class CoapServer {
                 LOGGER.info("Sending Response to: " + activeRequest.getSocketAddress());
                 socket.send(new DatagramPacket(response.toByteArray(), response.toByteArray().length, activeRequest.getSocketAddress()));
             } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                LOGGER.error(e.getMessage(), e);
             }
         }
     }
@@ -189,7 +210,7 @@ public class CoapServer {
         final int[] bytes = new int[data.length + 1];
         bytes[0] = 51;
         for (int i = 0; i < data.length; i++) {
-            short read = (short) ((short) data[i] & 0xff);
+            final short read = (short) ((short) data[i] & 0xff);
             bytes[i + 1] = read;
         }
 
@@ -199,16 +220,18 @@ public class CoapServer {
         }
         LOGGER.info(messageBinary.toString());
 
-        final int[] macAddress = Converter.AddressToInteger(nodeUrn);
+        final int[] macAddress = Converter.getInstance().addressToInteger(nodeUrn);
 
         final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
 
+
+        LOGGER.info("sending to device");
         try {
-            LOGGER.info("sending to device");
             XBeeRadio.getInstance().send(address16, 112, bytes);
-        } catch (Exception e) {
+        } catch (Exception e) {//NOPMD
             LOGGER.error(e.getMessage(), e);
         }
+
 
     }
 }

@@ -248,7 +248,7 @@ public class XbeeMessageParser implements Runnable {
 
     public static void main(String[] args) {
         XBeeAddress16 xBeeAddress16 = new XBeeAddress16(new int[]{0x99, 0x79});
-        System.out.println("0x"
+        LOGGER.info("0x"
                 + Integer.toHexString(xBeeAddress16.getAddress()[0])
                 + Integer.toHexString(xBeeAddress16.getAddress()[1]));
     }
