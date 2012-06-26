@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<routings>
+    <route>
+        <source>0.I.1</source>
+        <destination>0x99c</destination>
+    </route>
+    <route>
+        <source>0.I.2</source>
+        <destination>0x2df</destination>
+    </route>
+    <route>
+        <source>0.I.3</source>
+        <destination>0x42f</destination>
+    </route>
+    <route>
+        <source>0.I.9</source>
+        <capability>urn:wisebed:node:capability:light</capability>
+        <destination>0x4ec</destination>
+    </route>
+    <route>
+        <source>0.I.9</source>
+        <capability>urn:wisebed:node:capability:aircondition</capability>
+        <destination>0x2b0</destination>
+    </route>
+    <route>
+        <source>0.I.11</source>
+        <destination>0x494</destination>
+    </route>
+
+</routings>
