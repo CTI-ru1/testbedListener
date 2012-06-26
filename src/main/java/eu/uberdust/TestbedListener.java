@@ -58,7 +58,10 @@ public class TestbedListener {
             CoapServer.getInstance();
         }
 
-        NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, Integer.parseInt(testbedId));
+        if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
+                PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
+            NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, Integer.parseInt(testbedId));
+        }
 
         if (backendType.equals(XBEE) || backendType.equals(COAP)) {
 
@@ -68,7 +71,11 @@ public class TestbedListener {
 
             if (usbPort.contains("/")) {
                 try {
+                    LOGGER.info("connected");
                     XBeeRadio.getInstance().open(usbPort, rate);
+                    XBeeRadio.getInstance().setChannel(12);
+                    LOGGER.info("Xbee Channel:" + XBeeRadio.getInstance().getChannel());
+                    Thread.sleep(5000);
                 } catch (final Exception e) {
                     LOGGER.fatal(e);
                 }
