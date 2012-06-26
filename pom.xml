@@ -225,6 +225,7 @@
         <testResources>
             <testResource>
                 <directory>src/test/resources/</directory>
+                <filtering>true</filtering>
             </testResource>
         </testResources>
         <plugins>
@@ -233,8 +234,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.10</version>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <!--<testSourceDirectory>${project.basedir}/src/test/java/eu/uberdust/testbedlistener/test/-->
+                    <!--</testSourceDirectory>-->
+                    <workingDirectory>${project.basedir}/src/test/resources</workingDirectory>
+                    <skipTests>false</skipTests>
                 </configuration>
+
             </plugin>
             <!--<plugin>-->
             <!--<groupId>org.apache.maven.plugins</groupId>-->
