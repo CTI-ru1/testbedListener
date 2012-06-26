@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<routings>
+    <route>
+        <source>node1</source>
+        <destination>0x1r1</destination>
+    </route>
+    <route>
+        <source>node2</source>
+        <destination>0x2r1</destination>
+    </route>
+    <route>
+        <source>node3</source>
+        <destination>0x3r1</destination>
+    </route>
+    <route>
+        <source>node4</source>
+        <capability>urn:node:capability:capability1</capability>
+        <destination>0x4r1</destination>
+    </route>
+    <route>
+        <source>node4</source>
+        <capability>urn:node:capability:othercapability</capability>
+        <destination>0x4r2</destination>
+    </route>
+    <route>
+        <source>node5</source>
+        <capability>urn:node:capability:othercapability</capability>
+        <destination>0x5r1</destination>
+    </route>
+
+</routings>
