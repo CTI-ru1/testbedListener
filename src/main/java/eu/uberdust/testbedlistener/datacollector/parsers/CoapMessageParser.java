@@ -1,20 +1,16 @@
 package eu.uberdust.testbedlistener.datacollector.parsers;
 
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.coap.TokenManager;
+import ch.ethz.inf.vs.californium.coap.Request;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
+import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
@@ -78,102 +74,97 @@ public class CoapMessageParser implements Runnable {
      */
     @Override
     public void run() {
+
         final String address = Integer.toHexString(remoteAddress.getAddress()[0]) + Integer.toHexString(remoteAddress.getAddress()[1]);
 
-        LOGGER.info("RECEIVED FROM " + address);
+        LOGGER.debug("from " + address + " with " + payload[0] + " Length is: " + payload.length + "@ " + new Date(System.currentTimeMillis()));
+        LOGGER.debug(Converter.getInstance().payloadToString(payload));
 
-        LOGGER.info("from " + address + " with " + payload[0] + " Length is: " + payload.length + "@ " + new Date(System.currentTimeMillis()));
-        final StringBuilder stringBuilder = new StringBuilder("contents:");
-        for (int i : payload) {
-            stringBuilder.append(Integer.toHexString(i)).append("|");
-        }
-        LOGGER.info(stringBuilder.toString());
+
         if (payload[0] == 1)   // check for broadcasting message
         {
-//            if (CoapServer.getInstance().registerEndpoint(address)) {
-            //Message request = new Message();
-            //request.setURI("/.well-known/core");
-            int[] mpayload = new int["33:52:01:00:00:9b:2e:77:65:6c:6c:2d:6b:6e:6f:77:6e:04:63:6f:72:65".split(":").length];
-            int i = 0;
-            for (String mbyte : "33:52:01:00:00:9b:2e:77:65:6c:6c:2d:6b:6e:6f:77:6e:04:63:6f:72:65".split(":")) {
-                mpayload[i] = Integer.parseInt(mbyte, 16);
-                i++;
-            }
+            LOGGER.debug("Broadcast Message from" + address);
+            Request request = new Request(METHOD_GET, false);
+            request.setURI("/.well-known/core");
+//            LOGGER.info(Converter.getInstance().payloadToString(request.toByteArray()));
             try {
+                int[] zpayloap = new int[1 + request.toByteArray().length];
+                zpayloap[0] = 51;
+                System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
                 LOGGER.info("Sending to arduino");
-                XBeeRadio.getInstance().send(remoteAddress, 112, mpayload);
+                LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
+                XBeeRadio.getInstance().send(remoteAddress, 112, zpayloap);
+//                CoapServer.getInstance().sendRequest(request.toByteArray(), address);
             } catch (Exception e) {     //NOPMD
                 LOGGER.error(e.getMessage(), e);
             }
 //            }
-        } else if (payload[0] == 51) // coap message
-        {
+        } else if (payload[0] == 51) {
+            // Coap messages start with 51
+
             byte byteArr[] = new byte[payload.length - 1];
             for (int i = 1; i < payload.length; i++) {
                 byteArr[i - 1] = (byte) payload[i];
             }
+
             Message response = Message.fromByteArray(byteArr);
 
-            // SEND ACK
+            // Send Ack if requested
             if (response.getType() == Message.messageType.CON) {
-                final Message ack = new Message(Message.messageType.ACK, 0);
-                ack.setMID(response.getMID());
-                CoapServer.getInstance().sendRequest(ack.toByteArray(), address);
-            } // END OF SEND ACK
-
+                CoapServer.getInstance().sendAck(response.getMID(), address);
+            }
+            //Process message
             if (payload[3] == 0 && payload[4] == 0) {  //getting .well-known/core autoconfig phase
+
                 final byte[] inPayload = response.getPayload();
-                final StringBuilder message = new StringBuilder("Response:");
+                final StringBuilder message = new StringBuilder("");
                 for (int i = 0; i < inPayload.length; i++) {
                     message.append((char) inPayload[i]);
 
                 }
                 LOGGER.info(message.toString());
-                final String[] temp = message.toString().split("<");
-                for (int i = 2; i < temp.length; i++) {
-                    final String[] temp2 = temp[i].split(">");
-                    URI uri = null;
-                    try {
-                        uri = new URI(new StringBuilder().append("/").append(temp2[0]).toString());
-                    } catch (URISyntaxException e) {
-                        LOGGER.error(e.getLocalizedMessage(), e);
+                String[] capabilities = Converter.extractCapabilities(message.toString());
+                LOGGER.info(capabilities.length);
+                for (String capability : capabilities) {
+                    LOGGER.info("cap:" + capability);
+                    reportToUberdustCapability(capability, address);
+                    if (capability.equals(".well-known/core")) {
+                        LOGGER.debug("skipping .well-known/core");
+                        continue;
+
                     }
-                    final Message request = new Message(Message.messageType.NON, METHOD_GET);
-                    request.setMID(mid.nextInt() % 65535);
-                    List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
-                    request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
-                    request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-                    request.setToken(TokenManager.getInstance().acquireToken());
-
-                    CoapServer.getInstance().addRequest(address, request, null, false);
-
-
-                    CoapServer.getInstance().sendRequest(request.toByteArray(), address);
-
+                    CoapServer.getInstance().registerForResource(capability, address);
                 }
-                return;
             } else {
                 LOGGER.info("activeRequests.matchResponse");
                 final String uriPath = CoapServer.getInstance().matchResponse(address, response);
-                LOGGER.info(uriPath);
-                if (uriPath != null) {
-                    LOGGER.info(response.getPayloadString());
+                sendToUberdust(uriPath, address, response);
 
-                    Double capabilityValue;
-                    try {
-                        capabilityValue = Double.valueOf(response.getPayloadString());
-                    } catch (final NumberFormatException e) {
-                        LOGGER.error(e);
-                        LOGGER.info(address);
-                        commitNodeReading("0x" + address, uriPath.substring(uriPath.lastIndexOf('/') + 1), response.getPayloadString());
-                        return;
-                    }
-                    commitNodeReading(address, uriPath, capabilityValue);
-                }
             }
-
         }
+    }
 
+    private void reportToUberdustCapability(String capability, String address) {
+        String myuripath = "report";
+        commitNodeReading("0x" + address, myuripath, capability);
+    }
+
+    private void sendToUberdust(final String uriPath, String address, final Message response) {
+        LOGGER.debug(uriPath);
+        if (uriPath != null) {
+            String myuripath = "";
+            myuripath = uriPath.replaceAll("/", ":");
+            if (':' == myuripath.charAt(0)) {
+                myuripath = myuripath.substring(1);
+            }
+            try {
+                Double capabilityValue = Double.valueOf(response.getPayloadString());
+                commitNodeReading(address, myuripath, capabilityValue);
+            } catch (final NumberFormatException e) {
+                commitNodeReading("0x" + address, myuripath, response.getPayloadString());
+                return;
+            }
+        }
     }
 
     private void commitNodeReading(final String nodeId, final String capability, final Double value) {

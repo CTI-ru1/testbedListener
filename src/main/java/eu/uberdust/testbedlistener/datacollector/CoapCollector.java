@@ -42,22 +42,16 @@ public class CoapCollector implements MessageListener {
     public CoapCollector() {
         PropertyConfigurator.configure(Thread.currentThread().getContextClassLoader().getResource("log4j.properties"));
 
-        final StringBuilder wsUrlBuilder = new StringBuilder(WS_URL_PREFIX);
-        wsUrlBuilder.append(PropertyReader.getInstance().getProperties().getProperty("uberdust.server"));
-        wsUrlBuilder.append(":");
-        wsUrlBuilder.append(PropertyReader.getInstance().getProperties().getProperty("uberdust.port"));
-        wsUrlBuilder.append(PropertyReader.getInstance().getProperties().getProperty("uberdust.basepath"));
-        wsUrlBuilder.append(WS_URL_SUFFIX);
-
-        final String ws_url = wsUrlBuilder.toString();
-
         executorService = Executors.newCachedThreadPool();
+        LOGGER.info("registering message listener to coap backend");
         XBeeRadio.getInstance().addMessageListener(112, this);
     }
 
     @Override
     public void receive(final RxResponse16 rxResponse16) {
-        executorService.submit(new CoapMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()));
+        final String address = Integer.toHexString(rxResponse16.getRemoteAddress().getAddress()[0]) + Integer.toHexString(rxResponse16.getRemoteAddress().getAddress()[1]);
+        if (address.equals("46e"))
+            executorService.submit(new CoapMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()));
     }
 
     public static void main(String[] args) {
@@ -73,4 +67,19 @@ public class CoapCollector implements MessageListener {
         new CoapCollector();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

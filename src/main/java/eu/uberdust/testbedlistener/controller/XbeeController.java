@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.controller;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.DeviceCommand;
+import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -97,7 +98,8 @@ public final class XbeeController implements Observer {
     }
 
     public static void main(final String[] args) {
-        TestbedController.getInstance();
+        NetworkManager.getInstance().start("192.168.1.5:8080/uberdust/", 2);
+        NetworkManager.getInstance().addObserver(XbeeController.getInstance());
 //        parseCustomRouting();
 
 

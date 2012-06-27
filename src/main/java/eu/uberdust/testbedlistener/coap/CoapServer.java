@@ -1,7 +1,9 @@
 package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.TokenManager;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
@@ -13,10 +15,15 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+
+import static ch.ethz.inf.vs.californium.coap.CodeRegistry.METHOD_GET;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,25 +33,48 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class CoapServer {
+    /**
+     * LOGGER.
+     */
     private static final Logger LOGGER = Logger.getLogger(CoapServer.class);
-
+    /**
+     * Singleton instance.
+     */
     private static CoapServer instance = null;
+    /**
+     * Registered Endpoints.
+     */
     private transient final Map<String, Integer> endpoints;
-    private transient final List<ActiveRequest> activeRequests;
+    /**
+     * Active Requests.
+     */
+    private transient final Map<String, List<ActiveRequest>> activeRequests;
+    /**
+     * COAP Server socket.
+     */
     private transient DatagramSocket socket;
+
+    /**
+     * Random number generator.
+     */
+    private transient final Random mid;
 
     /**
      * Constructor.
      */
     public CoapServer() {
         this.endpoints = new HashMap<String, Integer>();
-        this.activeRequests = new ArrayList<ActiveRequest>();
+        this.activeRequests = new HashMap<String, List<ActiveRequest>>();
+        mid = new Random();
+
+        //Start the udp socket
         try {
             socket = new DatagramSocket(5683);
         } catch (SocketException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
+        //Start the handler
         final UDPhandler thread = new UDPhandler(socket);
         thread.start();
         LOGGER.info("started CoapServer");
@@ -125,7 +155,10 @@ public class CoapServer {
      */
     public void addRequest(final String address, final Message req, final SocketAddress sAddress, final boolean hasQuery) {
         synchronized (CoapServer.class) {
-            activeRequests.add(new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, sAddress, hasQuery));
+            if (!activeRequests.containsKey(address)) {
+                activeRequests.put(address, new ArrayList<ActiveRequest>());
+            }
+            activeRequests.get(address).add(new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, sAddress, hasQuery));
         }
     }
 
@@ -135,20 +168,21 @@ public class CoapServer {
      * @param response The response received.
      * @return The URI of the request or null.
      */
+
     public String matchResponse(final String address, final Message response) {
         synchronized (CoapServer.class) {
             if (activeRequests.isEmpty()) {
                 LOGGER.info("no active request");
                 return null;
             }
-            LOGGER.info(response.getPayloadString());
-            LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
-            LOGGER.info(response.getOptionCount());
-            for (ActiveRequest activeRequest : activeRequests) {
-                if (!activeRequest.getHost().equals(address)) {
-                    continue;
-                }
-                LOGGER.info(activeRequest.getToken() + "--" + response.getTokenString());
+            LOGGER.debug(response.getPayloadString());
+            LOGGER.debug(response.hasOption(OptionNumberRegistry.TOKEN));
+            LOGGER.debug(response.getOptionCount());
+            if (!activeRequests.containsKey(address)) return null;
+            for (ActiveRequest activeRequest : activeRequests.get(address)) {
+
+                LOGGER.debug(activeRequest.getToken() + "--" + response.getTokenString());
+
                 if ((response.hasOption(OptionNumberRegistry.TOKEN))
                         && (response.getTokenString().equals(activeRequest.getToken()))) {
                     LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
@@ -171,9 +205,7 @@ public class CoapServer {
 
                     return retVal;
                 }
-
             }
-
         }
 
         return null;
@@ -206,6 +238,12 @@ public class CoapServer {
         CoapServer.getInstance();
     }
 
+    /**
+     * Sends a payload to a device and add the message id at the beggining of the message.
+     *
+     * @param data    the data to send.
+     * @param nodeUrn the destination device.
+     */
     public void sendRequest(final byte[] data, final String nodeUrn) {
         final int[] bytes = new int[data.length + 1];
         bytes[0] = 51;
@@ -233,5 +271,50 @@ public class CoapServer {
         }
 
 
+    }
+
+    /**
+     * Send a COAP ACK to a device containing a single mid.
+     *
+     * @param mid     the mid to ack.
+     * @param nodeUrn the destination device.
+     */
+    public void sendAck(final int mid, final String nodeUrn) {
+        final Message ack = new Message(Message.messageType.ACK, 0);
+        ack.setMID(mid);
+
+        final byte[] data = ack.toByteArray();
+        final int[] bytes = new int[data.length + 1];
+        bytes[0] = 51;
+        for (int i = 0; i < data.length; i++) {
+            final short read = (short) ((short) data[i] & 0xff);
+            bytes[i + 1] = read;
+        }
+        final int[] macAddress = Converter.getInstance().addressToInteger(nodeUrn);
+        final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
+        LOGGER.info("Sending Ack to " + nodeUrn);
+        try {
+            XBeeRadio.getInstance().send(address16, 112, bytes);
+        } catch (Exception e) {//NOPMD
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    public void registerForResource(final String capability, final String address) {
+        URI uri = null;
+        try {
+            uri = new URI(new StringBuilder().append("/").append(capability).toString());
+        } catch (URISyntaxException e) {
+            LOGGER.error(e.getLocalizedMessage(), e);
+        }
+        final Message request = new Message(Message.messageType.NON, METHOD_GET);
+        request.setMID(mid.nextInt() % 65535);
+        List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
+        request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
+        request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+        request.setToken(TokenManager.getInstance().acquireToken());
+
+        addRequest(address, request, null, false);
+        sendRequest(request.toByteArray(), address);
     }
 }

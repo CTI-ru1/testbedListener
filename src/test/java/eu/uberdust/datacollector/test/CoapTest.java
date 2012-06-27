@@ -19,49 +19,28 @@
 
 package eu.uberdust.datacollector.test;
 
+import ch.ethz.inf.vs.californium.coap.Request;
 import com.rapplogic.xbee.api.XBeeException;
-import com.rapplogic.xbee.api.wpan.RxResponse16;
-import eu.mksense.MessageListener;
-import eu.mksense.XBeeRadio;
+import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
+import static ch.ethz.inf.vs.californium.coap.CodeRegistry.METHOD_GET;
+
 public class CoapTest {
     private final static Logger LOGGER = Logger.getLogger(CoapTest.class);
-    private static final String PORT = "/dev/ttyUSB0";
-    private static final int RATE = 38400;
-    private static final int MPORT = 112;
-    private static final int CHANNEL = 12;
 
 
     public static void main(String[] args) throws XBeeException {
+        BasicConfigurator.configure();
 
-        try {
-            LOGGER.info("Opening...");
-            XBeeRadio.getInstance().open(PORT, RATE);
-            LOGGER.info("Connection Opened");
-            XBeeRadio.getInstance().setChannel(CHANNEL);
-            LOGGER.info("Channel: " + XBeeRadio.getInstance().getChannel());
-            LOGGER.info("Address: " + XBeeRadio.getInstance().getMyAddress());
-            LOGGER.info("XbeeAddress: " + XBeeRadio.getInstance().getMyXbeeAddress());
-            LOGGER.info("PID: " + XBeeRadio.getInstance().getPanId());
+        Request request = new Request(METHOD_GET, false);
+        request.setURI("/.well-known/core");
+        int[] payload = Converter.getInstance().ByteToInt(request.toByteArray());
 
-            XBeeRadio.getInstance().addMessageListener(MPORT, new TestMessageListener());
-        } catch (Exception e) {
-            LOGGER.error(e, e);
-        }
+        LOGGER.info(Converter.getInstance().payloadToString(payload));
+        LOGGER.info(Converter.getInstance().payloadToString(request.toByteArray()));
+
     }
 
-    private static class TestMessageListener implements MessageListener {
-        private final static Logger LOGGER = Logger.getLogger(TestMessageListener.class);
-
-        public TestMessageListener() {
-            BasicConfigurator.configure();
-        }
-
-        @Override
-        public void receive(RxResponse16 rxResponse16) {
-            LOGGER.info(rxResponse16);
-        }
-    }
 }

@@ -58,12 +58,14 @@ public class TestbedListener {
 
 
         if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(COAP))) {
+            LOGGER.info("Starting Coap Server");
             CoapServer.getInstance();
         }
 
         if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
                 PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
-            NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, Integer.parseInt(testbedId));
+            LOGGER.info("Connecting Network Manager");
+//            NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, Integer.parseInt(testbedId));
         }
 
         if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(XBEE))
@@ -75,10 +77,9 @@ public class TestbedListener {
 
             if (usbPort.contains("/")) {
                 try {
-                    LOGGER.info("connected");
                     XBeeRadio.getInstance().open(usbPort, rate);
                     XBeeRadio.getInstance().setChannel(12);
-                    LOGGER.info("Xbee Channel:" + XBeeRadio.getInstance().getChannel());
+                    LOGGER.info("Connected to XBee on " + usbPort + " at " + rate);
                     Thread.sleep(5000);
                 } catch (final Exception e) {
                     LOGGER.fatal(e);
@@ -100,8 +101,8 @@ public class TestbedListener {
                             LOGGER.info(address);
                             if ((address.getMsb() == xbeeMsb)
                                     && (address.getLsb() == xbeeLsb)) {
-                                LOGGER.info("connected");
                                 XBeeRadio.getInstance().open(xbeePort, rate);
+                                LOGGER.info("Connected to XBee on " + usbPort + " at " + rate);
                                 connected = true;
                                 break;
                             }
@@ -123,40 +124,44 @@ public class TestbedListener {
 
         //Awaits for commands from Uberdust.
         if (ENABLED.equals(PropertyReader.getInstance().getProperties().get("use.controller"))) {
+            LOGGER.info("Starting Controllers...");
             if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(TESTBED_RUNTIME))) {
-
-                LOGGER.info("starting TestbedController");
+                LOGGER.info("TestbedController");
                 NetworkManager.getInstance().addObserver(TestbedController.getInstance());
             }
             if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(XBEE))) {
+                LOGGER.info("XbeeController");
                 NetworkManager.getInstance().addObserver(XbeeController.getInstance());
             }
             if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(COAP))) {
-//                    NetworkManager.getInstance().addObserver(CoapController.getInstance());
+                //LOGGER.info("CoapController");
+                //NetworkManager.getInstance().addObserver(CoapController.getInstance());
             }
         }
 
 
         //Flashes the testbed every some minutes to ensure that the testbed collector application is used.
         if (ENABLED.equals(PropertyReader.getInstance().getProperties().get("use.nodeflasher"))) {
+            LOGGER.info("Starting NodeFlasherController");
             if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(TESTBED_RUNTIME))) {
-                LOGGER.info("starting NodeFlasherController");
                 new NodeFlasherController();
             }
         }
 
         //Listens to new Messages from the TestbedRuntime
         if (ENABLED.equals(PropertyReader.getInstance().getProperties().get("use.datacollector"))) {
+            LOGGER.info("Starting Collectors...");
             if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(TESTBED_RUNTIME))) {
-                LOGGER.info("starting DataCollector");
+                LOGGER.info("DataCollector");
                 final Thread dataCollector = new Thread(new DataCollector());
                 dataCollector.start();
             }
             if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(XBEE))) {
-                LOGGER.info("Starting XbeeDataCollector");
+                LOGGER.info("XbeeCollector");
                 new XbeeCollector();
             }
             if (ENABLED.equals(PropertyReader.getInstance().getProperties().getProperty(COAP))) {
+                LOGGER.info("CoapController");
                 new CoapCollector();
             }
         }

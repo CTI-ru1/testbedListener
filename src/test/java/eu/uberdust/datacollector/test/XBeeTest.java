@@ -23,6 +23,7 @@ import com.rapplogic.xbee.api.XBeeException;
 import com.rapplogic.xbee.api.wpan.RxResponse16;
 import eu.mksense.MessageListener;
 import eu.mksense.XBeeRadio;
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 public class XBeeTest {
@@ -45,14 +46,22 @@ public class XBeeTest {
             LOGGER.info("XbeeAddress: " + XBeeRadio.getInstance().getMyXbeeAddress());
             LOGGER.info("PID: " + XBeeRadio.getInstance().getPanId());
 
-            XBeeRadio.getInstance().addMessageListener(MPORT, new MessageListener() {
-                @Override
-                public void receive(RxResponse16 rxResponse16) {
-                    LOGGER.info(rxResponse16);
-                }
-            });
+            XBeeRadio.getInstance().addMessageListener(MPORT, new TestMessageListener());
         } catch (Exception e) {
             LOGGER.error(e, e);
+        }
+    }
+
+    private static class TestMessageListener implements MessageListener {
+        private final static Logger LOGGER = Logger.getLogger(TestMessageListener.class);
+
+        public TestMessageListener() {
+            BasicConfigurator.configure();
+        }
+
+        @Override
+        public void receive(RxResponse16 rxResponse16) {
+            LOGGER.info(rxResponse16);
         }
     }
 }
