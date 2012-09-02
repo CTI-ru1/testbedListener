@@ -15,12 +15,12 @@ import java.util.concurrent.Executors;
 /**
  * Opens a connection to a TestbedRuntime server and received debug messages from all nodes to collect data.
  */
-public class DataCollector implements Runnable {
+public class TestbedRuntimeCollector implements Runnable {
 
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(DataCollector.class);
+    private static final Logger LOGGER = Logger.getLogger(TestbedRuntimeCollector.class);
 
     /**
      * testbed hostname.
@@ -41,7 +41,7 @@ public class DataCollector implements Runnable {
     /**
      * Default Constructor.
      */
-    public DataCollector() {
+    public TestbedRuntimeCollector() {
         PropertyConfigurator.configure(Thread.currentThread().getContextClassLoader().getResource("log4j.properties"));
         readProperties();
 
@@ -78,7 +78,7 @@ public class DataCollector implements Runnable {
         LOGGER.info(channel.getId());
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             LOGGER.error(e);
         }

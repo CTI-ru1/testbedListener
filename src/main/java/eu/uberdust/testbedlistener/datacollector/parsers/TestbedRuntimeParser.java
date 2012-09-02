@@ -11,7 +11,7 @@ import java.util.Locale;
 /**
  * Parses a message received and adds data to a wisedb database.
  */
-public class MessageParser implements Runnable { //NOPMD
+public class TestbedRuntimeParser implements Runnable { //NOPMD
 
     /**
      * LOGGER.
@@ -41,9 +41,12 @@ public class MessageParser implements Runnable { //NOPMD
     /**
      * @param msg the message received from the testbed
      */
-    public MessageParser(final String msg) {
-        strLine = msg.substring(msg.indexOf("binaryData:") + "binaryData:".length());
-
+    public TestbedRuntimeParser(final String msg) {
+        if (msg.indexOf("binaryData:") > 0) {
+            strLine = msg.substring(msg.indexOf("binaryData:") + "binaryData:".length());
+        } else {
+            strLine = "";
+        }
     }
 
 

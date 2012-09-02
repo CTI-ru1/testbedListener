@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.controller.util;
+package eu.uberdust.testbedlistener.util;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;

@@ -1,0 +1,30 @@
+#####################################
+## General Application Configuration
+## Switch to 1 to run
+use.datacollector=1
+use.controller=1
+
+#####################################
+##DataCollector Genera Configuration
+wisedb.testbedid=1
+uberdust.server=uberdust.cti.gr
+uberdust.port=80
+uberdust.basepath=/
+
+
+#####################################
+##Backend Type:
+## xbee, tr, coap, cmd
+backend.type=cmd
+
+
+
+#####################################
+##XBee Backend Configuration
+#XBEE mac address
+xbee.msb=6c
+xbee.lsb=c3
+#XBEE connection baudrate
+xbee.baudrate=
+#XBEE connection port
+xbee.port=

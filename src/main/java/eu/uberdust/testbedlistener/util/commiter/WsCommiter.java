@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.datacollector.commiter;
+package eu.uberdust.testbedlistener.util.commiter;
 
 import eu.uberdust.communication.protobuf.Message;
 import eu.uberdust.network.NetworkManager;

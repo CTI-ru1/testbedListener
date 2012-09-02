@@ -1,7 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import de.uniluebeck.itm.gtr.messaging.Messages;
+import de.uniluebeck.itm.tr.iwsn.overlay.messaging.Messages;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNApp;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNAppMessages;
 import eu.uberdust.testbedlistener.util.PropertyReader;
@@ -22,11 +22,11 @@ import java.util.Map;
  * Date: 12/1/11
  * Time: 5:04 PM
  */
-public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
+public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(DataCollectorChannelUpstreamHandler.class);
+    private static final Logger LOGGER = Logger.getLogger(TRChannelUpstreamHandler.class);
 
     /**
      * counts the messages received - stats.
@@ -51,31 +51,18 @@ public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHa
     /**
      * reference to the class that created the handler.
      */
-    private final transient DataCollector dataCollector;
+    private final transient TestbedRuntimeCollector testbedRuntimeCollector;
     private String testbedPrefix;
     private int testbedId;
 
     /**
-     * @param dataCollector a datacollector object
+     * @param testbedRuntimeCollector a datacollector object
      */
-    public DataCollectorChannelUpstreamHandler(final DataCollector dataCollector) {
-        this.dataCollector = dataCollector;
+    public TRChannelUpstreamHandler(final TestbedRuntimeCollector testbedRuntimeCollector) {
+        this.testbedRuntimeCollector = testbedRuntimeCollector;
         messageCounter = 0;
         lastTime = System.currentTimeMillis();
 
-
-        final String sensorNamesString = PropertyReader.getInstance().getProperties().getProperty("sensors.names");
-        final String sensorPrefixesString = PropertyReader.getInstance().getProperties().getProperty("sensors.prefixes");
-
-        final String[] sensorsNamesList = sensorNamesString.split(",");
-        final String[] sensorsPrefixesList = sensorPrefixesString.split(",");
-
-        final StringBuilder sensBuilder = new StringBuilder("Sensors Checked: \n");
-        for (int i = 0; i < sensorsNamesList.length; i++) {
-            sensBuilder.append(sensorsNamesList[i]).append("[").append(sensorsPrefixesList[i]).append("]").append("\n");
-            sensors.put(sensorsPrefixesList[i], sensorsNamesList[i]);
-        }
-        LOGGER.info(sensBuilder);
 
         testbedPrefix = PropertyReader.getInstance().getProperties().getProperty("testbed.prefix");
         LOGGER.info(testbedPrefix);
@@ -87,16 +74,18 @@ public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHa
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+        System.out.println("asdsad");
+        LOGGER.error(e.getCause());
         if (e instanceof ConnectException) {
             LOGGER.warn("ConnectException");
         }
     }
 
     @Override
-    public final void messageReceived(final ChannelHandlerContext ctx, final MessageEvent messageEvent)
+    public final void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e)
             throws InvalidProtocolBufferException {
-        LOGGER.debug("message received");
-        final Messages.Msg message = (Messages.Msg) messageEvent.getMessage();
+        LOGGER.info("message received");
+        Messages.Msg message = (Messages.Msg) e.getMessage();
         if (WSNApp.MSG_TYPE_LISTENER_MESSAGE.equals(message.getMsgType())) {
             final WSNAppMessages.Message wsnAppMessage = WSNAppMessages.Message.parseFrom(message.getPayload());
             parse(wsnAppMessage.toString());
@@ -152,7 +141,7 @@ public class DataCollectorChannelUpstreamHandler extends SimpleChannelUpstreamHa
      */
     private void shutdown() {
         LOGGER.error("Shutting down!!!");
-        dataCollector.restart();
+        testbedRuntimeCollector.restart();
     }
 
     /**
