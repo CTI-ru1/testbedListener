@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 /**
  * Opens a connection to the XBee and receives messages from all nodes to collect data.
  */
-public class XbeeCollector implements MessageListener {
+public class XbeeCollector extends AbstractCollector implements MessageListener {
 
     /**
      * Logger.

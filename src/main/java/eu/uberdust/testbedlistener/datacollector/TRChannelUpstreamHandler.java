@@ -84,7 +84,6 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
     @Override
     public final void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e)
             throws InvalidProtocolBufferException {
-        LOGGER.info("message received");
         Messages.Msg message = (Messages.Msg) e.getMessage();
         if (WSNApp.MSG_TYPE_LISTENER_MESSAGE.equals(message.getMsgType())) {
             final WSNAppMessages.Message wsnAppMessage = WSNAppMessages.Message.parseFrom(message.getPayload());

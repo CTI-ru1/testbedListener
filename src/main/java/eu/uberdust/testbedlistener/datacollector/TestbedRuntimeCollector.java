@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 /**
  * Opens a connection to a TestbedRuntime server and received debug messages from all nodes to collect data.
  */
-public class TestbedRuntimeCollector implements Runnable {
+public class TestbedRuntimeCollector extends AbstractCollector implements Runnable{
 
     /**
      * Logger.
@@ -61,7 +61,7 @@ public class TestbedRuntimeCollector implements Runnable {
     /**
      * Channel factory with custom channelPipeline to parse the received messages.
      */
-    private final transient DataCollectorPipelineFactory chPipelineFactory = new DataCollectorPipelineFactory(this);
+    private final transient TRPipelineFactory chPipelineFactory = new TRPipelineFactory(this);
 
 
     /**

@@ -8,7 +8,7 @@
     <groupId>uberdust</groupId>
     <artifactId>testbedlistener</artifactId>
     <packaging>jar</packaging>
-    <name>ÜberDust - Testbed Listener</name>
+    <name>ÜberDust - Listeners</name>
     <description>Application for collecting data from a sensor Testbed</description>
     <url>http://uberdust.cti.gr</url>
     <version>1.0</version>
@@ -62,8 +62,6 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-
-
     </repositories>
 
     <dependencies>
@@ -73,72 +71,16 @@
             <version>2.7</version>
         </dependency>
         <dependency>
-            <groupId>mksense</groupId>
-            <artifactId>XbeeLib</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.rxtx</groupId>
-            <artifactId>rxtx</artifactId>
-            <version>2.1.7</version>
-        </dependency>
-        <dependency>
             <groupId>uberdust</groupId>
             <artifactId>NetworkManager</artifactId>
             <version>1.0</version>
         </dependency>
+
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <version>1.2.16</version>
         </dependency>
-        <dependency>
-            <groupId>de.uniluebeck.itm</groupId>
-            <artifactId>tr.overlay</artifactId>
-            <version>0.7.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-jdk14</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>de.uniluebeck.itm</groupId>
-            <artifactId>tr.iwsn-deviceapp</artifactId>
-            <version>0.7.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-jdk14</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -168,16 +110,6 @@
             <version>3.2.4.Final</version>
         </dependency>
         <dependency>
-            <groupId>uberdust</groupId>
-            <artifactId>WebSocketsLibrary</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>de.uniluebeck.itm</groupId>
-            <artifactId>tr.scripting-client</artifactId>
-            <version>0.7.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.6.1</version>
@@ -198,14 +130,24 @@
             <version>1.6.1</version>
         </dependency>
         <dependency>
-            <groupId>quartz</groupId>
-            <artifactId>quartz</artifactId>
-            <version>2.0.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>2.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>de.uniluebeck.itm</groupId>
+            <artifactId>tr.iwsn-server</artifactId>
+            <version>0.8.4</version>
+        </dependency>
+        <dependency>
+            <groupId>de.uniluebeck.itm</groupId>
+            <artifactId>tr.scripting-client</artifactId>
+            <version>0.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>mksense</groupId>
+            <artifactId>XbeeLib</artifactId>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>californium</groupId>
@@ -214,11 +156,28 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/ExampleClient.jar</systemPath>
         </dependency>
+
     </dependencies>
+
+    <distributionManagement>
+        <!-- use the following if you're not using a snapshot version. -->
+        <repository>
+            <id>repository.ru1</id>
+            <name>Ru1 Repo</name>
+            <url>scp://ru1.cti.gr/srv/maven</url>
+        </repository>
+
+    </distributionManagement>
+
+
     <build>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>*properties*</exclude>
+                    <exclude>*xml*</exclude>
+                </excludes>
                 <filtering>true</filtering>
             </resource>
         </resources>
@@ -228,53 +187,43 @@
                 <filtering>true</filtering>
             </testResource>
         </testResources>
+
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.10</version>
                 <configuration>
-                    <!--<testSourceDirectory>${project.basedir}/src/test/java/eu/uberdust/testbedlistener/test/-->
-                    <!--</testSourceDirectory>-->
                     <workingDirectory>${project.basedir}/src/test/resources</workingDirectory>
                     <skipTests>false</skipTests>
                 </configuration>
-
             </plugin>
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-antrun-plugin</artifactId>-->
-            <!--<version>1.6</version>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<phase>deploy</phase>-->
-            <!--<configuration>-->
-            <!--<target>-->
-            <!--<scp file="${project.build.directory}/${artifactId}-${version}.one-jar.jar"-->
-            <!--todir="testbedruntime@gold.cti.gr:/home/testbedruntime/dataCollector"-->
-            <!--keyfile="${user.home}/.ssh/id_rsa"-->
-            <!--trust="true" verbose="true" port="22"-->
-            <!--passphrase=""/>-->
-            <!--</target>-->
-            <!--</configuration>-->
-            <!--<goals>-->
-            <!--<goal>run</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--<dependencies>-->
-            <!--<dependency>-->
-            <!--<groupId>org.apache.ant</groupId>-->
-            <!--<artifactId>ant-jsch</artifactId>-->
-            <!--<version>1.7.1</version>-->
-            <!--</dependency>-->
-            <!--<dependency>-->
-            <!--<groupId>com.jcraft</groupId>-->
-            <!--<artifactId>jsch</artifactId>-->
-            <!--<version>0.1.38</version>-->
-            <!--</dependency>-->
-            <!--</dependencies>-->
-            <!--</plugin>-->
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.3</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>assemblies/tr-listener-assembly.xml</descriptor>
+                        <descriptor>assemblies/cmd-listener-assembly.xml</descriptor>
+                        <descriptor>assemblies/xbee-listener-assembly.xml</descriptor>
+                        <descriptor>assemblies/coap-listener-assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>listener</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.dstovall</groupId>
@@ -283,14 +232,17 @@
                 <executions>
                     <execution>
                         <configuration>
-                            <mainClass>eu.uberdust.TestbedListener</mainClass>
+                            <mainClass>eu.uberdust.testbedlistener.Main</mainClass>
+                            <filename>testbed-listener.jar</filename>
                         </configuration>
                         <goals>
                             <goal>one-jar</goal>
                         </goals>
                     </execution>
+
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -302,16 +254,6 @@
         </plugins>
     </build>
 
-
-    <distributionManagement>
-        <!-- use the following if you're not using a snapshot version. -->
-        <repository>
-            <id>repository.ru1</id>
-            <name>Ru1 Repo</name>
-            <url>scp://ru1.cti.gr/srv/maven</url>
-        </repository>
-
-    </distributionManagement>
 
     <reporting>
         <plugins>
@@ -369,6 +311,13 @@
                     <!--<findbugsXmlOutput>true</findbugsXmlOutput>-->
                     <!-- Optional directory to put findbugs xml report -->
                     <findbugsXmlOutputDirectory>target/site</findbugsXmlOutputDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                <show>private</show>
                 </configuration>
             </plugin>
         </plugins>

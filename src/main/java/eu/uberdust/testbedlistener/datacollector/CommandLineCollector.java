@@ -1,20 +1,17 @@
 package eu.uberdust.testbedlistener.datacollector;
 
-import com.rapplogic.xbee.api.wpan.RxResponse16;
-import eu.mksense.MessageListener;
-import eu.mksense.XBeeRadio;
-import eu.uberdust.testbedlistener.datacollector.parsers.XbeeMessageParser;
-import eu.uberdust.testbedlistener.util.PropertyReader;
+import eu.uberdust.testbedlistener.datacollector.parsers.CommandLineParser;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
  * Opens a connection to the XBee and receives messages from all nodes to collect data.
  */
-public class CommandLineCollector implements MessageListener {
+public class CommandLineCollector extends AbstractCollector implements Runnable {
 
     /**
      * Logger.
@@ -22,66 +19,39 @@ public class CommandLineCollector implements MessageListener {
     private static final Logger LOGGER = Logger.getLogger(CommandLineCollector.class);
 
     /**
-     * WebSocket address prefix.
-     */
-    private static final String WS_URL_PREFIX = "ws://";
-
-    /**
-     * WebSocket address suffix.
-     */
-    private static final String WS_URL_SUFFIX = "insertreading.ws";
-
-
-    /**
-     * executors for handling incoming messages.
-     */
-    private final transient ExecutorService executorService;
-
-    private String testbedPrefix;
-    private int testbedId;
-    private String capabilityPrefix;
-
-
-    /**
      * Default Constructor.
      */
     public CommandLineCollector() {
         PropertyConfigurator.configure(Thread.currentThread().getContextClassLoader().getResource("log4j.properties"));
-
-        final StringBuilder wsUrlBuilder = new StringBuilder(WS_URL_PREFIX);
-        wsUrlBuilder.append(PropertyReader.getInstance().getProperties().getProperty("uberdust.server"));
-        wsUrlBuilder.append(":");
-        wsUrlBuilder.append(PropertyReader.getInstance().getProperties().getProperty("uberdust.port"));
-        wsUrlBuilder.append(PropertyReader.getInstance().getProperties().getProperty("uberdust.basepath"));
-        wsUrlBuilder.append(WS_URL_SUFFIX);
-
-        testbedPrefix = PropertyReader.getInstance().getProperties().getProperty("testbed.prefix");
-        capabilityPrefix = PropertyReader.getInstance().getProperties().getProperty("testbed.capability.prefix");
-        LOGGER.info(testbedPrefix);
-        testbedId = Integer.parseInt(PropertyReader.getInstance().getProperties().getProperty("wisedb.testbedid"));
-        LOGGER.info(testbedId);
-
-        executorService = Executors.newCachedThreadPool();
-        XBeeRadio.getInstance().addMessageListener(112, this);
     }
 
     @Override
-    public void receive(final RxResponse16 rxResponse16) {
-        executorService.submit(new XbeeMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()
-                , testbedPrefix, testbedId, capabilityPrefix));
-    }
+    public void run() {
+        //  prompt the user to enter their name
+        System.out.println("Enter a new reading: ");
 
-    public static void main(String[] args) {
-        final String xbeePort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
-        final Integer rate =
-                Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
-        try {
-            XBeeRadio.getInstance().open(xbeePort, rate);
-        } catch (final Exception e) {
-            LOGGER.error(e);
-            return;
+        //  open up standard input
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        String readingString = null;
+
+        //  read the username from the command-line; need to use try/catch with the
+        //  readLine() method
+        while (true) {
+            try {
+                LOGGER.info("waiting for input");
+                readingString = br.readLine();
+                if (readingString.equals("exit")) {
+                    System.exit(0);
+                }
+                CommandLineParser messageParser = new CommandLineParser(readingString);
+                messageParser.run();
+            } catch (IOException ioe) {
+                System.out.println("IO error trying to read your name!");
+                System.exit(1);
+            }
         }
-        new CommandLineCollector();
+
     }
 }
 

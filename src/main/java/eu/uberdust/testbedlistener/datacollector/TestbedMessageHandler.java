@@ -1,6 +1,6 @@
 package eu.uberdust.testbedlistener.datacollector;
 
-import eu.uberdust.testbedlistener.datacollector.parsers.MessageParser;
+import eu.uberdust.testbedlistener.datacollector.parsers.TestbedRuntimeParser;
 import org.apache.log4j.Logger;
 
 import java.util.concurrent.ExecutorService;
@@ -58,6 +58,6 @@ public class TestbedMessageHandler {
     }
 
     public void handle(final String toString) {
-        executorService.submit(new MessageParser(toString));
+        executorService.submit(new TestbedRuntimeParser(toString));
     }
 }

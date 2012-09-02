@@ -1,9 +1,8 @@
 package eu.uberdust.testbedlistener.datacollector.parsers;
 
 import eu.uberdust.communication.protobuf.Message;
-import eu.uberdust.testbedlistener.datacollector.DataCollector;
 import eu.uberdust.testbedlistener.datacollector.TestbedMessageHandler;
-import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
+import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
 import java.util.Locale;
@@ -11,12 +10,12 @@ import java.util.Locale;
 /**
  * Parses a message received and adds data to a wisedb database.
  */
-public class TestbedRuntimeParser implements Runnable { //NOPMD
+public class TestbedRuntimeParser extends AbstractMessageParser{ //NOPMD
 
     /**
      * LOGGER.
      */
-    private static final Logger LOGGER = Logger.getLogger(DataCollector.class);
+    private static final Logger LOGGER = Logger.getLogger(TestbedRuntimeParser.class);
 
     /**
      * Text line of the message received.
@@ -80,8 +79,6 @@ public class TestbedRuntimeParser implements Runnable { //NOPMD
      * Parses the message and creates the event to report.
      */
     public final void parse() {
-
-        LOGGER.debug(strLine);
 
         //get the node id
         final String nodeId = extractNodeId(strLine);

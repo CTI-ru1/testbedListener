@@ -1,7 +1,7 @@
 package eu.uberdust.testbedlistener.test;
 
 
-import eu.uberdust.testbedlistener.controller.util.RoutingTable;
+import eu.uberdust.testbedlistener.util.RoutingTable;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;

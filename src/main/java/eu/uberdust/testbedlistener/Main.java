@@ -7,20 +7,26 @@ import eu.uberdust.testbedlistener.factory.XbeeListenerFactory;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 
 /**
- * Created by IntelliJ IDEA.
- * User: amaxilatis
- * Date: 8/30/12
- * Time: 2:52 PM
- * To change this template use File | Settings | File Templates.
+ * Main class for the Testbedlistener application.
+ * Starts a new Listener.
+ *
+ * @see eu.uberdust.testbedlistener.factory.AbstractListenerFactory
  */
 public class Main {
     /**
+     * The porperty file to use.
+     */
+    private static final String PROPERTY_FILE = "listener.properties";
+
+    /**
      * Starts the application.
+     * Launches different listeners based on the type property provided.
      *
      * @param args not used.
+     * @see Main#PROPERTY_FILE
      */
     public static void main(final String[] args) {
-        PropertyReader.getInstance().setFile("listener.properties");
+        PropertyReader.getInstance().setFile(PROPERTY_FILE);
 
         final String type = PropertyReader.getInstance().getProperties().getProperty("type");
 

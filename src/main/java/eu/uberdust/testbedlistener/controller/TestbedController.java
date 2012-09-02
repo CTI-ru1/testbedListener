@@ -18,6 +18,7 @@ import org.apache.log4j.PropertyConfigurator;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
@@ -112,7 +113,11 @@ public final class TestbedController implements Observer {
         LOGGER.debug("Retrieved the following node URNs: {}" + nodeURNs);
 
         final ProtobufControllerClient pcc = ProtobufControllerClient.create(pccHost, pccPort, BeanShellHelper.parseSecretReservationKeys(secretReservationKeys));
-        pcc.connect();
+        try {
+            pcc.connect();
+        } catch (ConnectException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         //pcc.addListener(new ControllerClientListener());
 
     }

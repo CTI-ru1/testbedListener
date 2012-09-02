@@ -2,8 +2,7 @@ package eu.uberdust.testbedlistener.datacollector.parsers;
 
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.uberdust.communication.protobuf.Message;
-import eu.uberdust.testbedlistener.datacollector.DataCollector;
-import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
+import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
 import java.util.Locale;
@@ -11,12 +10,12 @@ import java.util.Locale;
 /**
  * Parses an XBee message received and adds data to a wisedb database.
  */
-public class XbeeMessageParser implements Runnable {
+public class XbeeMessageParser extends AbstractMessageParser {
 
     /**
      * LOGGER.
      */
-    private static final Logger LOGGER = Logger.getLogger(DataCollector.class);
+    private static final Logger LOGGER = Logger.getLogger(XbeeMessageParser.class);
 
     /**
      * Testbed Capability prefix.

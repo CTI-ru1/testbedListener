@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.util;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -26,7 +27,7 @@ public final class PropertyReader {
     /**
      * The name of the property File.
      */
-    private static final String PROPERTY_FILE = "testbedlistener.properties";
+    private static final String PROPERTY_FILE = "listener.properties";
 
     private static final String TESTBED_PREFIX = "testbed.prefix";
     private static final String CAPABILITIES_PREFIX = "testbed.capability.prefix";
@@ -39,13 +40,12 @@ public final class PropertyReader {
         PropertyConfigurator.configure(Thread.currentThread().getContextClassLoader().getResource("log4j.properties"));
 
         properties = new Properties();
-        try {
-            properties.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(PROPERTY_FILE));
-        } catch (IOException e) {
-            LOGGER.error("No properties file found! " + PROPERTY_FILE + " not found!");
-            return;
-        }
-        LOGGER.info("Loaded properties from file: " + PROPERTY_FILE);
+
+    }
+
+
+    public static void main(String[] args) {
+        new PropertyReader();
     }
 
     /**
@@ -68,7 +68,7 @@ public final class PropertyReader {
      * @return the Property File Object.
      */
     public Properties getProperties() {
-        LOGGER.debug("getProperties()");
+        LOGGER.trace("getProperties()");
         return properties;
     }
 
@@ -82,5 +82,16 @@ public final class PropertyReader {
 
     public int getTestbedId() {
         return Integer.valueOf(properties.get(TESTBED_ID).toString());
+    }
+
+    public void setFile(String propertyFile) {
+        try {
+            properties.load(new FileInputStream(propertyFile));
+        } catch (IOException e) {
+            e.printStackTrace();
+            LOGGER.error("No properties file found! " + propertyFile + " not found!");
+            return;
+        }
+        LOGGER.info("Loaded properties from file: " + propertyFile);
     }
 }

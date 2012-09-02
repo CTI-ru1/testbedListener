@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 /**
  * Opens a connection to the XBee and receives messages from all nodes to collect data.
  */
-public class CoapCollector implements MessageListener {
+public class CoapCollector extends AbstractCollector implements MessageListener {
 
     /**
      * Logger.
@@ -50,7 +50,8 @@ public class CoapCollector implements MessageListener {
     @Override
     public void receive(final RxResponse16 rxResponse16) {
         final String address = Integer.toHexString(rxResponse16.getRemoteAddress().getAddress()[0]) + Integer.toHexString(rxResponse16.getRemoteAddress().getAddress()[1]);
-        if (address.equals("46e"))
+        LOGGER.info(address);
+        if (address.equals("9a8"))
             executorService.submit(new CoapMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()));
     }
 

@@ -7,5 +7,5 @@ package eu.uberdust.testbedlistener.datacollector.parsers;
  * Time: 11:36 AM
  * To change this template use File | Settings | File Templates.
  */
-public class AbstractMessageParser {
+public abstract class AbstractMessageParser implements Runnable {
 }

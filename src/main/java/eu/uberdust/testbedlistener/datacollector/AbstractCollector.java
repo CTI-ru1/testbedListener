@@ -7,5 +7,5 @@ package eu.uberdust.testbedlistener.datacollector;
  * Time: 11:33 AM
  * To change this template use File | Settings | File Templates.
  */
-public class AbstractCollector {
+public abstract class AbstractCollector {
 }

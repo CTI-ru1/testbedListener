@@ -1,25 +1,21 @@
 package eu.uberdust.testbedlistener.datacollector.parsers;
 
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.Request;
 import com.rapplogic.xbee.api.XBeeAddress16;
-import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.datacollector.commiter.WsCommiter;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
+import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
 import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
 
-import static ch.ethz.inf.vs.californium.coap.CodeRegistry.METHOD_GET;
-
 /**
  * Parses an XBee message received and adds data to a wisedb database.
  */
-public class CoapMessageParser implements Runnable {
+public class CoapMessageParser extends AbstractMessageParser{
 
     /**
      * LOGGER.
@@ -83,22 +79,7 @@ public class CoapMessageParser implements Runnable {
 
         if (payload[0] == 1)   // check for broadcasting message
         {
-            LOGGER.debug("Broadcast Message from" + address);
-            Request request = new Request(METHOD_GET, false);
-            request.setURI("/.well-known/core");
-//            LOGGER.info(Converter.getInstance().payloadToString(request.toByteArray()));
-            try {
-                int[] zpayloap = new int[1 + request.toByteArray().length];
-                zpayloap[0] = 51;
-                System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
-                LOGGER.info("Sending to arduino");
-                LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
-                XBeeRadio.getInstance().send(remoteAddress, 112, zpayloap);
-//                CoapServer.getInstance().sendRequest(request.toByteArray(), address);
-            } catch (Exception e) {     //NOPMD
-                LOGGER.error(e.getMessage(), e);
-            }
-//            }
+
         } else if (payload[0] == 51) {
             // Coap messages start with 51
 
@@ -115,6 +96,12 @@ public class CoapMessageParser implements Runnable {
             }
             //Process message
             if (payload[3] == 0 && payload[4] == 0) {  //getting .well-known/core autoconfig phase
+
+                if (!CoapServer.getInstance().registerEndpoint(address)) {
+                    LOGGER.info("endpoint was already registered");
+                    return;
+                }
+
 
                 final byte[] inPayload = response.getPayload();
                 final StringBuilder message = new StringBuilder("");
@@ -133,9 +120,13 @@ public class CoapMessageParser implements Runnable {
                         continue;
 
                     }
-                    CoapServer.getInstance().registerForResource(capability, address);
+                    try {
+                        CoapServer.getInstance().registerForResource(capability, address);
+                    } catch (Exception e) {
+                    }
                 }
             } else {
+                CoapServer.getInstance().endpointIsAlive(address);
                 LOGGER.info("activeRequests.matchResponse");
                 final String uriPath = CoapServer.getInstance().matchResponse(address, response);
                 sendToUberdust(uriPath, address, response);

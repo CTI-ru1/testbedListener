@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.coap.udp;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import org.apache.log4j.Logger;
 
@@ -35,7 +36,13 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         final byte[] inData = cleanupData(packet.getData());
         final Message updRequest = Message.fromByteArray(inData);
 
-        final Message coapRequest = new Message(updRequest.getType(), updRequest.getCode());
+        Request coapRequest;
+        if (updRequest.getType().equals(Message.messageType.CON)) {
+
+            coapRequest = new Request(updRequest.getCode(), true);
+        } else {
+            coapRequest = new Request(updRequest.getCode(), false);
+        }
 
         //set MID
         coapRequest.setMID(updRequest.getMID());
@@ -47,6 +54,7 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         final String uriPath = updRequest.getUriPath();
         String nodeUrn = uriPath.substring(1, uriPath.indexOf('/', 1));
         final String newUri = uriPath.substring(uriPath.indexOf('/', 1));
+
         final List<Option> uriPatha = Option.split(OptionNumberRegistry.URI_PATH, newUri, "/");
         coapRequest.setOptions(OptionNumberRegistry.URI_PATH, uriPatha);
 

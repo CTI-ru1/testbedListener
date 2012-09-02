@@ -8,7 +8,7 @@ import eu.uberdust.testbedlistener.util.PropertyReader;
 /**
  * The testbed Listener Connects to Uberdust and Testbed Runtime to forward command and readings Both Ways.
  */
-public class CommandLineListenerFactory implements Runnable {
+public class CommandLineListenerFactory extends AbstractListenerFactory {
 
     /**
      * Logger.

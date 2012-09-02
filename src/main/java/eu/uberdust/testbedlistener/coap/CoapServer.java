@@ -1,13 +1,16 @@
 package eu.uberdust.testbedlistener.coap;
 
+import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
 import eu.uberdust.testbedlistener.util.Converter;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -22,8 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import static ch.ethz.inf.vs.californium.coap.CodeRegistry.METHOD_GET;
+import java.util.Timer;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,7 +46,7 @@ public class CoapServer {
     /**
      * Registered Endpoints.
      */
-    private transient final Map<String, Integer> endpoints;
+    private transient final Map<String, Long> endpoints;
     /**
      * Active Requests.
      */
@@ -58,14 +60,20 @@ public class CoapServer {
      * Random number generator.
      */
     private transient final Random mid;
+    private String testbedPrefix;
+    private static final long MILLIS_TO_STALE = 3 * 60 * 1000;
 
     /**
      * Constructor.
      */
     public CoapServer() {
-        this.endpoints = new HashMap<String, Integer>();
+        this.endpoints = new HashMap<String, Long>();
         this.activeRequests = new HashMap<String, List<ActiveRequest>>();
+        this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         mid = new Random();
+
+        Timer discoveryTimer = new Timer();
+        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
 
         //Start the udp socket
         try {
@@ -77,6 +85,7 @@ public class CoapServer {
         //Start the handler
         final UDPhandler thread = new UDPhandler(socket);
         thread.start();
+
         LOGGER.info("started CoapServer");
     }
 
@@ -101,12 +110,30 @@ public class CoapServer {
      * @return if the endoint existed in the server.
      */
     public boolean registerEndpoint(final String endpoint) {
+        LOGGER.info("registerEndpoint");
+
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(endpoint)) {
-                return false;
+                if (System.currentTimeMillis() - endpoints.get(endpoint) > MILLIS_TO_STALE) {
+                    endpoints.put(endpoint, System.currentTimeMillis());
+                    LOGGER.info("endpoint was stale");
+                    return true;
+                } else {
+                    return false;
+                }
             } else {
-                endpoints.put(endpoint, 1);
+                LOGGER.info("inserting endpoint");
+                endpoints.put(endpoint, System.currentTimeMillis());
                 return true;
+            }
+        }
+    }
+
+    public void endpointIsAlive(final String endpoint) {
+        LOGGER.info("endpointIsAlive");
+        synchronized (CoapServer.class) {
+            if (endpoints.containsKey(endpoint)) {
+                endpoints.put(endpoint, System.currentTimeMillis());
             }
         }
     }
@@ -116,6 +143,7 @@ public class CoapServer {
      *
      * @param replyPacket the packet to use to reply.
      */
+
     public void sendReply(final DatagramPacket replyPacket) {
         synchronized (CoapServer.class) {
             try {
@@ -186,7 +214,7 @@ public class CoapServer {
                 if ((response.hasOption(OptionNumberRegistry.TOKEN))
                         && (response.getTokenString().equals(activeRequest.getToken()))) {
                     LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
-                    respondToUDP(response, activeRequest);
+                    respondToUDP(response, activeRequest, address);
                     if (activeRequest.hasQuery()) {
                         return null;
                     } else {
@@ -200,8 +228,8 @@ public class CoapServer {
                         retVal = null;
                     }
                     LOGGER.info("Found By MID");
-                    respondToUDP(response, activeRequest);
-                    activeRequests.remove(activeRequest);
+                    respondToUDP(response, activeRequest, address);
+                    activeRequests.get(address).remove(activeRequest);
 
                     return retVal;
                 }
@@ -216,11 +244,13 @@ public class CoapServer {
      *
      * @param response      the response received.
      * @param activeRequest the request for the response.
+     * @param address
      */
-    private void respondToUDP(final Message response, final ActiveRequest activeRequest) {
+    private void respondToUDP(final Message response, final ActiveRequest activeRequest, String address) {
         if (activeRequest.getSocketAddress() != null) {
             try {
-                response.setURI("/urn:pspace:0x472" + activeRequest.getUriPath());
+                response.setURI("/" + testbedPrefix + address + activeRequest.getUriPath());
+                LOGGER.info("/" + testbedPrefix + address + activeRequest.getUriPath());
                 LOGGER.info("Sending Response to: " + activeRequest.getSocketAddress());
                 socket.send(new DatagramPacket(response.toByteArray(), response.toByteArray().length, activeRequest.getSocketAddress()));
             } catch (IOException e) {
@@ -239,7 +269,7 @@ public class CoapServer {
     }
 
     /**
-     * Sends a payload to a device and add the message id at the beggining of the message.
+     * Sends a payload to a device and add the message id at the beginning of the message.
      *
      * @param data    the data to send.
      * @param nodeUrn the destination device.
@@ -301,20 +331,24 @@ public class CoapServer {
     }
 
     public void registerForResource(final String capability, final String address) {
-        URI uri = null;
-        try {
-            uri = new URI(new StringBuilder().append("/").append(capability).toString());
-        } catch (URISyntaxException e) {
-            LOGGER.error(e.getLocalizedMessage(), e);
-        }
-        final Message request = new Message(Message.messageType.NON, METHOD_GET);
-        request.setMID(mid.nextInt() % 65535);
-        List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
-        request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
-        request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-        request.setToken(TokenManager.getInstance().acquireToken());
+        {
+            URI uri = null;
+            try {
+                uri = new URI(new StringBuilder().append("/").append(capability).toString());
+            } catch (URISyntaxException e) {
+                LOGGER.error(e.getLocalizedMessage(), e);
+            }
+            final Request request = new Request(CodeRegistry.METHOD_GET, false);
+            request.setMID(mid.nextInt() % 65535);
+            request.setURI(uri);
+//            List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
+//            request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
+            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+            request.setToken(TokenManager.getInstance().acquireToken());
 
-        addRequest(address, request, null, false);
-        sendRequest(request.toByteArray(), address);
+            addRequest(address, request, null, false);
+            sendRequest(request.toByteArray(), address);
+        }
+
     }
 }

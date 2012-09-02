@@ -7,5 +7,6 @@ package eu.uberdust.testbedlistener.factory;
  * Time: 11:15 AM
  * To change this template use File | Settings | File Templates.
  */
-public class AbstractListenerFactory {
+public abstract class AbstractListenerFactory implements Runnable {
+
 }
