@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.util;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -68,7 +69,7 @@ public final class PropertyReader {
      * @return the Property File Object.
      */
     public Properties getProperties() {
-        LOGGER.trace("getProperties()");
+        LOGGER.debug("getProperties()");
         return properties;
     }
 
