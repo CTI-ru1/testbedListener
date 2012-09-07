@@ -148,6 +148,8 @@
             <groupId>mksense</groupId>
             <artifactId>XbeeLib</artifactId>
             <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/XbeeLib-1.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>californium</groupId>
@@ -155,6 +157,11 @@
             <version>1.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/ExampleClient.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.9</version>
         </dependency>
 
     </dependencies>
