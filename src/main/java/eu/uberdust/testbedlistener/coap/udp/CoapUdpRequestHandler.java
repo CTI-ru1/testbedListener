@@ -5,6 +5,7 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;
@@ -36,6 +37,11 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         final byte[] inData = cleanupData(packet.getData());
         final Message updRequest = Message.fromByteArray(inData);
 
+        List<Option> udpOptions = updRequest.getOptions();
+        for (Option udpOption : udpOptions) {
+            LOGGER.info("udp-option: " + udpOption.getName());
+        }
+
         Request coapRequest;
         if (updRequest.getType().equals(Message.messageType.CON)) {
 
@@ -62,10 +68,25 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         final List<Option> uriPathb = Option.split(OptionNumberRegistry.URI_QUERY, updRequest.getQuery(), "&");
         coapRequest.setOptions(OptionNumberRegistry.URI_QUERY, uriPathb);
 
+        if (updRequest.hasOption(OptionNumberRegistry.BLOCK2)) {
+            coapRequest.setOption(updRequest.getOptions(OptionNumberRegistry.BLOCK2).get(0));
+            byte[] bytes = updRequest.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
+            int[] ints = Converter.getInstance().ByteToInt(bytes);
+            for (int anInt : ints) {
+                LOGGER.info("-" + anInt);
+            }
+        }
+
         LOGGER.info("UDP uriPath: " + updRequest.getUriPath());
         LOGGER.info("UDP uriQuery: " + updRequest.getQuery());
         LOGGER.info("COAP uriPath: " + coapRequest.getUriPath());
         LOGGER.info("COAP uriQuery: " + coapRequest.getQuery());
+
+        List<Option> options = coapRequest.getOptions();
+        for (Option option : options) {
+            LOGGER.info("hasOption: " + option.getName());
+        }
+
 
         LOGGER.info("NodeUrn: " + nodeUrn);
 
