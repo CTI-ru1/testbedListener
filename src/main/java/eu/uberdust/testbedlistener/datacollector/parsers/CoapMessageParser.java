@@ -15,7 +15,7 @@ import java.util.Random;
 /**
  * Parses an XBee message received and adds data to a wisedb database.
  */
-public class CoapMessageParser extends AbstractMessageParser{
+public class CoapMessageParser extends AbstractMessageParser {
 
     /**
      * LOGGER.
@@ -74,13 +74,13 @@ public class CoapMessageParser extends AbstractMessageParser{
         final String address = Integer.toHexString(remoteAddress.getAddress()[0]) + Integer.toHexString(remoteAddress.getAddress()[1]);
 
         LOGGER.debug("from " + address + " with " + payload[0] + " Length is: " + payload.length + "@ " + new Date(System.currentTimeMillis()));
-        LOGGER.debug(Converter.getInstance().payloadToString(payload));
 
 
         if (payload[0] == 1)   // check for broadcasting message
         {
 
         } else if (payload[0] == 51) {
+            LOGGER.info(Converter.getInstance().payloadToString(payload));
             // Coap messages start with 51
 
             byte byteArr[] = new byte[payload.length - 1];
@@ -116,11 +116,12 @@ public class CoapMessageParser extends AbstractMessageParser{
                     LOGGER.info("cap:" + capability);
                     reportToUberdustCapability(capability, address);
                     if (capability.equals(".well-known/core")) {
-                        LOGGER.debug("skipping .well-known/core");
+                        LOGGER.info("skipping .well-known/core");
                         continue;
 
                     }
                     try {
+                        Thread.sleep(300);
                         CoapServer.getInstance().registerForResource(capability, address);
                     } catch (Exception e) {
                     }
@@ -150,7 +151,7 @@ public class CoapMessageParser extends AbstractMessageParser{
             }
             try {
                 Double capabilityValue = Double.valueOf(response.getPayloadString());
-                commitNodeReading(address, myuripath, capabilityValue);
+                commitNodeReading("0x" + address, myuripath, capabilityValue);
             } catch (final NumberFormatException e) {
                 commitNodeReading("0x" + address, myuripath, response.getPayloadString());
                 return;
