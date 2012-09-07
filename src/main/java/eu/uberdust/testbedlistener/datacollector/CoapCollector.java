@@ -1,5 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector;
 
+import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import com.rapplogic.xbee.api.wpan.RxResponse16;
 import eu.mksense.MessageListener;
 import eu.mksense.XBeeRadio;
@@ -49,10 +51,23 @@ public class CoapCollector extends AbstractCollector implements MessageListener 
 
     @Override
     public void receive(final RxResponse16 rxResponse16) {
-        final String address = Integer.toHexString(rxResponse16.getRemoteAddress().getAddress()[0]) + Integer.toHexString(rxResponse16.getRemoteAddress().getAddress()[1]);
-        LOGGER.info(address);
-        if (address.equals("9a8"))
+//        final String address = Integer.toHexString(rxResponse16.getRemoteAddress().getAddress()[0]) + Integer.toHexString(rxResponse16.getRemoteAddress().getAddress()[1]);
+//        LOGGER.info(address);
+//        if (address.equals("9a8"))
+        try {
+            byte byteArr[] = new byte[rxResponse16.getData().length - 1];
+            for (int i = 1; i < rxResponse16.getData().length; i++) {
+                byteArr[i - 1] = (byte) rxResponse16.getData()[i];
+            }
+            Message response = Message.fromByteArray(byteArr);
+
+            if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
+                LOGGER.info("BLOCKWISE TRANSFER DETECTED");
+            }
+
             executorService.submit(new CoapMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()));
+        } catch (Exception e) {
+        }
     }
 
     public static void main(String[] args) {
