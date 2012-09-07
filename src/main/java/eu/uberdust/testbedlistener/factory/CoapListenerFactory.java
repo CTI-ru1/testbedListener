@@ -47,9 +47,9 @@ public class CoapListenerFactory extends AbstractListenerFactory {
 
         if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
                 PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
-            LOGGER.info("Connecting Network Manager");
             final String controllerURL = server + ":" + port + testbedBasePath;
             final int controllerTestbed = Integer.parseInt(testbedId);
+            LOGGER.info("Connecting Network Manager @ " + controllerTestbed + " - " + controllerURL);
             NetworkManager.getInstance().start(controllerURL, controllerTestbed);
         }
 
@@ -98,6 +98,7 @@ public class CoapListenerFactory extends AbstractListenerFactory {
                 }
             }
             if (!connected) {
+                System.exit(1);
                 LOGGER.error("Could not connect to xbee device!");
             }
         }
