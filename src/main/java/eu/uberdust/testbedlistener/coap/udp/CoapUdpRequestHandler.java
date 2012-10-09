@@ -5,7 +5,6 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;
@@ -35,50 +34,62 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
     @Override
     public void run() {
         final byte[] inData = cleanupData(packet.getData());
-        final Message updRequest = Message.fromByteArray(inData);
+        final Message udpRequest = Message.fromByteArray(inData);
 
-        List<Option> udpOptions = updRequest.getOptions();
+        List<Option> udpOptions = udpRequest.getOptions();
         for (Option udpOption : udpOptions) {
             LOGGER.info("udp-option: " + udpOption.getName());
         }
 
         Request coapRequest;
-        if (updRequest.getType().equals(Message.messageType.CON)) {
-
-            coapRequest = new Request(updRequest.getCode(), true);
+        if (udpRequest.getType().equals(Message.messageType.CON)) {
+            coapRequest = new Request(udpRequest.getCode(), true);
         } else {
-            coapRequest = new Request(updRequest.getCode(), false);
+            coapRequest = new Request(udpRequest.getCode(), false);
         }
+        LOGGER.info("incoming request of type:" + udpRequest.getType());
+        coapRequest.setType(udpRequest.getType());
 
         //set MID
-        coapRequest.setMID(updRequest.getMID());
+        coapRequest.setMID(udpRequest.getMID());
 
         //set PAYLOAD
-        coapRequest.setPayload(updRequest.getPayload());
+        coapRequest.setPayload(udpRequest.getPayload());
 
         //set URI_PATH
-        final String uriPath = updRequest.getUriPath();
+        final String uriPath = udpRequest.getUriPath();
         String nodeUrn = uriPath.substring(1, uriPath.indexOf('/', 1));
         final String newUri = uriPath.substring(uriPath.indexOf('/', 1));
+        LOGGER.info("here");
 
-        final List<Option> uriPatha = Option.split(OptionNumberRegistry.URI_PATH, newUri, "/");
-        coapRequest.setOptions(OptionNumberRegistry.URI_PATH, uriPatha);
-
-        //SET URI_QUERY
-        final List<Option> uriPathb = Option.split(OptionNumberRegistry.URI_QUERY, updRequest.getQuery(), "&");
-        coapRequest.setOptions(OptionNumberRegistry.URI_QUERY, uriPathb);
-
-        if (updRequest.hasOption(OptionNumberRegistry.BLOCK2)) {
-            coapRequest.setOption(updRequest.getOptions(OptionNumberRegistry.BLOCK2).get(0));
-            byte[] bytes = updRequest.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
-            int[] ints = Converter.getInstance().ByteToInt(bytes);
-            for (int anInt : ints) {
-                LOGGER.info("-" + anInt);
-            }
+        if (udpRequest.hasOption(OptionNumberRegistry.URI_PATH)) {
+            final List<Option> uriPatha = Option.split(OptionNumberRegistry.URI_PATH, newUri, "/");
+            coapRequest.setOptions(OptionNumberRegistry.URI_PATH, uriPatha);
         }
 
-        LOGGER.info("UDP uriPath: " + updRequest.getUriPath());
-        LOGGER.info("UDP uriQuery: " + updRequest.getQuery());
+        if (udpRequest.hasOption(OptionNumberRegistry.URI_QUERY)) {
+            //SET URI_QUERY
+            final List<Option> uriPathb = Option.split(OptionNumberRegistry.URI_QUERY, udpRequest.getQuery(), "&");
+            coapRequest.setOptions(OptionNumberRegistry.URI_QUERY, uriPathb);
+        }
+
+        if (udpRequest.hasOption(OptionNumberRegistry.BLOCK2)) {
+            coapRequest.setOption(udpRequest.getOptions(OptionNumberRegistry.BLOCK2).get(0));
+            byte[] bytes = udpRequest.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
+        }
+
+        LOGGER.info("123");
+        if (udpRequest.hasOption(OptionNumberRegistry.OBSERVE)) {
+            LOGGER.info("HAS OBSERVE");
+            coapRequest.setOptions(OptionNumberRegistry.OBSERVE, udpRequest.getOptions(OptionNumberRegistry.OBSERVE));
+        }
+        if (udpRequest.hasOption(OptionNumberRegistry.TOKEN)) {
+            LOGGER.info("HAS TOKEN");
+            coapRequest.setOptions(OptionNumberRegistry.TOKEN, udpRequest.getOptions(OptionNumberRegistry.TOKEN));
+        }
+
+        LOGGER.info("UDP uriPath: " + udpRequest.getUriPath());
+        LOGGER.info("UDP uriQuery: " + udpRequest.getQuery());
         LOGGER.info("COAP uriPath: " + coapRequest.getUriPath());
         LOGGER.info("COAP uriQuery: " + coapRequest.getQuery());
 
@@ -119,10 +130,12 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
      * @return the data from the udp packet without tailing zeros.
      */
     private byte[] cleanupData(final byte[] data) {
+        LOGGER.info(data.length);
         int myLen = data.length;
         for (int i = data.length - 1; i >= 0; i--) {
-            if (data[i] == 0) {
-                myLen = i;
+            if (data[i] != 0) {
+                myLen = i + 1;
+                break;
             }
         }
         final byte[] adata = new byte[myLen];

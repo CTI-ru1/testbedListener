@@ -3,7 +3,6 @@ package eu.uberdust.testbedlistener.coap;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import com.rapplogic.xbee.api.XBeeAddress16;
-import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 
@@ -40,10 +39,11 @@ public class BroadcastCoapRequest extends TimerTask {
             zpayloap[0] = 51;
             System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
             LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
-            XBeeRadio.getInstance().send(remoteAddress, 112, zpayloap);
+//            XBeeRadio.getInstance().send(remoteAddress, 112, zpayloap);
         } catch (Exception e) {     //NOPMD
             LOGGER.error(e.getMessage(), e);
         }
 //            }
     }
+
 }

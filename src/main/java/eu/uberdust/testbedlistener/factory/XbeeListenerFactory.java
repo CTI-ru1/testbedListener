@@ -1,6 +1,5 @@
 package eu.uberdust.testbedlistener.factory;
 
-import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.controller.XbeeController;
@@ -64,18 +63,18 @@ public class XbeeListenerFactory extends AbstractListenerFactory {
 
                     try {
                         LOGGER.info("trying " + xbeePort);
-                        XBeeAddress16 address = XBeeRadio.getInstance().checkXbeeAddress(xbeePort, rate);
-
-                        //wait to unlock the xbee
-                        Thread.sleep(1000);
-                        LOGGER.info(address);
-                        if ((address.getMsb() == xbeeMsb)
-                                && (address.getLsb() == xbeeLsb)) {
-                            XBeeRadio.getInstance().open(xbeePort, rate);
-                            LOGGER.info("Connected to XBee on " + usbPort + " at " + rate);
-                            connected = true;
-                            break;
-                        }
+//                        XBeeAddress16 address = XBeeRadio.getInstance().checkXbeeAddress(xbeePort, rate);
+//
+//                        wait to unlock the xbee
+//                        Thread.sleep(1000);
+//                        LOGGER.info(address);
+//                        if ((address.getMsb() == xbeeMsb)
+//                                && (address.getLsb() == xbeeLsb)) {
+//                            XBeeRadio.getInstance().open(xbeePort, rate);
+//                            LOGGER.info("Connected to XBee on " + usbPort + " at " + rate);
+//                            connected = true;
+//                            break;
+//                        }
 
 
                     } catch (final Exception e) {

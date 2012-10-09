@@ -1,10 +1,12 @@
 package eu.uberdust.testbedlistener.coap.udp;
 
+import ch.ethz.inf.vs.californium.coap.Request;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,7 +18,7 @@ public class UDPhandler extends Thread {//NOPMD
     /**
      * LOGGER.
      */
-    private static final Logger LOGGER = Logger.getLogger(CoapUdpRequestHandler.class);
+    private static final Logger LOGGER = Logger.getLogger(UDPhandler.class);
 
     private transient final DatagramSocket socket;
 
@@ -39,6 +41,7 @@ public class UDPhandler extends Thread {//NOPMD
             try {
                 LOGGER.info("Waiting for data");
                 socket.receive(packet);
+                LOGGER.info("received from " + packet.getAddress().getHostAddress());
             } catch (IOException e) {
                 LOGGER.fatal(e.getMessage(), e);
             }
@@ -55,5 +58,10 @@ public class UDPhandler extends Thread {//NOPMD
      */
     private void processNewRequest(final DatagramPacket packet) {
         executorService.submit(new CoapUdpRequestHandler(packet));
+    }
+
+    public void send(Request request, String device) throws IOException {
+        DatagramPacket packet = new DatagramPacket(request.toByteArray(), request.toByteArray().length, InetAddress.getByName(device), 5683);
+        socket.send(packet);
     }
 }

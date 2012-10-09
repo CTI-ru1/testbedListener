@@ -2,6 +2,9 @@ package eu.uberdust.testbedlistener.util;
 
 import org.apache.log4j.Logger;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: amaxilatis
@@ -53,12 +56,12 @@ public class Converter {
     }
 
     public String payloadToString(final int[] payload) {
-        final StringBuilder stringBuilder = new StringBuilder("Contents:");
+        final StringBuilder stringBuilder = new StringBuilder("Contents:[");
         for (int i : payload) {
-            stringBuilder.append(Integer.toHexString(i)).append("|");
+            stringBuilder.append("0x").append(Integer.toHexString(i)).append(",");
         }
 
-        return stringBuilder.toString().substring(0, stringBuilder.toString().length() - 1);
+        return stringBuilder.toString().substring(0, stringBuilder.toString().length() - 1) + "]";
     }
 
     public int[] toIntArray(byte[] bytes) {
@@ -87,13 +90,29 @@ public class Converter {
         return bytes;
     }
 
-    public static String[] extractCapabilities(final String message) {
-        LOGGER.info(message);
-        String[] capabilities = message.substring(1).split("<");
-        LOGGER.info("cap found " + capabilities.length);
-        for (int i = 0; i < capabilities.length; i++) {
-            capabilities[i] = capabilities[i].substring(0, capabilities[i].indexOf('>'));
+    public static List<String> extractCapabilities(final String message) {
+        LOGGER.debug(message);
+        String[] capabilities = message.split(",");
+        LOGGER.debug("capabilities found: " + capabilities.length);
+        List caps = new LinkedList();
+        for (String capability : capabilities) {
+            LOGGER.debug(capability);
+            if (capability.startsWith("<") && capability.endsWith(">")) {
+                String newCap = capability.replaceAll("<", "").replaceAll(">", "");
+                if ((newCap.charAt(newCap.length() - 1)) == 0) {
+                    newCap = newCap.substring(0, newCap.length() - 1);
+                }
+                caps.add(newCap);
+            }
         }
-        return capabilities;
+        return caps;
+    }
+
+    public String message(byte[] payload) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : payload) {
+            sb.append(b);
+        }
+        return sb.toString();
     }
 }
