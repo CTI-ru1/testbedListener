@@ -49,4 +49,13 @@ public class WsCommiter {
             LOGGER.error("InsertReadingWebSocketClient -link- " + e);
         }
     }
+
+    public WsCommiter(Message.NodeReadings readings) {
+        try {
+            NetworkManager.getInstance().sendNodeReading(readings);
+            LOGGER.info(readings);
+        } catch (Exception e) {
+            LOGGER.error("InsertReadingWebSocketClient -node-" + e);
+        }
+    }
 }

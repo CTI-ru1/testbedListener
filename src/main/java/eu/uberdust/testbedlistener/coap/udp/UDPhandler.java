@@ -1,6 +1,8 @@
 package eu.uberdust.testbedlistener.coap.udp;
 
+import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -35,8 +37,8 @@ public class UDPhandler extends Thread {//NOPMD
 
     @Override
     public void run() {
-        final byte[] buf = new byte[1024];
         while (true) {
+            final byte[] buf = new byte[1024];
             final DatagramPacket packet = new DatagramPacket(buf, 1024);
             try {
                 LOGGER.info("Waiting for data");
@@ -57,11 +59,42 @@ public class UDPhandler extends Thread {//NOPMD
      * @param packet the request as a UDP packet.
      */
     private void processNewRequest(final DatagramPacket packet) {
-        executorService.submit(new CoapUdpRequestHandler(packet));
+        final byte[] inData = cleanupData(packet.getData());
+
+        try {
+            final Request udpRequest = (Request) Message.fromByteArray(inData);
+            executorService.submit(new CoapUdpRequestHandler(packet));
+        } catch (ClassCastException cce) {
+            final Response udpRequest = (Response) Message.fromByteArray(inData);
+            executorService.submit(new CoapUdpResponseHandler(udpRequest, packet.getAddress().getHostAddress(), this));
+        }
+
     }
 
-    public void send(Request request, String device) throws IOException {
+    public void send(Message request, String device) throws IOException {
         DatagramPacket packet = new DatagramPacket(request.toByteArray(), request.toByteArray().length, InetAddress.getByName(device), 5683);
         socket.send(packet);
+    }
+
+
+    /**
+     * Clear tailing zeros from the udpPacket.
+     *
+     * @param data the incoming packet.
+     * @return the data from the udp packet without tailing zeros.
+     */
+    private byte[] cleanupData(final byte[] data) {
+        LOGGER.info(data.length);
+        int myLen = data.length;
+        for (int i = data.length - 1; i >= 0; i--) {
+            if (data[i] != 0) {
+                myLen = i + 1;
+                break;
+            }
+        }
+        final byte[] adata = new byte[myLen];
+        System.arraycopy(data, 0, adata, 0, myLen);
+        LOGGER.info(adata.length);
+        return adata;
     }
 }

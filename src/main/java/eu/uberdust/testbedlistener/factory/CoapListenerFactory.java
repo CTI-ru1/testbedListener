@@ -40,19 +40,6 @@ public class CoapListenerFactory extends AbstractListenerFactory {
         final String testbedBasePath = PropertyReader.getInstance().getProperties().getProperty("uberdust.basepath");
         final String usbPort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
 
-        LOGGER.info("Starting Coap Server");
-        CoapServer.getInstance();
-
-
-        if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
-                PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
-            final String controllerURL = server + ":" + port + testbedBasePath;
-            final int controllerTestbed = Integer.parseInt(testbedId);
-            LOGGER.info("Connecting Network Manager @ " + controllerTestbed + " - " + controllerURL);
-            NetworkManager.getInstance().start(controllerURL, controllerTestbed);
-        }
-
-
         final int xbeeMsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.msb"), 16);
         final int xbeeLsb = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.lsb"), 16);
         final Integer rate = Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
@@ -64,7 +51,8 @@ public class CoapListenerFactory extends AbstractListenerFactory {
                 LOGGER.info("Connected to XBee on " + usbPort + " at " + rate);
                 Thread.sleep(5000);
             } catch (final Exception e) {
-                LOGGER.fatal(e);
+                LOGGER.fatal(e,e);
+                System.exit(1);
             }
         } else {
             File devices = new File("/dev/");
@@ -101,6 +89,19 @@ public class CoapListenerFactory extends AbstractListenerFactory {
                 LOGGER.error("Could not connect to xbee device!");
             }
         }
+        LOGGER.info("Starting Coap Server");
+        CoapServer.getInstance();
+
+
+        if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
+                PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
+            final String controllerURL = server + ":" + port + testbedBasePath;
+            final int controllerTestbed = Integer.parseInt(testbedId);
+            LOGGER.info("Connecting Network Manager @ " + controllerTestbed + " - " + controllerURL);
+            NetworkManager.getInstance().start(controllerURL, controllerTestbed);
+        }
+
+
 
 
         LOGGER.info("Listening on channel :" + XBeeRadio.getInstance().getChannel());

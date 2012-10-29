@@ -149,7 +149,8 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
      * @param toString the string to parse
      */
     private void parse(final String toString) {
-        TestbedMessageHandler.getInstance().handle(toString);
+        LOGGER.info(toString);
+//        TestbedMessageHandler.getInstance().handle(toString);
 
     }
 

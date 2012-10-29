@@ -1,6 +1,8 @@
 package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
@@ -16,18 +18,17 @@ import java.util.TimerTask;
  * Time: 11:52 AM
  * To change this template use File | Settings | File Templates.
  */
-public class BroadcastCoapRequest extends TimerTask {
+public class BlockWiseCoapRequest extends TimerTask {
     /**
      * LOGGER.
      */
-    private static final Logger LOGGER = Logger.getLogger(BroadcastCoapRequest.class);
+    private static final Logger LOGGER = Logger.getLogger(BlockWiseCoapRequest.class);
     private XBeeAddress16 remoteAddress;
+    private byte[] blockIdx;
 
-    public BroadcastCoapRequest() {
-        remoteAddress = new XBeeAddress16();
-        remoteAddress.setMsb(0xff);
-        remoteAddress.setLsb(0xff);
-
+    public BlockWiseCoapRequest(XBeeAddress16 address16, byte[] blockIdx) {
+        remoteAddress = address16;
+        this.blockIdx= blockIdx;
     }
 
     @Override
@@ -35,6 +36,9 @@ public class BroadcastCoapRequest extends TimerTask {
         LOGGER.debug("Broadcast Message from server");
         Request request = new Request(CodeRegistry.METHOD_GET, false);
         request.setURI("/.well-known/core");
+        Option blockOpt = new Option(OptionNumberRegistry.BLOCK2);
+        blockOpt.setIntValue(18);
+        request.addOption(blockOpt);
 //            LOGGER.info(Converter.getInstance().payloadToString(request.toByteArray()));
         try {
             int[] zpayloap = new int[1 + request.toByteArray().length];

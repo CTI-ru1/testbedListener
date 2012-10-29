@@ -4,6 +4,7 @@ import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
@@ -61,13 +62,19 @@ public class CoapServer {
     private String testbedPrefix;
     private static final long MILLIS_TO_STALE = 3 * 60 * 1000;
     private Map<Integer, String> ownRequests;
+    private ArrayList<TokenItem> ownObserves;
+    private Map<XBeeAddress16, String> blockWisePending;
+    private Map<Integer, String> ethernetBlockWisePending;
 
     /**
      * Constructor.
      */
     public CoapServer() {
         ownRequests = new HashMap<Integer, String>();
+        ownObserves = new ArrayList<TokenItem>();
         this.endpoints = new HashMap<String, Long>();
+        blockWisePending = new HashMap<XBeeAddress16, String>();
+        ethernetBlockWisePending = new HashMap<Integer, String>();
         this.activeRequests = new HashMap<String, List<ActiveRequest>>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         mid = new Random();
@@ -422,4 +429,97 @@ public class CoapServer {
         }
         return "";
     }
+
+    public void addPending(XBeeAddress16 remoteAddress, String remainder) {
+        blockWisePending.put(remoteAddress, remainder);
+    }
+
+    public String getPending(XBeeAddress16 remoteAddress) {
+        if (blockWisePending.containsKey(remoteAddress)) {
+            String value = blockWisePending.get(remoteAddress);
+            blockWisePending.remove(remoteAddress);
+            return value;
+        }
+        return "";
+    }
+
+    public void addEthernet(String payload, int mid) {
+        LOGGER.info("Adding by mid " + mid);
+        ownRequests.put(mid, payload);
+    }
+
+    public String checkEthernet(int mid) {
+        LOGGER.info("Checking by mid " + mid);
+        if (ownRequests.containsKey(mid)) {
+            String eth = ownRequests.get(mid);
+            ownRequests.remove(mid);
+            return eth;
+        }
+        return "";
+    }
+
+    public void addEthernet(String payload, String token) {
+        LOGGER.info("Adding by token " + token + " \"" + payload + "\"");
+        ownObserves.add(new TokenItem(token, payload));
+    }
+
+    public String checkEthernet(String token) {
+        LOGGER.info("Checking by token " + token);
+        for (TokenItem tokenItem : ownObserves) {
+            if (tokenItem.getBytes().equals(token)) {
+                return tokenItem.getPath();
+            }
+        }
+        return "";
+    }
+
+
+    public static void main(String[] args) {
+        PropertyReader.getInstance().setFile("listener.properties");
+        CoapServer.getInstance();
+    }
+
+
+    public void addPending(Integer mid, String remainder) {
+        ethernetBlockWisePending.put(mid, remainder);
+    }
+
+    public String getPending(int mid) {
+        if (ethernetBlockWisePending.containsKey(mid)) {
+            String value = ethernetBlockWisePending.get(mid);
+            ethernetBlockWisePending.remove(mid);
+            return value;
+        }
+        return "";
+    }
+
+    public void ackEthernet(UDPhandler udPhandler, Response response, String address) {
+        Message ack = new Message(Message.messageType.ACK, 0);
+        ack.setMID(response.getMID());
+        try {
+            udPhandler.send(ack, address);
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
+
+    class TokenItem {
+        String bytes;
+        String path;
+
+        TokenItem(String bytes, String path) {
+            this.bytes = bytes;
+            this.path = path;
+        }
+
+        public String getBytes() {
+            return bytes;
+        }
+
+        public String getPath() {
+            return path;
+        }
+    }
+
 }

@@ -40,6 +40,7 @@ public class TestbedRuntimeListenerFactory extends AbstractListenerFactory {
 
         //Awaits for commands from Uberdust.
         if (ENABLED.equals(PropertyReader.getInstance().getProperties().get("use.controller"))) {
+            LOGGER.info("addObserver");
             NetworkManager.getInstance().addObserver(TestbedController.getInstance());
         }
 
@@ -55,4 +56,9 @@ public class TestbedRuntimeListenerFactory extends AbstractListenerFactory {
         LOGGER.info("up and running");
     }
 
+    public static void main(String[] args) {
+        PropertyReader.getInstance().setFile("listener.properties");
+        Thread thread = new Thread(new TestbedRuntimeListenerFactory());
+        thread.start();
+    }
 }

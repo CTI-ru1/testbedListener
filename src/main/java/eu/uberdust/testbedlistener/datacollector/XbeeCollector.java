@@ -70,18 +70,58 @@ public class XbeeCollector extends AbstractCollector implements MessageListener 
         executorService.submit(new XbeeMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()
                 , testbedPrefix, testbedId, capabilityPrefix));
     }
-
-    public static void main(String[] args) {
-        final String xbeePort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
-        final Integer rate =
-                Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
-        try {
-            XBeeRadio.getInstance().open(xbeePort, rate);
-        } catch (final Exception e) {
-            LOGGER.error(e);
-            return;
-        }
-        new XbeeCollector();
-    }
+//
+//    public static void main(String[] args) {
+//        PropertyReader.getInstance().setFile("listener.properties");
+//        final String xbeePort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
+//        final Integer rate =
+//                Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
+//        try {
+//            XBeeRadio.getInstance().open(xbeePort, rate);
+//        } catch (final Exception e) {
+//            LOGGER.error(e);
+//            return;
+//        }
+//
+//        XBeeAddress16 address
+//                = new XBeeAddress16();
+//        address.setLsb(0xb0);
+//        address.setMsb(0x02);
+//
+//        int[] payload = new int[3];
+//        payload[0] = 1;
+//        payload[1] = 1;
+//        payload[2] = 1;
+//        int[] payload1 = new int[3];
+//        payload[0] = 1;
+//        payload[1] = 2;
+//        payload[2] = 1;
+//        while (true) {
+//            try {
+//                XBeeRadio.getInstance().send(address, 112, payload);
+//                LOGGER.info("sending1");
+//            } catch (Exception e) {
+//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//            }
+//            try {
+//                Thread.sleep(500);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//            }
+//            try {
+//                XBeeRadio.getInstance().send(address, 112, payload1);
+//                LOGGER.info("sending2");
+//            } catch (Exception e) {
+//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//            }
+//            try {
+//                Thread.sleep(60000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//            }
+//        }
+////        new XbeeCollector();
+//
+//    }
 }
 

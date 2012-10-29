@@ -5,9 +5,9 @@ import de.uniluebeck.itm.wisebed.cmdlineclient.BeanShellHelper;
 import de.uniluebeck.itm.wisebed.cmdlineclient.protobuf.ProtobufControllerClient;
 import de.uniluebeck.itm.wisebed.cmdlineclient.wrapper.WSNAsyncWrapper;
 import eu.uberdust.DeviceCommand;
+import eu.uberdust.testbedlistener.datacollector.TestbedRuntimeCollector;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
-import eu.wisebed.api.common.Message;
 import eu.wisebed.api.sm.ExperimentNotRunningException_Exception;
 import eu.wisebed.api.sm.SessionManagement;
 import eu.wisebed.api.sm.UnknownReservationIdException_Exception;
@@ -16,16 +16,12 @@ import eu.wisebed.testbed.api.wsn.WSNServiceHelper;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -51,6 +47,7 @@ public final class TestbedController implements Observer {
      * static instance(ourInstance) initialized as null.
      */
     private static TestbedController ourInstance = null;
+    private TestbedRuntimeCollector testbed;
 
     /**
      * TestbedController is loaded on the first execution of TestbedController.getInstance()
@@ -74,7 +71,7 @@ public final class TestbedController implements Observer {
     private TestbedController() {
         PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
         readProperties();
-        connectToRuntime();
+//        connectToRuntime();
 
     }
 
@@ -125,7 +122,7 @@ public final class TestbedController implements Observer {
     public void sendCommand(final String destination, final String payloadIn) {
 
         // Send a message to nodes via uart (to receive them enable RX_UART_MSGS in the fronts_config.h-file)
-        final Message msg = new Message();
+//        final Message msg = new Message();
 
         final String macAddress = destination.
                 substring(destination.indexOf("0x") + 2);
@@ -137,27 +134,27 @@ public final class TestbedController implements Observer {
             payload[i] = Integer.valueOf(strPayload[i].replaceAll("\n", ""), 16).byteValue();
         }
 
-        final byte[] newPayload = new byte[macBytes.length + payload.length + 1];
-        newPayload[0] = PAYLOAD_PREFIX;
-        System.arraycopy(macBytes, 0, newPayload, 1, macBytes.length);
+//        final byte[] newPayload = new byte[macBytes.length + payload.length + 1];
+//        newPayload[0] = PAYLOAD_PREFIX;
+//        System.arraycopy(macBytes, 0, newPayload, 1, macBytes.length);
 //        System.arraycopy(PAYLOAD_HEADERS, 0, newPayload, 3, PAYLOAD_HEADERS.length);
 
         LOGGER.info("sizeIs " + payload.length);
-        LOGGER.info("sizeIs " + newPayload.length);
+//        LOGGER.info("sizeIs " + newPayload.length);
 
-        System.arraycopy(payload, 0, newPayload, 3, payload.length);
-        msg.setBinaryData(newPayload);
-        msg.setSourceNodeId("urn:wisebed:ctitestbed:0x1");
-
-        LOGGER.debug("Sending message - " + Arrays.toString(newPayload));
-        try {
-            msg.setTimestamp(DatatypeFactory.newInstance().newXMLGregorianCalendar(
-                    (GregorianCalendar) GregorianCalendar.getInstance()));
-        } catch (final DatatypeConfigurationException e) {
-            LOGGER.error(e);
-        }
-
-        wsn.send(nodeURNs, msg, 10, TimeUnit.SECONDS);
+//        System.arraycopy(payload, 0, newPayload, 3, payload.length);
+//        msg.setBinaryData(newPayload);
+//        msg.setSourceNodeId("urn:wisebed:ctitestbed:0x1");
+//
+        LOGGER.debug("Sending message - " + Arrays.toString(payload));
+//        try {
+//            msg.setTimestamp(DatatypeFactory.newInstance().newXMLGregorianCalendar(
+//                    (GregorianCalendar) GregorianCalendar.getInstance()));
+//        } catch (final DatatypeConfigurationException e) {
+//            LOGGER.error(e);
+//        }
+               testbed.sendMessage(payload,destination);
+//        wsn.send(nodeURNs, msg, 10, TimeUnit.SECONDS);
 
     }
 
@@ -167,7 +164,7 @@ public final class TestbedController implements Observer {
 
     @Override
     public void update(final Observable observable, final Object o) {
-        LOGGER.debug("called update ");
+        LOGGER.info("called update ");
         if (o instanceof DeviceCommand) {
 
             final DeviceCommand command = (DeviceCommand) o;
@@ -186,5 +183,9 @@ public final class TestbedController implements Observer {
 //                sendCommand(command.getDestination(), command.getPayload());
 //            }
 //        }
+    }
+
+    public void setTestbed(TestbedRuntimeCollector testbed) {
+        this.testbed = testbed;
     }
 }

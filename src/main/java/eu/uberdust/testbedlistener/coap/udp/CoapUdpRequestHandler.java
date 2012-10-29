@@ -95,7 +95,7 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
 
         List<Option> options = coapRequest.getOptions();
         for (Option option : options) {
-            LOGGER.info("hasOption: " + option.getName());
+            LOGGER.info("hasOption: " + option.getName() + " val: " + option.getRawValue()[0]);
         }
 
 

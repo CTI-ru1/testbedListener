@@ -141,6 +141,16 @@
         </dependency>
         <dependency>
             <groupId>de.uniluebeck.itm</groupId>
+            <artifactId>tr.runtime.socket-connector</artifactId>
+            <version>0.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>de.uniluebeck.itm</groupId>
+            <artifactId>tr.iwsn</artifactId>
+            <version>0.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>de.uniluebeck.itm</groupId>
             <artifactId>tr.scripting-client</artifactId>
             <version>0.8.1</version>
         </dependency>

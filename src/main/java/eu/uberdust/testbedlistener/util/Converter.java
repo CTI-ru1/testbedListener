@@ -96,13 +96,16 @@ public class Converter {
         LOGGER.debug("capabilities found: " + capabilities.length);
         List caps = new LinkedList();
         for (String capability : capabilities) {
-            LOGGER.debug(capability);
-            if (capability.startsWith("<") && capability.endsWith(">")) {
+            LOGGER.info(capability);
+            if (capability.contains("<") && capability.contains(">")) {
                 String newCap = capability.replaceAll("<", "").replaceAll(">", "");
-                if ((newCap.charAt(newCap.length() - 1)) == 0) {
-                    newCap = newCap.substring(0, newCap.length() - 1);
+                StringBuilder validCap = new StringBuilder();
+                for (char c : newCap.toCharArray()) {
+                    if (c!=0){
+                        validCap.append(c);
+                    }
                 }
-                caps.add(newCap);
+                caps.add(validCap.toString());
             }
         }
         return caps;
@@ -114,5 +117,18 @@ public class Converter {
             sb.append(b);
         }
         return sb.toString();
+    }
+
+    public static String extractRemainder(String message) {
+        LOGGER.debug(message);
+        int startTag = message.lastIndexOf("<");
+        int endTag = message.lastIndexOf(">");
+        if (endTag > startTag) {
+            return "";
+        } else if (endTag + 2 < message.length()) {
+            return message.substring(endTag+2);
+        } else {
+            return "";
+        }
     }
 }

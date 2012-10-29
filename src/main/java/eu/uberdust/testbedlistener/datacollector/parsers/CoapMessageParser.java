@@ -1,8 +1,10 @@
 package eu.uberdust.testbedlistener.datacollector.parsers;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
 import com.rapplogic.xbee.api.XBeeAddress16;
+import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
@@ -44,6 +46,7 @@ public class CoapMessageParser extends AbstractMessageParser {
      */
     private transient final int[] payload;
     private transient final Random mid;
+    private boolean isBlockwise;
 
     /**
      * Default Constructor.
@@ -121,9 +124,9 @@ public class CoapMessageParser extends AbstractMessageParser {
             if (response.getType() == Message.messageType.CON) {
                 CoapServer.getInstance().sendAck(response.getMID(), address);
             }
-            LOGGER.info("from"+address);
+            LOGGER.info("from" + address);
             //Process message
-            LOGGER.info(response.getPayload()[0]);
+//            LOGGER.info(response.getPayload()[0]);
             if (CoapServer.getInstance().isOutside(address, response)) {
                 LOGGER.info("IS OUTSIDE");
                 CoapServer.getInstance().endpointIsAlive(address);
@@ -140,22 +143,28 @@ public class CoapMessageParser extends AbstractMessageParser {
 
 
                 final byte[] inPayload = response.getPayload();
-                final StringBuilder message = new StringBuilder("");
+                final StringBuilder message = new StringBuilder(CoapServer.getInstance().getPending(remoteAddress));
                 for (int i = 0; i < inPayload.length; i++) {
                     message.append((char) inPayload[i]);
 
                 }
                 LOGGER.info(message.toString());
                 List<String> capabilities = Converter.extractCapabilities(message.toString());
+                isBlockwise = false;
+                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
+                    isBlockwise = true;
+                    LOGGER.info("REQ BLOCKWISE");
+                    String remainder = Converter.extractRemainder(message.toString());
+                    LOGGER.info(remainder);
+                    CoapServer.getInstance().addPending(remoteAddress, remainder);
+                }
 
                 LOGGER.info(capabilities.size());
+                reportToUberdustCapability(capabilities, address);
+
                 for (String capability : capabilities) {
                     if (!capability.equals(".well-known/core")) {
                         LOGGER.info("cap:" + capability);
-                        reportToUberdustCapability(capability, address);
-                        LOGGER.info("skipping .well-known/core");
-                        continue;
-
                     }
                 }
 
@@ -167,6 +176,27 @@ public class CoapMessageParser extends AbstractMessageParser {
                             CoapServer.getInstance().requestForResource(capability, address);
                         } catch (Exception e) {
                         }
+                    }
+                }
+
+
+                if (isBlockwise) {
+
+
+                    byte[] blockIdx = response.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
+                    byte m = blockIdx[0];
+                    m = (byte) (m >> 4);
+                    m = (byte) (m & 0x01);
+                    if (m == 0x00) {
+
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                        LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
+                        BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(remoteAddress, blockIdx);
+                        nextBlock.run();
                     }
                 }
 //            } else {
@@ -193,7 +223,7 @@ public class CoapMessageParser extends AbstractMessageParser {
 
 //                }
             } else {
-                LOGGER.info("from"+address);
+                LOGGER.info("from" + address);
 
                 String uriPath = CoapServer.getInstance().matchMID(mess.getMID()).substring(1).replaceAll("/", ":");
                 StringBuilder stringReading = new StringBuilder();
@@ -209,9 +239,24 @@ public class CoapMessageParser extends AbstractMessageParser {
 
     }
 
-    private void reportToUberdustCapability(String capability, String address) {
+    private void reportToUberdustCapability(List<String> capabilities, String address) {
+        eu.uberdust.communication.protobuf.Message.NodeReadings.Builder readings = eu.uberdust.communication.protobuf.Message.NodeReadings.newBuilder();
+        for (String capability : capabilities) {
+            if (capability.equals("temp")) {
+                capability = "temperature";
+            }
+            final String nodeUrn = testbedPrefix + "0x" + address;
+            final String capabilityName = (capability).toLowerCase();
 
-        commitNodeReading("0x" + address, "report", capability);
+            final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
+                    .setNode(nodeUrn)
+                    .setCapability("report")
+                    .setTimestamp(System.currentTimeMillis())
+                    .setStringReading(capabilityName)
+                    .build();
+            readings.addReading(reading);
+        }
+        new WsCommiter(readings.build());
     }
 
     private void sendToUberdust(final String uriPath, String address, final Message response) {
