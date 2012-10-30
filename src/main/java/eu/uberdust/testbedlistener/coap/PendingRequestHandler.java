@@ -31,9 +31,6 @@ public class PendingRequestHandler {
      * List of All pending Requests.
      */
     List<PendingRequest> pendingRequestList;
-    public static final int FALSE = 0;
-    public static final int TOKEN = 1;
-    public static final int MID = 2;
 
     /**
      * Constructor.
