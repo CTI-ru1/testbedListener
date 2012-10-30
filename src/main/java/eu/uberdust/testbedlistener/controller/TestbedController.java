@@ -159,7 +159,7 @@ public final class TestbedController implements Observer {
     }
 
     public void sendMessage(byte[] payload, String destination) {
-        testbed.sendMessage(payload, "urn:wisebed:ctitestbed:0x153d");
+        testbed.sendMessage(payload, destination);
     }
 
 
