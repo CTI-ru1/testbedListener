@@ -46,35 +46,45 @@ public class PendingRequest {
     }
 
     /**
-     * @return the id of the message
+     * Get the id of the message.
+     *
+     * @return the id of the message.
      */
     public int getMid() {
         return mid;
     }
 
     /**
-     * @return the token of the query if it exists
+     * Get the token of the query if it exists.
+     *
+     * @return the token of the query if it exists.
      */
     public String getToken() {
         return token;
     }
 
     /**
-     * @return the socket address fo the sender
+     * Get the socket address fo the sender.
+     *
+     * @return the socket address fo the sender.
      */
     public SocketAddress getSocketAddress() {
         return socketAddress;
     }
 
     /**
-     * @return true if the request was a observe
+     * Get true if the request was a observe.
+     *
+     * @return true if the request was a observe.
      */
     public boolean isObserve() {
         return isObserve;
     }
 
     /**
-     * @return true if the request was a confirm
+     * Get true if the request was a confirm.
+     *
+     * @return true if the request was a confirm.
      */
     public boolean isConfirm() {
         return isConfirm;
