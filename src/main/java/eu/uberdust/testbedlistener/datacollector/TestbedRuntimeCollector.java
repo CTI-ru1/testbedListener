@@ -140,7 +140,7 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
     public void sendMessage(byte[] newPayload, String destination) {
         byte[] framedPayload = new byte[newPayload.length + 1];
         System.arraycopy(newPayload,0,framedPayload,1,newPayload.length);
-        framedPayload[0] = 0xb;
+        framedPayload[0] = 0xa;
         ByteString bs = ByteString.copyFrom(framedPayload);
         WSNAppMessages.Message.Builder message = WSNAppMessages.Message.newBuilder()
                 .setBinaryData(bs)

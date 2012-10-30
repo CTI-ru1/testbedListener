@@ -153,10 +153,15 @@ public final class TestbedController implements Observer {
 //        } catch (final DatatypeConfigurationException e) {
 //            LOGGER.error(e);
 //        }
-               testbed.sendMessage(payload,destination);
+        testbed.sendMessage(payload, destination);
 //        wsn.send(nodeURNs, msg, 10, TimeUnit.SECONDS);
 
     }
+
+    public void sendMessage(byte[] payload, String destination) {
+        testbed.sendMessage(payload, "urn:wisebed:ctitestbed:0x153d");
+    }
+
 
     public static void main(final String[] args) {
         TestbedController.getInstance();
@@ -170,7 +175,7 @@ public final class TestbedController implements Observer {
             final DeviceCommand command = (DeviceCommand) o;
 
             LOGGER.info("TO:" + command.getDestination() + " BYTES:" + command.getPayload());
-            sendCommand(command.getDestination(), command.getPayload());
+//            sendCommand(command.getDestination(), command.getPayload());
 
         }
 //        if (o instanceof eu.uberdust.communication.protobuf.Message.Control) {

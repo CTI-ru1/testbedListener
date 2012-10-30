@@ -15,7 +15,7 @@ public class HereIamMessage {
         return mess;
     }
 
-    public HereIamMessage(int[] payload) {
+    public HereIamMessage(byte[] payload) {
 
         StringBuilder sb = new StringBuilder();
 //        System.out.println(payload.length);

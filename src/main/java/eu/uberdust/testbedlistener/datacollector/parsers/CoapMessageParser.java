@@ -2,17 +2,16 @@ package eu.uberdust.testbedlistener.datacollector.parsers;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.coap.Response;
-import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
-import java.util.Date;
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.Random;
 
@@ -39,12 +38,14 @@ public class CoapMessageParser extends AbstractMessageParser {
     /**
      * The Mac Address of the remote node.
      */
-    private transient final XBeeAddress16 remoteAddress;
+    private transient final String address;
 
     /**
      * The payload of the received message.
      */
-    private transient final int[] payload;
+    private transient final byte[] payload;
+    private transient final String mac;
+
     private transient final Random mid;
     private boolean isBlockwise;
 
@@ -54,10 +55,11 @@ public class CoapMessageParser extends AbstractMessageParser {
      * @param address the address of the node
      * @param payload the payload message to be parsed.
      */
-    public CoapMessageParser(final XBeeAddress16 address, final int[] payload) {
+    public CoapMessageParser(String address, byte[] payload) {
 
         this.payload = payload.clone();
-        remoteAddress = address;
+        this.address = address;
+        this.mac = address.split("0x")[1];
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.capabilityPrefix = PropertyReader.getInstance().getTestbedCapabilitiesPrefix();
         mid = new Random();
@@ -75,63 +77,35 @@ public class CoapMessageParser extends AbstractMessageParser {
      */
     @Override
     public void run() {
+        LOGGER.debug("from " + address + " {" + mac + "} with payload length " + payload.length);
 
-        final String address = Integer.toHexString(remoteAddress.getAddress()[0]) + Integer.toHexString(remoteAddress.getAddress()[1]);
-
-        LOGGER.debug("from " + address + " with " + payload[0] + " Length is: " + payload.length + "@ " + new Date(System.currentTimeMillis()));
-
-//        if (!address.contains("9a8")) {
-//            if (!address.contains("181")) {
-//                return;
-//            }
-//        } else {
-//            LOGGER.info("from 9a8 @ " + new Date());
-//            LOGGER.info(Converter.getInstance().payloadToString(payload));
-////            HereIamMessage mess = new HereIamMessage(payload);
-////            LOGGER.info(mess.getMess());
-////            LOGGER.info(mess.isValid());
-//
-//        }
         HereIamMessage hereIamMessage = new HereIamMessage(payload);
 
         if (hereIamMessage.isValid())   // check for broadcasting message
         {
-//            LOGGER.info("hereIam");
-//            Request request = new Request(CodeRegistry.METHOD_GET, false);
-//            request.setURI("/.well-known/core");
-//            try {
-//                int[] zpayloap = new int[1 + request.toByteArray().length];
-//                zpayloap[0] = 51;
-//                System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
-//                LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
-//                XBeeRadio.getInstance().send(remoteAddress, 112, zpayloap);
-//            } catch (Exception e) {     //NOPMD
-//                LOGGER.error(e.getMessage(), e);
-//            }
-        } else if (payload[0] == 51) {
-            byte byteArr[] = new byte[payload.length - 1];
-            for (int i = 1; i < payload.length; i++) {
-                byteArr[i - 1] = (byte) payload[i];
-            }
-            LOGGER.info(Converter.getInstance().payloadToString(payload));
-            // Coap messages start with 51
+            handleHereIAm();
+        } else {
+            LOGGER.info("Valid Coap Response Message from" + address);
+            Message response = Message.fromByteArray(payload);
 
+            //Message mess = Response.fromByteArray(payload);
 
-            Message response = Message.fromByteArray(byteArr);
-            Message mess = Response.fromByteArray(byteArr);
-
+            /**TODO:SEND ack only when from inside**/
             // Send Ack if requested
-            if (response.getType() == Message.messageType.CON) {
-                CoapServer.getInstance().sendAck(response.getMID(), address);
-            }
-            LOGGER.info("from" + address);
+            //            if (response.getType() == Message.messageType.CON) {
+            //                CoapServer.getInstance().sendAck(response.getMID(), address);
+            //            }
+
             //Process message
 //            LOGGER.info(response.getPayload()[0]);
-            if (CoapServer.getInstance().isOutside(address, response)) {
+            SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
+            if (originSocketAddress != null) {
                 LOGGER.info("IS OUTSIDE");
-                CoapServer.getInstance().endpointIsAlive(address);
-                final String uriPath = CoapServer.getInstance().matchResponse(address, response);
-                LOGGER.info(uriPath);
+                /**TODO:Check if needed**/
+                //CoapServer.getInstance().endpointIsAlive(address);
+                CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
+//                final String uriPath = CoapServer.getInstance().matchResponse(address, response);
+//                LOGGER.info(uriPath);
 //                CoapServer.getInstance().printAll();
             } else if (payload[3] == 0 && payload[4] == 0) {  //getting .well-known/core autoconfig phase
                 LOGGER.info("IS INSIDE");
@@ -143,7 +117,7 @@ public class CoapMessageParser extends AbstractMessageParser {
 
 
                 final byte[] inPayload = response.getPayload();
-                final StringBuilder message = new StringBuilder(CoapServer.getInstance().getPending(remoteAddress));
+                final StringBuilder message = new StringBuilder(CoapServer.getInstance().getPending(address));
                 for (int i = 0; i < inPayload.length; i++) {
                     message.append((char) inPayload[i]);
 
@@ -156,7 +130,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info("REQ BLOCKWISE");
                     String remainder = Converter.extractRemainder(message.toString());
                     LOGGER.info(remainder);
-                    CoapServer.getInstance().addPending(remoteAddress, remainder);
+                    CoapServer.getInstance().addPending(address, remainder);
                 }
 
                 LOGGER.info(capabilities.size());
@@ -195,7 +169,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                         }
                         LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
-                        BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(remoteAddress, blockIdx);
+                        BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(address, blockIdx);
                         nextBlock.run();
                     }
                 }
@@ -223,20 +197,38 @@ public class CoapMessageParser extends AbstractMessageParser {
 
 //                }
             } else {
-                LOGGER.info("from" + address);
+                /**TODO: fix response to uberdust to store readings
 
-                String uriPath = CoapServer.getInstance().matchMID(mess.getMID()).substring(1).replaceAll("/", ":");
-                StringBuilder stringReading = new StringBuilder();
-                int[] conts = Converter.getInstance().ByteToInt(mess.getPayload());
-                for (int cont : conts) {
-                    stringReading.append((char) cont);
-                }
-                LOGGER.info("new Reading : " + address + " @ " + uriPath + ": " + stringReading.toString());
+                 LOGGER.info("from" + address);
 
-                sendToUberdust(uriPath, address, mess);
+                 String uriPath = CoapServer.getInstance().matchMID(mess.getMID()).substring(1).replaceAll("/", ":");
+                 StringBuilder stringReading = new StringBuilder();
+                 int[] conts = Converter.getInstance().ByteToInt(mess.getPayload());
+                 for (int cont : conts) {
+                 stringReading.append((char) cont);
+                 }
+                 LOGGER.info("new Reading : " + address + " @ " + uriPath + ": " + stringReading.toString());
+
+                 sendToUberdust(uriPath, address, mess);
+                 **/
             }
         }
 
+    }
+
+    private void handleHereIAm() {
+        //            LOGGER.info("hereIam");
+//            Request request = new Request(CodeRegistry.METHOD_GET, false);
+//            request.setURI("/.well-known/core");
+//            try {
+//                int[] zpayloap = new int[1 + request.toByteArray().length];
+//                zpayloap[0] = 51;
+//                System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
+//                LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
+//                XBeeRadio.getInstance().send(remoteAddress, 112, zpayloap);
+//            } catch (Exception e) {     //NOPMD
+//                LOGGER.error(e.getMessage(), e);
+//            }
     }
 
     private void reportToUberdustCapability(List<String> capabilities, String address) {

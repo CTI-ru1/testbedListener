@@ -4,9 +4,7 @@ import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
-import com.rapplogic.xbee.api.XBeeAddress16;
-import eu.mksense.XBeeRadio;
-import eu.uberdust.testbedlistener.util.Converter;
+import eu.uberdust.testbedlistener.controller.TestbedController;
 import org.apache.log4j.Logger;
 
 import java.util.TimerTask;
@@ -23,12 +21,12 @@ public class BlockWiseCoapRequest extends TimerTask {
      * LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(BlockWiseCoapRequest.class);
-    private XBeeAddress16 remoteAddress;
+    private String remoteAddress;
     private byte[] blockIdx;
 
-    public BlockWiseCoapRequest(XBeeAddress16 address16, byte[] blockIdx) {
+    public BlockWiseCoapRequest(String address16, byte[] blockIdx) {
         remoteAddress = address16;
-        this.blockIdx= blockIdx;
+        this.blockIdx = blockIdx;
     }
 
     @Override
@@ -39,13 +37,18 @@ public class BlockWiseCoapRequest extends TimerTask {
         Option blockOpt = new Option(OptionNumberRegistry.BLOCK2);
         blockOpt.setIntValue(18);
         request.addOption(blockOpt);
+        byte[] payload = new byte[request.toByteArray().length + 1];
+        System.arraycopy(request.toByteArray(), 0, payload, 0, request.toByteArray().length);
+        payload[0] = 0x33;
+
 //            LOGGER.info(Converter.getInstance().payloadToString(request.toByteArray()));
         try {
-            int[] zpayloap = new int[1 + request.toByteArray().length];
-            zpayloap[0] = 51;
-            System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
-            LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
-            XBeeRadio.getInstance().send(remoteAddress, 112, zpayloap);
+//            int[] zpayloap = new int[1 + request.toByteArray().length];
+//            zpayloap[0] = 51;
+//            System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
+//            LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
+
+            TestbedController.getInstance().sendMessage(payload, remoteAddress);
         } catch (Exception e) {     //NOPMD
             LOGGER.error(e.getMessage(), e);
         }

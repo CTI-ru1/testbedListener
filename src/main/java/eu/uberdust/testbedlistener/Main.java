@@ -1,6 +1,6 @@
 package eu.uberdust.testbedlistener;
 
-import eu.uberdust.testbedlistener.factory.CoapListenerFactory;
+import eu.uberdust.testbedlistener.factory.COAPTRListenerFactory;
 import eu.uberdust.testbedlistener.factory.CommandLineListenerFactory;
 import eu.uberdust.testbedlistener.factory.TestbedRuntimeListenerFactory;
 import eu.uberdust.testbedlistener.factory.XbeeListenerFactory;
@@ -37,7 +37,7 @@ public class Main {
             XbeeListenerFactory xbee = new XbeeListenerFactory();
             xbee.run();
         } else if (type.equals("coap")) {
-            CoapListenerFactory coap = new CoapListenerFactory();
+            COAPTRListenerFactory coap = new COAPTRListenerFactory();
             coap.run();
         } else if (type.equals("cmd")) {
             CommandLineListenerFactory cmd = new CommandLineListenerFactory();

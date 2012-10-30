@@ -150,7 +150,7 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
      */
     private void parse(final String toString) {
         LOGGER.info(toString);
-//        TestbedMessageHandler.getInstance().handle(toString);
+        TestbedMessageHandler.getInstance().handle(toString);
 
     }
 
