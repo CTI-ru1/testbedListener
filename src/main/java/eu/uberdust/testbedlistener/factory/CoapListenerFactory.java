@@ -4,7 +4,6 @@ import eu.mksense.XBeeRadio;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.controller.XbeeController;
-import eu.uberdust.testbedlistener.datacollector.CoapCollector;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 
 import java.io.File;
@@ -115,7 +114,7 @@ public class CoapListenerFactory extends AbstractListenerFactory {
         //Listens to new Messages from the TestbedRuntime
         if (ENABLED.equals(PropertyReader.getInstance().getProperties().get("use.datacollector"))) {
             LOGGER.info("Starting CoapController...");
-            new CoapCollector();
+//            new CoapCollector();
         }
         LOGGER.info("up and running");
     }
