@@ -1,5 +1,6 @@
 package eu.uberdust.testbedlistener.datacollector;
 
+import de.uniluebeck.itm.tr.runtime.wsnapp.WSNAppMessages;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import org.apache.log4j.Logger;
 
@@ -57,12 +58,12 @@ public class TestbedMessageHandler {
         return instance;
     }
 
-    public synchronized void handle(final String messageString) {
-        TestbedMessage testbedMessage = new TestbedMessage(messageString);
-        LOGGER.info("ISTRCOAP" + testbedMessage.isValid());
-        if (testbedMessage.isValid()) {
-            executorService.submit(new CoapMessageParser(testbedMessage.getSourceNodeId(), testbedMessage.getDatabinary()));
-        }
+    public synchronized void handle(final WSNAppMessages.Message message) {
+
+//        LOGGER.debug("ISTRCOAP" + testbedMessage.isValid());
+//        if (testbedMessage.isValid()) {
+        executorService.submit(new CoapMessageParser(message.getSourceNodeId(), message.getBinaryData().toByteArray()));
+//        }
 //        {
 ////            executorService.submit(new TestbedRuntimeParser(messageString));
 //        }
@@ -92,12 +93,12 @@ public class TestbedMessageHandler {
                 return;
             }
             try {
-                LOGGER.info(datastring);
+//                LOGGER.info(datastring);
                 String temp2 = datastring.split("DATA:")[1];
                 temp2 = temp2.replaceAll(" ", "");
                 temp2 = temp2.replaceAll("\"", "");
 
-                LOGGER.info(temp2);
+                LOGGER.debug(temp2);
 
                 databinary = new byte[temp2.length() / 2 - 1];
 
@@ -108,8 +109,6 @@ public class TestbedMessageHandler {
                 valid = false;
                 return;
             }
-            LOGGER.info("ISVALID");
-
         }
 
         public String getSourceNodeId() {

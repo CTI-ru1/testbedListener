@@ -2,7 +2,6 @@ package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.coap.Request;
 import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;
@@ -60,43 +59,94 @@ public class PendingRequestHandler {
      * @param coapRequest   the CoAPrequest.
      * @param socketAddress the Socket Address the request originated from.
      */
-    public void addRequest(final String URIHost, final Request coapRequest, final SocketAddress socketAddress) {
+    public void addRequest(final String URIHost, final Message coapRequest, final SocketAddress socketAddress) {
+        for (PendingRequest pendingRequest : pendingRequestList) {
+            if (pendingRequest.getToken().equals(coapRequest.getTokenString())) {
+                pendingRequest.setMID(coapRequest.getMID());
+                pendingRequest.setFirst(true);
+                return;
+            }
+        }
         pendingRequestList.add(new PendingRequest(
                 URIHost,
                 coapRequest.getMID(),
                 coapRequest.getTokenString(),
                 socketAddress,
-                coapRequest.hasOption(OptionNumberRegistry.BLOCK2),
+                coapRequest.hasOption(OptionNumberRegistry.OBSERVE),
                 coapRequest.isConfirmable()));
 
     }
 
-    public SocketAddress isPending(final Message response) {
+    public synchronized SocketAddress isPending(final Message response) {
         final int messageMID = response.getMID();
         final String messageTOKEN = response.getTokenString();
-        LOGGER.info("Looking for " + messageMID + "/" + messageTOKEN);
+        int observeCount = 0;
+        if (response.hasOption(OptionNumberRegistry.OBSERVE)) {
+            observeCount = response.getOptions(OptionNumberRegistry.OBSERVE).get(0).getIntValue();
+        }
+        LOGGER.debug("Looking for " + messageMID + "/" + messageTOKEN + " OBSC " + observeCount);
+        SocketAddress socket = null;
 
         synchronized (PendingRequestHandler.class) {
             if (pendingRequestList.isEmpty()) {
+                LOGGER.error("pendig is empty");
                 return null;
             }
+            PendingRequest mp = null;
             for (PendingRequest pendingRequest : pendingRequestList) {
-                LOGGER.info("Looking for " + messageMID + "/" + messageTOKEN + "@" + pendingRequest.getMid() + "/" + pendingRequest.getToken());
-                if ((response.hasOption(OptionNumberRegistry.BLOCK2))
-                        && (messageTOKEN.equals(pendingRequest.getToken()))) {
-                    return pendingRequest.getSocketAddress();
+                if (response.hasOption(OptionNumberRegistry.OBSERVE)) {
+                    if ((messageTOKEN.equals(pendingRequest.getToken()))
+                            && ((messageMID != pendingRequest.getMid()) || pendingRequest.isFirst())) {
+                        LOGGER.debug("Looking for " + messageMID + "/" + messageTOKEN + "@" + pendingRequest.getMid() + "/" + pendingRequest.getToken() + " OBSC " + observeCount);
+                        mp = null;
+                        LOGGER.debug("Updating message id to " + response.getMID());
+                        pendingRequest.setFirst(false);
+                        pendingRequest.setMID(response.getMID());
+                        socket = pendingRequest.getSocketAddress();
+                        break;
+                    }
+                } else {
+                    LOGGER.debug("checking " + pendingRequest.getMid());
+                    if (messageMID == pendingRequest.getMid()) {
+                        LOGGER.debug("Looking for " + messageMID + "/" + messageTOKEN + "@" + pendingRequest.getMid() + "/" + pendingRequest.getToken() + " OBSC " + observeCount);
+                        if (!pendingRequest.isObserve()) {
+                            mp = pendingRequest;
+                        }
+                        socket = pendingRequest.getSocketAddress();
+                        break;
+                    }
                 }
-                if (messageMID == pendingRequest.getMid()) {
-                    return pendingRequest.getSocketAddress();
-                }
+
+            }
+            if (mp != null) {
+                pendingRequestList.remove(mp);
             }
         }
         //NotFound return false
-        return null;
+        return socket;
 
     }
 
     public void respond(final SocketAddress originSocketAddress, final Message response) {
 
+    }
+
+    public String matchMID4Host(final Message udpRequest) {
+        final int messageMID = udpRequest.getMID();
+
+        LOGGER.info("Looking for " + messageMID);
+
+        synchronized (PendingRequestHandler.class) {
+            if (pendingRequestList.isEmpty()) {
+                return "";
+            }
+            for (PendingRequest pendingRequest : pendingRequestList) {
+                LOGGER.info("Looking for " + messageMID + "@" + pendingRequest.getMid());
+                if (messageMID == pendingRequest.getMid()) {
+                    return pendingRequest.getUriHost();
+                }
+            }
+        }
+        return "";
     }
 }

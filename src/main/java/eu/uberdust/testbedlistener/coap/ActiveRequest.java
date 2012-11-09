@@ -14,12 +14,12 @@ public class ActiveRequest {
      */
     private static final Logger LOGGER = Logger.getLogger(ActiveRequest.class);
 
-    private transient final String uriPath;
-    private transient final int mid;
+    private transient String uriPath;
+    private transient int mid;
     private transient final String token;
     private transient final String host;
-    private transient final SocketAddress socketAddress;
-    private transient final boolean query;
+    private transient SocketAddress socketAddress;
+    private transient boolean query;
 
     /**
      * @return the uri path of the request
@@ -81,6 +81,22 @@ public class ActiveRequest {
         this.token = token;
         this.host = host;
         this.socketAddress = socketAddress;
+        this.query = query;
+    }
+
+    public void setMid(int mid) {
+        this.mid = mid;
+    }
+
+    public void setUriPath(String uriPath) {
+        this.uriPath = uriPath;
+    }
+
+    public void setSocketAddress(SocketAddress socketAddress) {
+        this.socketAddress = socketAddress;
+    }
+
+    public void setQuery(boolean query) {
         this.query = query;
     }
 }

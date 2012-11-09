@@ -8,4 +8,5 @@ package eu.uberdust.testbedlistener.datacollector.parsers;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AbstractMessageParser implements Runnable {
+    public long timeStart;
 }

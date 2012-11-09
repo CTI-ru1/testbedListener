@@ -44,7 +44,7 @@ public class WsCommiter {
             Message.LinkReadings readings = Message.LinkReadings.newBuilder().addReading(linkReading).build();
 
             NetworkManager.getInstance().sendLinkReading(readings);
-            LOGGER.debug(readings);
+            LOGGER.info(readings);
         } catch (Exception e) {
             LOGGER.error("InsertReadingWebSocketClient -link- " + e);
         }

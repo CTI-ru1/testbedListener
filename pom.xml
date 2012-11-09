@@ -146,8 +146,8 @@
         </dependency>
         <dependency>
             <groupId>de.uniluebeck.itm</groupId>
-            <artifactId>tr.iwsn</artifactId>
-            <version>0.8.1</version>
+            <artifactId>tr.iwsn-server</artifactId>
+            <version>0.8.5</version>
         </dependency>
         <dependency>
             <groupId>de.uniluebeck.itm</groupId>

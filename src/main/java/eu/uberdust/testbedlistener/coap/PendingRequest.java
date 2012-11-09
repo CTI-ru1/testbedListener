@@ -16,7 +16,7 @@ public class PendingRequest {
     /**
      * MID of the CoAP Message.
      */
-    private transient final int mid;
+    private transient int mid;
     /**
      * Token of the CoAP message (if Exists).
      */
@@ -37,6 +37,7 @@ public class PendingRequest {
      * True for ConfirmAble CoAP Messages.
      */
     private transient final boolean isConfirm;
+    private transient boolean isFirst;
 
     /**
      * @return the uri path of the request
@@ -108,5 +109,18 @@ public class PendingRequest {
         this.socketAddress = socketAddress;
         this.isObserve = observe;
         this.isConfirm = confirm;
+        this.isFirst = true;
+    }
+
+    public boolean isFirst() {
+        return isFirst;
+    }
+
+    public void setFirst(boolean first) {
+        isFirst = first;
+    }
+
+    public void setMID(final int MID) {
+        this.mid = MID;
     }
 }

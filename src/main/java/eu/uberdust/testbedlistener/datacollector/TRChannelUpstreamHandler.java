@@ -4,6 +4,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import de.uniluebeck.itm.tr.iwsn.overlay.messaging.Messages;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNApp;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNAppMessages;
+import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -31,17 +32,17 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
     /**
      * counts the messages received - stats.
      */
-    private transient int messageCounter;
+    private static int messages = 0;
 
     /**
      * Stats counter.
      */
-    private static final int REPORT_LIMIT = 1000;
+    private static final int REPORT_LIMIT = 100;
 
     /**
      * saves the last time 1000 messages were received - stats.
      */
-    private transient long lastTime;
+    private static long messagesTime = System.currentTimeMillis();
 
     /**
      * map that contains the sensors monitored.
@@ -60,10 +61,6 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
      */
     public TRChannelUpstreamHandler(final TestbedRuntimeCollector testbedRuntimeCollector) {
         this.testbedRuntimeCollector = testbedRuntimeCollector;
-        messageCounter = 0;
-        lastTime = System.currentTimeMillis();
-
-
         testbedPrefix = PropertyReader.getInstance().getProperties().getProperty("testbed.prefix");
         LOGGER.info(testbedPrefix);
         testbedId = Integer.parseInt(PropertyReader.getInstance().getProperties().getProperty("wisedb.testbedid"));
@@ -74,7 +71,6 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        System.out.println("asdsad");
         LOGGER.error(e.getCause());
         if (e instanceof ConnectException) {
             LOGGER.warn("ConnectException");
@@ -87,7 +83,12 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
         Messages.Msg message = (Messages.Msg) e.getMessage();
         if (WSNApp.MSG_TYPE_LISTENER_MESSAGE.equals(message.getMsgType())) {
             final WSNAppMessages.Message wsnAppMessage = WSNAppMessages.Message.parseFrom(message.getPayload());
-            parse(wsnAppMessage.toString());
+//            logMessage();
+//            if (wsnAppMessage.toString().contains("9979")) {
+//                LOGGER.info(wsnAppMessage.toString());
+//                LOGGER.info(Converter.getInstance().payloadToString(wsnAppMessage.getBinaryData().toByteArray()));
+//        }
+            parse(wsnAppMessage);
 
 //            messageCounter++;
 //            if (messageCounter == REPORT_LIMIT) {
@@ -115,8 +116,22 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
 //                messageCounter = 0;
 //            }
 
-        } else {
+        } else
+
+        {
             LOGGER.error("got a message of type " + message.getMsgType());
+        }
+
+    }
+
+    private void logMessage() {
+        synchronized (TRChannelUpstreamHandler.class) {
+            messages++;
+            if (messages == REPORT_LIMIT) {
+                new Evaluator("TRMessageRate", messages / (double) ((System.currentTimeMillis() - messagesTime) / 1000), "messages/sec");
+                messages = 0;
+                messagesTime = System.currentTimeMillis();
+            }
         }
     }
 
@@ -146,11 +161,10 @@ public class TRChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
     /**
      * Submits a new thread to the executor to parse the new string message.
      *
-     * @param toString the string to parse
+     * @param mess the testbed message to parse
      */
-    private void parse(final String toString) {
-        LOGGER.info(toString);
-        TestbedMessageHandler.getInstance().handle(toString);
+    private void parse(final WSNAppMessages.Message mess) {
+        TestbedMessageHandler.getInstance().handle(mess);
 
     }
 

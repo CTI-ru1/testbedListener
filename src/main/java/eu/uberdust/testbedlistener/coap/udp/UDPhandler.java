@@ -1,8 +1,6 @@
 package eu.uberdust.testbedlistener.coap.udp;
 
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -37,13 +35,14 @@ public class UDPhandler extends Thread {//NOPMD
 
     @Override
     public void run() {
+
         while (true) {
             final byte[] buf = new byte[1024];
             final DatagramPacket packet = new DatagramPacket(buf, 1024);
             try {
                 LOGGER.info("Waiting for data");
                 socket.receive(packet);
-                LOGGER.info("received from " + packet.getAddress().getHostAddress());
+                LOGGER.info("received from " + packet.getSocketAddress());
             } catch (IOException e) {
                 LOGGER.fatal(e.getMessage(), e);
             }
@@ -61,13 +60,14 @@ public class UDPhandler extends Thread {//NOPMD
     private void processNewRequest(final DatagramPacket packet) {
         final byte[] inData = cleanupData(packet.getData());
 
-        try {
-            final Request udpRequest = (Request) Message.fromByteArray(inData);
-            executorService.submit(new CoapUdpRequestHandler(packet));
-        } catch (ClassCastException cce) {
-            final Response udpRequest = (Response) Message.fromByteArray(inData);
-            executorService.submit(new CoapUdpResponseHandler(udpRequest, packet.getAddress().getHostAddress(), this));
-        }
+//        try {
+//        final Request udpRequest = (Request) Message.fromByteArray(inData);
+        executorService.submit(new CoapUdpRequestHandler(packet));
+//        } catch (ClassCastException cce) {
+//            LOGGER.info("ISRESPONSE");
+//            final Response udpRequest = (Response) Message.fromByteArray(inData);
+//            executorService.submit(new CoapUdpRequestHandler(udpRequest, packet.getAddress().getHostAddress(), this));
+//        }
 
     }
 

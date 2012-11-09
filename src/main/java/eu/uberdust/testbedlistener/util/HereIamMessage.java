@@ -10,18 +10,19 @@ package eu.uberdust.testbedlistener.util;
 public class HereIamMessage {
 
     private String mess;
+    private byte[] payload;
 
     public String getMess() {
         return mess;
     }
 
     public HereIamMessage(byte[] payload) {
-
+        this.payload = payload;
         StringBuilder sb = new StringBuilder();
 //        System.out.println(payload.length);
 
-        for (int i : payload) {
-            sb.append((char) i);
+        for (int i = 2; i < payload.length; i++) {
+            sb.append((char) payload[i]);
         }
         mess = sb.toString();
     }

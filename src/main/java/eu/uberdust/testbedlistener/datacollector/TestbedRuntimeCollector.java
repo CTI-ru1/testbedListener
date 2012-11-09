@@ -4,7 +4,9 @@ import com.google.protobuf.ByteString;
 import de.uniluebeck.itm.tr.iwsn.overlay.messaging.Messages;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNApp;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNAppMessages;
+import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.controller.TestbedController;
+import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -42,6 +44,7 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
      */
     private transient NioClientSocketChannelFactory factory;
     private transient ClientBootstrap bootstrap;
+    private Channel channel;
 
     /**
      * Default Constructor.
@@ -49,6 +52,7 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
     public TestbedRuntimeCollector() {
         PropertyConfigurator.configure(Thread.currentThread().getContextClassLoader().getResource("log4j.properties"));
         readProperties();
+        channel = null;
 
     }
 
@@ -75,11 +79,12 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
      * @return true when connection was success
      */
     public final boolean start() {
+        System.out.println("Calling Start");
 
         ChannelFuture connectFuture = null;
         // Make a new connection.
         connectFuture = bootstrap.connect(new InetSocketAddress(host, port));
-        final Channel channel = connectFuture.getChannel();
+        channel = connectFuture.getChannel();
         LOGGER.info(channel.getId());
 
         try {
@@ -121,10 +126,6 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
         if (!start()) {
             restart();
         }
-//        else {
-//            TestbedController.getInstance().connectToRuntime();
-//        }
-
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -138,16 +139,22 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
     }
 
     public void sendMessage(byte[] newPayload, String destination) {
-        destination = PropertyReader.getInstance().getTestbedPrefix()+"0x" + destination;
-        LOGGER.info("Sending to " + destination);
-        byte[] framedPayload = new byte[newPayload.length + 1];
-        System.arraycopy(newPayload, 0, framedPayload, 1, newPayload.length);
+        byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
+
+        destination = CoapServer.getInstance().findGateway(destination);
+        destination = PropertyReader.getInstance().getTestbedPrefix() + "0x" + destination;
+        LOGGER.debug("Sending to " + destination);
+        byte[] framedPayload = new byte[newPayload.length + 1 + 2];
+        System.arraycopy(newPayload, 0, framedPayload, 3, newPayload.length);
         framedPayload[0] = 0xa;
+        framedPayload[1] = destinationBytes[0];
+        framedPayload[2] = destinationBytes[1];
+
         ByteString bs = ByteString.copyFrom(framedPayload);
         WSNAppMessages.Message.Builder message = WSNAppMessages.Message.newBuilder()
                 .setBinaryData(bs)
                 .setSourceNodeId("gateway")
-                .setTimestamp("Nobody cares for this demo purpose");
+                .setTimestamp(String.valueOf(System.currentTimeMillis()));
 
         WSNAppMessages.OperationInvocation.Builder oiBuilder = WSNAppMessages.OperationInvocation.newBuilder()
                 .setOperation(WSNAppMessages.OperationInvocation.Operation.SEND)
@@ -162,18 +169,14 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
                 .setPriority(1)
                 .build();
 
-        // Make a new connection.
-        ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(host, port));
-
-        // Wait until the connection is made successfully.
-        Channel channel = connectFuture.awaitUninterruptibly().getChannel();
-        if (!connectFuture.isSuccess()) {
-            LOGGER.error("Client connect failed", connectFuture.getCause());
+        if (channel.isConnected()) {
+//        System.out.println("sending" + channel.getId());
+            channel.write(msg);
+//        System.out.println("sent");
+            LOGGER.info("Sent@" + destination + ":" + Converter.getInstance().payloadToString(framedPayload));
+        } else {
+            System.err.println("Channel not connected!");
         }
-
-        LOGGER.info("WILL WRITE MESSAGE");
-        channel.write(msg);
-        LOGGER.info("WROTE MESSAGE");
     }
 
 

@@ -43,7 +43,10 @@ public class Converter {
         return macAddress;
     }
 
-    public byte[] addressToByte(final String address) {
+    public byte[] addressToByte(String address) {
+        if (address.contains("0x")) {
+            address = address.split("0x")[1];
+        }
         final byte[] macAddress = new byte[2];
         if (address.length() == 4) {
             macAddress[0] = Integer.valueOf(address.substring(0, 2), 16).byteValue();
@@ -68,12 +71,21 @@ public class Converter {
         return new int[0];  //To change body of created methods use File | Settings | File Templates.
     }
 
+    /**
+     * Converts a Byte Array to a hex String.
+     *
+     * @param payload The Byte Array to convert.
+     * @return The hex string of the input.
+     */
     public String payloadToString(final byte[] payload) {
-        final StringBuilder stringBuilder = new StringBuilder("Contents:");
+        final StringBuilder stringBuilder = new StringBuilder();
         for (int i : payload) {
-            stringBuilder.append(Integer.toHexString(i)).append("|");
+            String hexstr = Integer.toHexString(i);
+            if (hexstr.length() > 2) {
+                hexstr = hexstr.substring(hexstr.length() - 2);
+            }
+            stringBuilder.append(hexstr).append("|");
         }
-
         return stringBuilder.toString().substring(0, stringBuilder.toString().length() - 1);
     }
 
@@ -101,7 +113,7 @@ public class Converter {
                 String newCap = capability.replaceAll("<", "").replaceAll(">", "");
                 StringBuilder validCap = new StringBuilder();
                 for (char c : newCap.toCharArray()) {
-                    if (c!=0){
+                    if (c != 0) {
                         validCap.append(c);
                     }
                 }
@@ -126,9 +138,26 @@ public class Converter {
         if (endTag > startTag) {
             return "";
         } else if (endTag + 2 < message.length()) {
-            return message.substring(endTag+2);
+            return message.substring(endTag + 2);
         } else {
             return "";
         }
+    }
+
+    public byte[] commaPayloadtoBytes(final String payloadIn) {
+        final String[] strBytes = payloadIn.split(",");
+        final byte[] payload = new byte[strBytes.length];
+        for (int i = 0; i < payload.length; i++) {
+            payload[i] = Integer.valueOf(strBytes[i].replaceAll("\n", ""), 16).byteValue();
+        }
+        return payload;
+    }
+
+    public static String byteToString(byte macMSB) {
+        String hexstr = Integer.toHexString(macMSB);
+        if (hexstr.length() > 2) {
+            hexstr = hexstr.substring(hexstr.length() - 2);
+        }
+        return hexstr;
     }
 }
