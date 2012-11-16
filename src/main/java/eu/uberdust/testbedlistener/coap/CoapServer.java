@@ -602,6 +602,18 @@ public class CoapServer {
 
     }
 
+    public Map<String, Long> getEndpoints() {
+        return endpoints;
+    }
+
+    public List<ActiveRequest> getActiveRequests() {
+        return activeRequests;
+    }
+
+    public ArrayList<TokenItem> getObservers() {
+        return ownObserves;
+    }
+
 
     class TokenItem {
         String bytes;

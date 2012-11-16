@@ -5,6 +5,7 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.coap.InternalCoapRequest;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
 import org.apache.log4j.Logger;
 
@@ -99,12 +100,9 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
 //        printOptions(coapRequest);
 
         final String uriHost = getURIHost(udpRequest);
+        LOGGER.info("UDP path:" + udpRequest.getUriPath());
         if ("".equals(uriHost)) {
-            LOGGER.error("UDP {source:" + packet.getSocketAddress()
-                    + ", uriPath:" + udpRequest.getUriPath()
-                    + ", uriQuery:" + udpRequest.getQuery()
-                    + ", uriHost:" + uriHost
-                    + "}");
+            InternalCoapRequest.getInstance().handleRequest(udpRequest, packet.getSocketAddress());
             return;
         }
         LOGGER.info("UDP {source:" + packet.getSocketAddress()
@@ -131,7 +129,8 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
             List<Option> options = request.getOptions(OptionNumberRegistry.URI_HOST);
             return options.get(0).getStringValue();
         }
-        return "ffff";
+        //return "ffff";
+        return "";
     }
 
     /**
