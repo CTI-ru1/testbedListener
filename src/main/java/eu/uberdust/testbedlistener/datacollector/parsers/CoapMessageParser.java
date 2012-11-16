@@ -243,7 +243,7 @@ public class CoapMessageParser extends AbstractMessageParser {
             if (capability.equals("temp")) {
                 capability = "temperature";
             }
-            final String nodeUrn = testbedPrefix + address;
+            final String nodeUrn = testbedPrefix + "0x" + address;
             final String capabilityName = (capability).toLowerCase();
 
             final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()

@@ -73,7 +73,7 @@ public class CoapServer {
     private ArrayList<TokenItem> ownObserves;
     private Map<String, String> blockWisePending;
     private Map<Integer, String> ethernetBlockWisePending;
-    private Map<String, Double> gateways;
+    private Map<String, String> gateways;
 
     /**
      * Constructor.
@@ -110,9 +110,9 @@ public class CoapServer {
     }
 
     private void loadGateways() {
-        gateways = new HashMap<String, Double>();
-        loadGatewaysFromFile();
+        gateways = new HashMap<String, String>();
         loadGatewaysFromUberdust();
+        loadGatewaysFromFile();
     }
 
     private void loadGatewaysFromUberdust() {
@@ -139,7 +139,7 @@ public class CoapServer {
                 urn = urn.substring(urn.lastIndexOf(":0x") + 3);
                 final String value = row.split("\t")[3];
                 if ("1.0".equals(value)) {
-                    gateways.put(urn, Double.valueOf(value));
+                    gateways.put(urn, urn);
                 }
             }
         } catch (MalformedURLException e) {
@@ -155,11 +155,18 @@ public class CoapServer {
             bin = new BufferedReader(new FileReader("gateways"));
             String str = bin.readLine();
             while (str != null) {
-                if (str.contains(":")) {
-                    str = str.substring(str.lastIndexOf(":0x") + 3);
+                if (str.contains(",")) {
+                    final String source = str.split(",")[0].substring(str.split(",")[0].lastIndexOf(":0x") + 3);
+                    final String from = str.split(",")[1].substring(str.split(",")[1].lastIndexOf(":0x") + 3);
+                    gateways.put(source, from);
+
+                } else {
+                    if (str.contains(":")) {
+                        str = str.substring(str.lastIndexOf(":0x") + 3);
+                    }
+                    gateways.put(str, str);
                 }
                 LOGGER.info("adding " + str);
-                gateways.put(str, 1.0);
                 str = bin.readLine();
             }
         } catch (FileNotFoundException e) {
@@ -310,7 +317,7 @@ public class CoapServer {
                         && (responseTokenString.equals(activeRequest.getToken()))) {
                     LOGGER.info("Found By Token " + responseTokenString + "==" + activeRequest.getToken());
 //                    response.setPayload(payload);
-                    LOGGER.info(response.getPayloadString());
+//                    LOGGER.info(response.getPayloadString());
 
                     if (activeRequest.getMid() == response.getMID()) return "";
 
@@ -321,13 +328,13 @@ public class CoapServer {
                         return activeRequest.getHost() + "," + activeRequest.getUriPath();
                     }
                 }
-                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
+//                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
                 if (response.getMID() == activeRequest.getMid()) {
                     String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
                     if (activeRequest.hasQuery()) {
                         retVal = null;
                     }
-                    LOGGER.info("Found By MID" + retVal + " " + activeRequest.getHost());
+//                    LOGGER.info("Found By MID" + retVal + " " + activeRequest.getHost());
                     try {
                         activeRequests.remove(activeRequest);
                     } catch (Exception e) {
@@ -588,7 +595,7 @@ public class CoapServer {
 
     public String findGateway(final String destination) {
         if (gateways.containsKey(destination)) {
-            return destination;
+            return gateways.get(destination);
         } else {
             return "1ccd";
         }

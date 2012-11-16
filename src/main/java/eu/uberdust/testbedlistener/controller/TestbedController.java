@@ -79,7 +79,7 @@ public final class TestbedController implements Observer {
         if (o instanceof DeviceCommand) {
             final DeviceCommand command = (DeviceCommand) o;
             LOGGER.debug("TO:" + command.getDestination() + " BYTES:" + command.getPayload());
-//            sendCommand(command.getDestination(), command.getPayload());
+            sendCommand(command.getDestination(), command.getPayload());
         }
     }
 
