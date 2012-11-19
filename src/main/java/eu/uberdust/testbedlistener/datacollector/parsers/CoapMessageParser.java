@@ -114,6 +114,8 @@ public class CoapMessageParser extends AbstractMessageParser {
                 if (requestType.equals("/.well-known/core")) {
                     LOGGER.info("WELL-KNOWN " + mac);
 
+                    CoapServer.getInstance().updateEndpoint(mac, requestType.substring(1));
+
                     final String payloadStr = response.getPayloadString();
 
                     List<String> capabilities = Converter.extractCapabilities(payloadStr);
@@ -139,6 +141,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info(capabilities.size());
                     for (String capability : capabilities) {
                         if (!capability.equals(".well-known/core")) {
+                            if (!CoapServer.getInstance().registerEndpoint(capability, mac)) continue;
                             try {
                                 Thread.sleep(1000);
                                 CoapServer.getInstance().requestForResource(capability, mac, true);
@@ -230,7 +233,7 @@ public class CoapMessageParser extends AbstractMessageParser {
         final byte macLSB = payload[1];
         final String macStr = Converter.byteToString(macMSB) + Converter.byteToString(macLSB);
 //        if (macStr.contains("1ccd")) return;
-        if (!CoapServer.getInstance().registerEndpoint(macStr)) return;
+        if (!CoapServer.getInstance().registerEndpoint(".well-known/core", macStr)) return;
         LOGGER.info("Requesting .well-known/core uri_host:" + macStr);
         Request request = CoapHelper.getWellKnown(macStr);
         CoapServer.getInstance().addRequest(macStr, request, null, false);

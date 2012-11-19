@@ -53,7 +53,7 @@ public class CoapServer {
     /**
      * Registered Endpoints.
      */
-    private transient final Map<String, Long> endpoints;
+    private transient final Map<String, Map<String, Long>> endpoints;
     /**
      * Active Requests.
      */
@@ -68,7 +68,7 @@ public class CoapServer {
      */
     private transient final Random mid;
     private String testbedPrefix;
-    private static final long MILLIS_TO_STALE = 3 * 60 * 1000;
+    private static final long MILLIS_TO_STALE = 1 * 60 * 1000;
     private Map<Integer, String> ownRequests;
     private ArrayList<TokenItem> ownObserves;
     private Map<String, String> blockWisePending;
@@ -81,7 +81,7 @@ public class CoapServer {
     public CoapServer() {
         ownRequests = new HashMap<Integer, String>();
         ownObserves = new ArrayList<TokenItem>();
-        this.endpoints = new HashMap<String, Long>();
+        this.endpoints = new HashMap<String, Map<String, Long>>();
         blockWisePending = new HashMap<String, String>();
         ethernetBlockWisePending = new HashMap<Integer, String>();
         this.activeRequests = new ArrayList<ActiveRequest>();
@@ -132,6 +132,7 @@ public class CoapServer {
                 response.append((char) str);
                 str = out.read();
             }
+
             out.close();
             final String[] splitted = response.toString().split("\n");
             for (final String row : splitted) {
@@ -191,40 +192,53 @@ public class CoapServer {
     }
 
     /**
-     * Adds an endpoint to the list of endpoints provided by the server.
+     * Adds an address to the list of endpoints provided by the server.
      *
-     * @param endpoint an endpoint address.
+     * @param address an address address.
+     * @param path
      * @return if the endoint existed in the server.
      */
-    public boolean registerEndpoint(final String endpoint) {
-        LOGGER.debug("registerEndpoint");
+    public boolean registerEndpoint(final String path, final String address) {
+        LOGGER.error("registerEndpoint-" + address + path);
 
         synchronized (CoapServer.class) {
-            if (endpoints.containsKey(endpoint)) {
-                if (System.currentTimeMillis() - endpoints.get(endpoint) > MILLIS_TO_STALE) {
-                    endpoints.put(endpoint, System.currentTimeMillis());
-                    LOGGER.info("endpoint was stale");
-                    return true;
+            if (endpoints.containsKey(address)) {
+                if (endpoints.get(address).containsKey(path)) {
+                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > MILLIS_TO_STALE) {
+                        endpoints.get(address).put(path, System.currentTimeMillis());
+                        LOGGER.info("address was stale");
+                        return true;
+                    } else {
+//                        endpoints.get(address).put(path, System.currentTimeMillis());
+                        return false;
+                    }
                 } else {
-                    endpoints.put(endpoint, System.currentTimeMillis());
-                    return false;
+                    endpoints.get(address).put(path, System.currentTimeMillis());
+                    return true;
                 }
             } else {
-                LOGGER.debug("inserting endpoint");
-                endpoints.put(endpoint, System.currentTimeMillis());
+                LOGGER.debug("inserting address");
+                HashMap<String, Long> map = new HashMap<String, Long>();
+                map.put(path, System.currentTimeMillis());
+                endpoints.put(address, map);
                 return true;
             }
         }
     }
 
-    public void endpointIsAlive(final String endpoint) {
-        LOGGER.info("endpointIsAlive");
-        synchronized (CoapServer.class) {
-            if (endpoints.containsKey(endpoint)) {
-                endpoints.put(endpoint, System.currentTimeMillis());
-            }
-        }
+    public void updateEndpoint(final String address, final String path) {
+        endpoints.get(address).put(path, System.currentTimeMillis());
     }
+
+
+//    public void endpointIsAlive(final String endpoint, final String path) {
+//        LOGGER.info("endpointIsAlive");
+//        synchronized (CoapServer.class) {
+//            if (endpoints.containsKey(endpoint)) {
+//                endpoints.put(endpoint, System.currentTimeMillis());
+//            }
+//        }
+//    }
 
     /**
      * Sends a reply to a packet using the socket.
@@ -450,32 +464,6 @@ public class CoapServer {
 
     }
 
-//    public boolean isOutside(String address, Message response) {
-////        LOGGER.info("Looking for " + address + " with mid " + response.getMID());
-////        synchronized (CoapServer.class) {
-////            if (activeRequests.isEmpty()) {
-////                return false;
-////            }
-//////            if (!activeRequests.containsKey(address)) return false;
-//////
-//////            for (ActiveRequest activeRequest : activeRequests.get(destination)) {
-//////                if ((response.hasOption(OptionNumberRegistry.TOKEN))
-//////                        && (response.getTokenString().equals(activeRequest.getToken()))) {
-//////                    if (activeRequest.hasQuery()) {
-//////                        return false;
-//////                    } else {
-//////                        return true;
-//////                    }
-//////                }
-//////                if (response.getMID() == activeRequest.getMid()) {
-//////                    String retVal = activeRequest.getUriPath();
-//////                    return true;
-//////                }
-//////            }
-////
-////        }
-////
-////        return false;
 //    }
 
     public void requestForResource(String capability, String address, boolean observe) {
@@ -549,6 +537,34 @@ public class CoapServer {
         ownObserves.add(new TokenItem(token, payload));
     }
 
+    //    public boolean isOutside(String address, Message response) {
+////        LOGGER.info("Looking for " + address + " with mid " + response.getMID());
+////        synchronized (CoapServer.class) {
+////            if (activeRequests.isEmpty()) {
+////                return false;
+////            }
+//////            if (!activeRequests.containsKey(address)) return false;
+//////
+//////            for (ActiveRequest activeRequest : activeRequests.get(destination)) {
+//////                if ((response.hasOption(OptionNumberRegistry.TOKEN))
+//////                        && (response.getTokenString().equals(activeRequest.getToken()))) {
+//////                    if (activeRequest.hasQuery()) {
+//////                        return false;
+//////                    } else {
+//////                        return true;
+//////                    }
+//////                }
+//////                if (response.getMID() == activeRequest.getMid()) {
+//////                    String retVal = activeRequest.getUriPath();
+//////                    return true;
+//////                }
+//////            }
+////
+////        }
+////
+////        return false;
+
+
     public String checkEthernet(String token) {
         LOGGER.info("Checking by token " + token);
         for (TokenItem tokenItem : ownObserves) {
@@ -564,7 +580,6 @@ public class CoapServer {
         PropertyReader.getInstance().setFile("listener.properties");
         CoapServer.getInstance();
     }
-
 
     public void addPending(Integer mid, String remainder) {
         ethernetBlockWisePending.put(mid, remainder);
@@ -602,7 +617,7 @@ public class CoapServer {
 
     }
 
-    public Map<String, Long> getEndpoints() {
+    public Map<String, Map<String, Long>> getEndpoints() {
         return endpoints;
     }
 

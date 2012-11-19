@@ -136,11 +136,6 @@
         </dependency>
         <dependency>
             <groupId>de.uniluebeck.itm</groupId>
-            <artifactId>tr.iwsn-server</artifactId>
-            <version>0.8.4</version>
-        </dependency>
-        <dependency>
-            <groupId>de.uniluebeck.itm</groupId>
             <artifactId>tr.runtime.socket-connector</artifactId>
             <version>0.6.1</version>
         </dependency>
@@ -167,11 +162,6 @@
             <version>1.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/ExampleClient.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.9</version>
         </dependency>
 
     </dependencies>
@@ -263,6 +253,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
@@ -333,8 +324,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
                 <configuration>
-                <show>private</show>
+                    <show>private</show>
                 </configuration>
             </plugin>
         </plugins>
