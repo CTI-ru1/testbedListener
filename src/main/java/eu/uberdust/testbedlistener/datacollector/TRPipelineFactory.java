@@ -1,6 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector;
 
 import de.uniluebeck.itm.tr.iwsn.overlay.messaging.Messages;
+import eu.uberdust.testbedlistener.datacollector.collector.TestbedRuntimeCollector;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;

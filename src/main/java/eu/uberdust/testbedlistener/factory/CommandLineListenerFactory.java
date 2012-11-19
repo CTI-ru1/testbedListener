@@ -2,7 +2,7 @@ package eu.uberdust.testbedlistener.factory;
 
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.controller.CommandLineController;
-import eu.uberdust.testbedlistener.datacollector.CommandLineCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.CommandLineCollector;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 
 /**

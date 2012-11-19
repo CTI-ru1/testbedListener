@@ -3,7 +3,7 @@ package eu.uberdust.testbedlistener.factory;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.controller.TestbedController;
-import eu.uberdust.testbedlistener.datacollector.TestbedRuntimeCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.TestbedRuntimeCollector;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 
 /**

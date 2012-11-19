@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.datacollector;
+package eu.uberdust.testbedlistener.datacollector.collector;
 
 import com.rapplogic.xbee.api.wpan.RxResponse16;
 import eu.mksense.MessageListener;

@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.datacollector;
+package eu.uberdust.testbedlistener.datacollector.collector;
 
 /**
  * Created by IntelliJ IDEA.

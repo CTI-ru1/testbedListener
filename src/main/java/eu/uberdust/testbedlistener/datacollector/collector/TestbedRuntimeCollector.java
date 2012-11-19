@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.datacollector;
+package eu.uberdust.testbedlistener.datacollector.collector;
 
 import com.google.protobuf.ByteString;
 import de.uniluebeck.itm.tr.iwsn.overlay.messaging.Messages;
@@ -6,6 +6,7 @@ import de.uniluebeck.itm.tr.runtime.wsnapp.WSNApp;
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNAppMessages;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.controller.TestbedController;
+import eu.uberdust.testbedlistener.datacollector.TRPipelineFactory;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;

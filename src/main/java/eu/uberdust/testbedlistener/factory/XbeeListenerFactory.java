@@ -3,7 +3,7 @@ package eu.uberdust.testbedlistener.factory;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.controller.XbeeController;
-import eu.uberdust.testbedlistener.datacollector.XbeeCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.XbeeCollector;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 
 import java.io.File;

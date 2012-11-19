@@ -1,7 +1,7 @@
 package eu.uberdust.testbedlistener.controller;
 
 import eu.uberdust.DeviceCommand;
-import eu.uberdust.testbedlistener.datacollector.TestbedRuntimeCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.TestbedRuntimeCollector;
 import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
