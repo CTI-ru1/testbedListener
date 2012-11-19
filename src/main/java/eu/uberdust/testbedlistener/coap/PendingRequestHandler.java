@@ -119,8 +119,10 @@ public class PendingRequestHandler {
                 }
 
             }
-            if (mp != null) {
+            if (response.getCode() == 69 || response.getCode() == 68 || response.getCode() == 65) {
                 CacheHandler.getInstance().setValue(mp.getUriHost(), mp.getUriPath(), response.getPayloadString());
+            }
+            if (mp != null) {
                 pendingRequestList.remove(mp);
             }
         }

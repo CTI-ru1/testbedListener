@@ -69,14 +69,14 @@ public class InternalCoapRequest {
                 }
                 else {
                     response.setContentType(0);
-                    payload.append("CACHE - ").append(pair.getTimestamp()).append(" - ").append(pair.getValue());
+                    payload.append("CACHE - ").append(new Date(pair.getTimestamp())).append(" - ").append(pair.getValue());
                 }
             }
             else {
                 return udpRequest;
             }
         } else if ("/.well-known/core".equals(path)) {
-            payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<observers>");
+            payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>");
             Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
             for (String endpoint : endpoints.keySet()) {
                 for (String resource : endpoints.get(endpoint).keySet()) {
@@ -134,10 +134,13 @@ public class InternalCoapRequest {
                 payload.append(pendingRequest.getMid()).append(" - ");
                 payload.append(pendingRequest.getToken()).append("\n");
             }
-        } else if ("/observers".equals(path)) {
-            ArrayList<CoapServer.TokenItem> observers = CoapServer.getInstance().getObservers();
-            for (CoapServer.TokenItem observer : observers) {
-                payload.append(observer).append("\n");
+        } else if ("/cache".equals(path)) {
+            Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
+            for (String device : cache.keySet()) {
+                for (String uriPath : cache.get(device).keySet()) {
+                    Cache pair = cache.get(device).get(uriPath);
+                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\n");
+                }
             }
             response.setContentType(0);
         } else {

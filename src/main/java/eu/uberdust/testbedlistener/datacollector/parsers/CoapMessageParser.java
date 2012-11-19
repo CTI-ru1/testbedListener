@@ -6,6 +6,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.CoapHelper;
 import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
+import eu.uberdust.testbedlistener.coap.CacheHandler;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
 import eu.uberdust.testbedlistener.util.Converter;
@@ -182,7 +183,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                         CoapServer.getInstance().sendAck(response.getMID(), mac);
                     }
                     sendToUberdust(requestType, mac, response);
-
+                    CacheHandler.getInstance().setValue(mac, "/" + requestType, response.getPayloadString());
 //                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
 //                    LOGGER.debug("Broadcast Message from server");
 //                    Request request = new Request(CodeRegistry.METHOD_GET, false);

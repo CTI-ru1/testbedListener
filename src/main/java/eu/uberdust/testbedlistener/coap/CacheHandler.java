@@ -61,4 +61,8 @@ public class CacheHandler {
             cache.put(uriHost, map);
         }
     }
+
+    public Map<String, Map<String, Cache>> getCache() {
+        return cache;
+    }
 }
