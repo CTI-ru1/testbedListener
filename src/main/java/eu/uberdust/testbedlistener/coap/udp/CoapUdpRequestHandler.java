@@ -82,6 +82,7 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         String uriHost = PendingRequestHandler.getInstance().matchMID4Host(udpRequest);
         printOptions(udpRequest);
         CoapServer.getInstance().sendRequest(udpRequest.toByteArray(), uriHost);
+        PendingRequestHandler.getInstance().removeRequest(udpRequest);
     }
 
     /**
@@ -99,12 +100,17 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
 //
 //        printOptions(coapRequest);
 
-        final String uriHost = getURIHost(udpRequest);
+        String uriHost = getURIHost(udpRequest);
         LOGGER.info("UDP path:" + udpRequest.getUriPath());
         if ("".equals(uriHost)) {
-            InternalCoapRequest.getInstance().handleRequest(udpRequest, packet.getSocketAddress());
+            udpRequest = InternalCoapRequest.getInstance().handleRequest(udpRequest, packet.getSocketAddress());
+            uriHost = getURIHost(udpRequest);
+        }
+        if (udpRequest == null)   {
+            LOGGER.info("UDP null");
             return;
         }
+
         LOGGER.info("UDP {source:" + packet.getSocketAddress()
                 + ", uriPath:" + udpRequest.getUriPath()
                 + ", uriQuery:" + udpRequest.getQuery()
