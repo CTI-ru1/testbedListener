@@ -149,4 +149,26 @@ public class PendingRequestHandler {
         }
         return "";
     }
+
+    public List<PendingRequest> getPendingRequestList() {
+        return pendingRequestList;
+    }
+
+    public void removeRequest(Message udpRequest) {
+        final int messageMID = udpRequest.getMID();
+
+        LOGGER.info("Looking for " + messageMID);
+
+        synchronized (PendingRequestHandler.class) {
+            if (pendingRequestList.isEmpty()) {
+                return;
+            }
+            for (PendingRequest pendingRequest : pendingRequestList) {
+                LOGGER.info("Looking for " + messageMID + "@" + pendingRequest.getMid());
+                if (messageMID == pendingRequest.getMid()) {
+                    pendingRequestList.remove(pendingRequest);
+                }
+            }
+        }
+    }
 }

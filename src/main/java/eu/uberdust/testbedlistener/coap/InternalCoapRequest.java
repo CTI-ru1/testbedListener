@@ -1,12 +1,18 @@
 package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+<<<<<<<HEAD
+        =======
+        >>>>>>>e666d3743c23b1464cf11239fd5b7c2f9784943a
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,7 +36,7 @@ public class InternalCoapRequest {
         }
     }
 
-    public void handleRequest(Message udpRequest, SocketAddress socketAddress) {
+    public Message handleRequest(Message udpRequest, SocketAddress socketAddress) {
         //To change body of created methods use File | Settings | File Templates.
         Message response = new Message();
         StringBuilder payload = new StringBuilder();
@@ -43,8 +49,34 @@ public class InternalCoapRequest {
         response.setMID(udpRequest.getMID());
 
         String path = udpRequest.getUriPath();
-        if ("/.well-known/core".equals(path)) {
-            payload.append("<status>,<endpoints>,<activeRequests>,<observers>\n");
+        if (path.contains("/device/")) {
+            //forward to device or respond from cache
+
+            payload.append(udpRequest.getOptionCount()).append(" - ");
+
+
+            String[] temp = path.split("/device/");
+            temp = temp[1].split("/");
+            String device = temp[0];
+            String uriPath = temp[1];
+            udpRequest.setURI(uriPath);
+            Option host = new Option(OptionNumberRegistry.URI_HOST);
+            host.setStringValue(device);
+            udpRequest.setOption(host);
+//            payload.append(udpRequest.getOptionCount()).append(" - ");
+//            payload.append(udpRequest.getUriPath()).append(" - ");
+//            payload.append(host.getStringValue()).append("\n");
+//            response.setContentType(0);
+//            response.setURI(uriPath);
+//            //response.setOption(host);
+            return udpRequest;
+        } else if ("/.well-known/core".equals(path)) {
+            payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<observers>");
+            Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
+            for (String endpoint : endpoints.keySet()) {
+                payload.append(",<device/").append(endpoint).append(">");
+            }
+            payload.append("\n");
             response.setContentType(40);
         } else if ("/status".equals(path)) {
             payload.append("Working");
@@ -79,6 +111,17 @@ public class InternalCoapRequest {
 
             }
             response.setContentType(0);
+        } else if ("/pendingRequests".equals(path)) {
+            List<PendingRequest> pendingRequests = PendingRequestHandler.getInstance().getPendingRequestList();
+            for (PendingRequest pendingRequest : pendingRequests) {
+                payload.append(pendingRequest.getUriHost());
+                if (pendingRequest.getUriHost().length() == 3)
+                    payload.append(" ");
+                payload.append(" - ");
+                payload.append(pendingRequest.getSocketAddress()).append(" - ");
+                payload.append(pendingRequest.getMid()).append(" - ");
+                payload.append(pendingRequest.getToken()).append("\n");
+            }
         } else if ("/observers".equals(path)) {
             ArrayList<CoapServer.TokenItem> observers = CoapServer.getInstance().getObservers();
             for (CoapServer.TokenItem observer : observers) {
@@ -90,5 +133,6 @@ public class InternalCoapRequest {
         }
         response.setPayload(payload.toString());
         CoapServer.getInstance().sendReply(response.toByteArray(), socketAddress);
+        return null;
     }
 }
