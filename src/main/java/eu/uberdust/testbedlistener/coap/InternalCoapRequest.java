@@ -10,10 +10,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-<<<<<<<HEAD
-        =======
-        >>>>>>>e666d3743c23b1464cf11239fd5b7c2f9784943a
-
 /**
  * Created by IntelliJ IDEA.
  * User: ven0m
