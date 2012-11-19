@@ -1,5 +1,6 @@
 package eu.uberdust.testbedlistener.coap;
 
+import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
@@ -48,29 +49,44 @@ public class InternalCoapRequest {
         if (path.contains("/device/")) {
             //forward to device or respond from cache
 
-            payload.append(udpRequest.getOptionCount()).append(" - ");
-
-
             String[] temp = path.split("/device/");
             temp = temp[1].split("/");
             String device = temp[0];
-            String uriPath = temp[1];
-            udpRequest.setURI(uriPath);
+            StringBuilder uriPath = new StringBuilder();
+            for(int i=1; i<temp.length; i++) {
+                uriPath.append("/").append(temp[i]);
+            }
+            //String uriPath = temp[1];
+            udpRequest.setURI(uriPath.toString());
             Option host = new Option(OptionNumberRegistry.URI_HOST);
             host.setStringValue(device);
             udpRequest.setOption(host);
-//            payload.append(udpRequest.getOptionCount()).append(" - ");
-//            payload.append(udpRequest.getUriPath()).append(" - ");
-//            payload.append(host.getStringValue()).append("\n");
-//            response.setContentType(0);
-//            response.setURI(uriPath);
-//            //response.setOption(host);
-            return udpRequest;
+            
+            if (udpRequest.getCode() == 1) {
+                Cache pair = CacheHandler.getInstance().getValue(device, uriPath.toString());
+                if(pair == null) {
+                    return udpRequest;
+                }
+                else {
+                    response.setContentType(0);
+                    payload.append("CACHE - ").append(pair.getTimestamp()).append(" - ").append(pair.getValue());
+                }
+            }
+            else {
+                return udpRequest;
+            }
         } else if ("/.well-known/core".equals(path)) {
             payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<observers>");
             Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
             for (String endpoint : endpoints.keySet()) {
-                payload.append(",<device/").append(endpoint).append(">");
+                for (String resource : endpoints.get(endpoint).keySet()) {
+                    if (".well-known/core".equals(resource)) {
+                        payload.append(",<device/").append(endpoint).append(">");
+                    }
+                    else {
+                        payload.append(",<device/").append(endpoint).append("/").append(resource).append(">");
+                    }
+                }
             }
             payload.append("\n");
             response.setContentType(40);

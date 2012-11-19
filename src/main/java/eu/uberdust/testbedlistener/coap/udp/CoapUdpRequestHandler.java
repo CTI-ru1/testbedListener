@@ -4,9 +4,7 @@ import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import eu.uberdust.Evaluator;
-import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.coap.InternalCoapRequest;
-import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
+import eu.uberdust.testbedlistener.coap.*;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;
@@ -120,7 +118,6 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         final byte[] data = udpRequest.toByteArray();
 
         PendingRequestHandler.getInstance().addRequest(uriHost, udpRequest, packet.getSocketAddress());
-
         CoapServer.getInstance().sendRequest(data, uriHost);
     }
 

@@ -38,6 +38,7 @@ public class PendingRequest {
      */
     private transient final boolean isConfirm;
     private transient boolean isFirst;
+    private transient String uriPath;
 
     /**
      * @return the uri path of the request
@@ -97,15 +98,17 @@ public class PendingRequest {
      * @param uriHost       the uri path
      * @param mid           the message id
      * @param token         the message token
+     * @param uriPath
      * @param socketAddress the socket address of the sender
      * @param observe       true if it is a observe
      * @param confirm       true if it is a confirm
      */
-    public PendingRequest(final String uriHost, final int mid, final String token, final SocketAddress socketAddress,
+    public PendingRequest(final String uriHost, final int mid, final String token, String uriPath, final SocketAddress socketAddress,
                           final boolean observe, final boolean confirm) {
         this.uriHost = uriHost;
         this.mid = mid;
         this.token = token;
+        this.uriPath = uriPath;
         this.socketAddress = socketAddress;
         this.isObserve = observe;
         this.isConfirm = confirm;
@@ -122,5 +125,9 @@ public class PendingRequest {
 
     public void setMID(final int MID) {
         this.mid = MID;
+    }
+
+    public String getUriPath() {
+        return uriPath;
     }
 }

@@ -71,6 +71,7 @@ public class PendingRequestHandler {
                 URIHost,
                 coapRequest.getMID(),
                 coapRequest.getTokenString(),
+                coapRequest.getUriPath(),
                 socketAddress,
                 coapRequest.hasOption(OptionNumberRegistry.OBSERVE),
                 coapRequest.isConfirmable()));
@@ -119,6 +120,7 @@ public class PendingRequestHandler {
 
             }
             if (mp != null) {
+                CacheHandler.getInstance().setValue(mp.getUriHost(), mp.getUriPath(), response.getPayloadString());
                 pendingRequestList.remove(mp);
             }
         }
