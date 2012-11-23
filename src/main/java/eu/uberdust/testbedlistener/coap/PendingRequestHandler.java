@@ -120,7 +120,12 @@ public class PendingRequestHandler {
 
             }
             if (response.getCode() == 69 || response.getCode() == 68 || response.getCode() == 65) {
-                CacheHandler.getInstance().setValue(mp.getUriHost(), mp.getUriPath(), response.getPayloadString());
+                int maxAge;
+                if (response.hasOption(OptionNumberRegistry.MAX_AGE))
+                    maxAge = response.getMaxAge();
+                else
+                    maxAge = 60;
+                CacheHandler.getInstance().setValue(mp.getUriHost(), mp.getUriPath(), maxAge, response.getContentType(), response.getPayloadString());
             }
             if (mp != null) {
                 pendingRequestList.remove(mp);

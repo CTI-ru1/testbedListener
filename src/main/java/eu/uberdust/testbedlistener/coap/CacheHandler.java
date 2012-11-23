@@ -1,7 +1,9 @@
 package eu.uberdust.testbedlistener.coap;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +18,12 @@ public class CacheHandler {
     private transient Map<String, Map<String, Cache>> cache;
 
     public CacheHandler() {
-        cache = new HashMap<String, Map<String, Cache>>();
+        cache = new TreeMap<String, Map<String, Cache>>(new Comparator<String>() {
+            @Override
+            public int compare(String s, String s1) {
+                return s.compareTo(s1);
+            }
+        });
     }
 
     public static CacheHandler getInstance() {
@@ -34,7 +41,7 @@ public class CacheHandler {
                 for (String resource : cache.get(device).keySet()) {
                     if ( resource.equals(uriPath)) {
                         Cache pair = cache.get(device).get(resource);
-                        if ( pair.getTimestamp() > System.currentTimeMillis() - 3*60*1000) {
+                        if ( pair.getTimestamp() > System.currentTimeMillis() - pair.getMaxAge()*1000) {
                             return pair;
                         }
                     }
@@ -44,19 +51,24 @@ public class CacheHandler {
         return null;
     }
 
-    public void setValue(String uriHost, String uriPath, String value) {
+    public void setValue(String uriHost, String uriPath, int maxAge, int contentType, String value) {
         if ( cache.containsKey(uriHost)) {
             if ( cache.get(uriHost).containsKey(uriPath)) {
-                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis());
+                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType);
             }
             else {
-                Cache pair = new Cache(value, System.currentTimeMillis());
+                Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
                 cache.get(uriHost).put(uriPath, pair);
             }
         }
         else {
-            Cache pair = new Cache(value, System.currentTimeMillis());
-            HashMap<String, Cache> map = new HashMap<String, Cache>();
+            Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
+            TreeMap<String, Cache> map = new TreeMap<String, Cache>(new Comparator<String>() {
+                @Override
+                public int compare(String s, String s1) {
+                    return s.compareTo(s1);
+                }
+            });
             map.put(uriPath, pair);
             cache.put(uriHost, map);
         }

@@ -7,11 +7,14 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
+import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
 import eu.uberdust.testbedlistener.util.PropertyReader;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
@@ -28,11 +31,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,7 +65,7 @@ public class CoapServer {
     /**
      * Random number generator.
      */
-    private transient final Random mid;
+    //private transient final Random mid;
     private String testbedPrefix;
     private static final long MILLIS_TO_STALE = 1 * 60 * 1000;
     private Map<Integer, String> ownRequests;
@@ -74,6 +73,9 @@ public class CoapServer {
     private Map<String, String> blockWisePending;
     private Map<Integer, String> ethernetBlockWisePending;
     private Map<String, String> gateways;
+    private Map<String, Long> duplicates;
+    private int currentMID;
+    private Timer cleanupTimer;
 
     /**
      * Constructor.
@@ -86,8 +88,9 @@ public class CoapServer {
         ethernetBlockWisePending = new HashMap<Integer, String>();
         this.activeRequests = new ArrayList<ActiveRequest>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
-        mid = new Random();
-
+        this.duplicates = new HashMap<String, Long>();
+        currentMID = (int) (Math.random() * 0x10000);
+        this.cleanupTimer = new Timer();
 //        Timer discoveryTimer = new Timer();
 //        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
 
@@ -105,8 +108,28 @@ public class CoapServer {
 //
 //        final Thread threadEthernet = new Thread(new EthernetSupport(thread));
 //        threadEthernet.start();
-
+//        cleanupTimer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                cleanActiveRequests();
+//            }
+//        },5*60*1000);
         LOGGER.info("started CoapServer");
+    }
+
+    public void cleanActiveRequests() {
+        for (ActiveRequest activeRequest : activeRequests) {
+            if (System.currentTimeMillis() - activeRequest.getTimestamp() > 3*60*1000) {
+
+                try {
+
+                    TokenManager.getInstance().releaseToken(Hex.decodeHex(activeRequest.getToken().toCharArray()));
+                } catch (DecoderException e) {
+
+                }
+                activeRequests.remove(activeRequest);
+            }
+        }
     }
 
     private void loadGateways() {
@@ -206,7 +229,7 @@ public class CoapServer {
                 if (endpoints.get(address).containsKey(path)) {
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > MILLIS_TO_STALE) {
                         endpoints.get(address).put(path, System.currentTimeMillis());
-                        LOGGER.info("address was stale");
+                        LOGGER.info("address was stale " + address + " " + path);
                         return true;
                     } else {
 //                        endpoints.get(address).put(path, System.currentTimeMillis());
@@ -217,7 +240,7 @@ public class CoapServer {
                     return true;
                 }
             } else {
-                LOGGER.debug("inserting address");
+                LOGGER.info("inserting address");
                 HashMap<String, Long> map = new HashMap<String, Long>();
                 map.put(path, System.currentTimeMillis());
                 endpoints.put(address, map);
@@ -298,10 +321,18 @@ public class CoapServer {
                     activeRequest.setMid(req.getMID());
                     activeRequest.setSocketAddress(sAddress);
                     activeRequest.setQuery(hasQuery);
+                    activeRequest.setTimestamp(System.currentTimeMillis());
                     return;
                 }
+                if (activeRequest.getUriPath().equals(req.getUriPath()) && activeRequest.getHost().equals(address)) {
+                    if (activeRequest.getSocketAddress() == sAddress) {
+                        activeRequest.setMid(req.getMID());
+                        activeRequest.setTimestamp(System.currentTimeMillis());
+                        activeRequest.setToken(req.getTokenString());
+                    }
+                }
             }
-            ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, sAddress, hasQuery);
+            ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, sAddress, hasQuery, System.currentTimeMillis());
             activeRequests.add(mRequest);
             LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
         }
@@ -389,10 +420,17 @@ public class CoapServer {
      * @param nodeUrn the destination device.
      */
     public void sendRequest(final byte[] data, final String nodeUrn) {
-        byte[] payload = new byte[data.length + 1];
+        final byte[] payload = new byte[data.length + 1];
         payload[0] = 51;
         System.arraycopy(data, 0, payload, 1, data.length);
         TestbedController.getInstance().sendMessage(payload, nodeUrn);
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                TestbedController.getInstance().sendMessage(payload, nodeUrn);
+            }
+        }, 2000);
     }
 
     private void sendXbee(XBeeAddress16 address16, int i, int[] bytes, int counter) {
@@ -451,7 +489,7 @@ public class CoapServer {
                 LOGGER.error(e.getLocalizedMessage(), e);
             }
             final Request request = new Request(CodeRegistry.METHOD_GET, false);
-            request.setMID(mid.nextInt() % 65535);
+            request.setMID(nextMID());
             request.setURI(uri);
 //            List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
 //            request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
@@ -462,6 +500,12 @@ public class CoapServer {
             sendRequest(request.toByteArray(), address);
         }
 
+    }
+
+    public int nextMID() {
+        currentMID = ++currentMID % 0x10000;
+
+        return currentMID;
     }
 
 //    }
@@ -477,15 +521,25 @@ public class CoapServer {
                 LOGGER.error(e, e);
             }
             final Request request = new Request(CodeRegistry.METHOD_GET, false);
-            int newmid = mid.nextInt() % 65535;
+            //int newmid = mid.nextInt() % 65535;
             request.setURI(uri);
-            request.setMID(newmid > 0 ? newmid : -newmid);
+            request.setMID(nextMID());
+            //request.setMID(newmid > 0 ? newmid : -newmid);
             Option urihost = new Option(OptionNumberRegistry.URI_HOST);
             urihost.setStringValue(address);
             request.addOption(urihost);
             if (observe) {
                 request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-                request.setToken(TokenManager.getInstance().acquireToken());
+                byte[] newToken = new byte[8];
+                byte[] tempToken = TokenManager.getInstance().acquireToken();
+                newToken[0] = (byte) 0xFF;
+                newToken[1] = (byte) 0xFF;
+//                for (int i = 0; i < tempToken.length; i++) {
+//                    newToken[2+i] = tempToken[i];
+//                }
+                System.arraycopy(tempToken,0,newToken,2,tempToken.length);
+                request.setToken(newToken);
+//                request.setToken(TokenManager.getInstance().acquireToken());
             }
             request.prettyPrint();
 //            ownRequests.put(request.getMID(), uri.toString());
@@ -627,6 +681,22 @@ public class CoapServer {
 
     public ArrayList<TokenItem> getObservers() {
         return ownObserves;
+    }
+
+    public boolean rejectDuplicate(String response) {
+        if (duplicates.containsKey(response)) {
+            if ( System.currentTimeMillis() - duplicates.get(response) > 10*1000 ) {
+                duplicates.put(response, System.currentTimeMillis());
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+        else {
+            duplicates.put(response, System.currentTimeMillis());
+            return false;
+        }
     }
 
 

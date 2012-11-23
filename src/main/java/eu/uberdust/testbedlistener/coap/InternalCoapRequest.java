@@ -4,6 +4,8 @@ import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
+import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -19,6 +21,9 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class InternalCoapRequest {
+
+    private static final Logger LOGGER = Logger.getLogger(InternalCoapRequest.class);
+
     private static InternalCoapRequest instance = null;
 
     public InternalCoapRequest() {
@@ -53,7 +58,7 @@ public class InternalCoapRequest {
             temp = temp[1].split("/");
             String device = temp[0];
             StringBuilder uriPath = new StringBuilder();
-            for(int i=1; i<temp.length; i++) {
+            for (int i = 1; i < temp.length; i++) {
                 uriPath.append("/").append(temp[i]);
             }
             //String uriPath = temp[1];
@@ -61,29 +66,30 @@ public class InternalCoapRequest {
             Option host = new Option(OptionNumberRegistry.URI_HOST);
             host.setStringValue(device);
             udpRequest.setOption(host);
-            
+
             if (udpRequest.getCode() == 1) {
                 Cache pair = CacheHandler.getInstance().getValue(device, uriPath.toString());
-                if(pair == null) {
+                if (pair == null) {
                     return udpRequest;
+                } else {
+                    response.setContentType(pair.getContentType());
+//                    payload.append("CACHE - ").append(new Date(pair.getTimestamp())).append(" - ").append(pair.getValue());
+                    payload.append(pair.getValue());
+                    Option etag = new Option(OptionNumberRegistry.ETAG);
+                    etag.setIntValue((int) (System.currentTimeMillis() - pair.getTimestamp()));
+                    response.setOption(etag);
                 }
-                else {
-                    response.setContentType(0);
-                    payload.append("CACHE - ").append(new Date(pair.getTimestamp())).append(" - ").append(pair.getValue());
-                }
-            }
-            else {
+            } else {
                 return udpRequest;
             }
         } else if ("/.well-known/core".equals(path)) {
-            payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>");
+            payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>,<wakeup>");
             Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
             for (String endpoint : endpoints.keySet()) {
                 for (String resource : endpoints.get(endpoint).keySet()) {
                     if (".well-known/core".equals(resource)) {
                         payload.append(",<device/").append(endpoint).append(">");
-                    }
-                    else {
+                    } else {
                         payload.append(",<device/").append(endpoint).append("/").append(resource).append(">");
                     }
                 }
@@ -109,16 +115,18 @@ public class InternalCoapRequest {
             }
             response.setContentType(0);
         } else if ("/activeRequests".equals(path)) {
+//            CoapServer.getInstance().cleanActiveRequests();
             List<ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequests();
             for (ActiveRequest activeRequest : activeRequests) {
                 if (activeRequest.getHost().length() == 3) {
                     payload.append(" ");
                 }
                 payload.append(
-                        String.format("%d- %s%s",
+                        String.format("%d- %s%s%s",
                                 activeRequest.getMid(),
                                 activeRequest.getHost(),
-                                activeRequest.getUriPath())
+                                activeRequest.getUriPath(),
+                                activeRequest.getToken())
                 ).append("\n");
 
             }
@@ -139,10 +147,47 @@ public class InternalCoapRequest {
             for (String device : cache.keySet()) {
                 for (String uriPath : cache.get(device).keySet()) {
                     Cache pair = cache.get(device).get(uriPath);
-                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\n");
+                    boolean stale;
+                    if ( System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge()*1000) {
+                        stale = true;
+                    }
+                    else {
+                        stale = false;
+                    }
+                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(pair.getMaxAge()).append("-").append(stale).append("\n");
+
                 }
             }
             response.setContentType(0);
+        } else if ("/wakeup".equals(path) && udpRequest.getCode() == 2) {
+            if (udpRequest.getCode() != 2) {
+                response.setCode(133);
+            } else {
+                String device = udpRequest.getPayloadString();
+                if (device.length() == 3) {
+                    device = "0" + device;
+                }
+                byte[] data = new byte[11];
+                int pos = 0;
+                data[pos++] = 0x69;
+                data[pos++] = 102; // w/e
+                for (int i = 0; i < 4; i += 2) {
+                    data[pos++] = (byte) ((Character.digit(device.charAt(i), 16) << 4) + Character.digit(device.charAt(i + 1), 16));
+                }
+                data[pos++] = 0x68;
+                data[pos++] = 0x65;
+                data[pos++] = 0x72;
+                data[pos++] = 0x65;
+                data[pos++] = 0x69;
+                data[pos++] = 0x61;
+                data[pos] = 0x6D;
+
+                Thread parser = new Thread(new CoapMessageParser("0x" + udpRequest.getPayloadString(), data));
+                parser.start();
+
+                payload.append("Here I am simulation on ").append(udpRequest.getPayloadString());
+                response.setContentType(0);
+            }
         } else {
             response.setCode(132); //not found
         }

@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.datacollector.parsers;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.TokenManager;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.CoapHelper;
 import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
@@ -71,7 +72,6 @@ public class CoapMessageParser extends AbstractMessageParser {
         this.capabilityPrefix = PropertyReader.getInstance().getTestbedCapabilitiesPrefix();
         mid = new Random();
     }
-
     /**
      * When an object implementing interface <code>Runnable</code> is used
      * to create a thread, starting the thread causes the object's
@@ -88,6 +88,11 @@ public class CoapMessageParser extends AbstractMessageParser {
 //        LOGGER.info("from " + address + " {" + mac + "} with payload length " + payload.length + " fistByte " + payload[0]);
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
         LOGGER.info(Converter.getInstance().payloadToString(payload));
+
+        if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
+            LOGGER.info("Rejecting");
+            return;
+        }
 
         HereIamMessage hereIamMessage = new HereIamMessage(payload);
 
@@ -183,7 +188,13 @@ public class CoapMessageParser extends AbstractMessageParser {
                         CoapServer.getInstance().sendAck(response.getMID(), mac);
                     }
                     sendToUberdust(requestType, mac, response);
-                    CacheHandler.getInstance().setValue(mac, "/" + requestType, response.getPayloadString());
+                    int maxAge;
+                    if(response.hasOption(OptionNumberRegistry.MAX_AGE))
+                        maxAge = response.getMaxAge();
+                    else
+                        maxAge = 60;
+                    CacheHandler.getInstance().setValue(mac, "/" + requestType, maxAge, response.getContentType(), response.getPayloadString());
+
 //                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
 //                    LOGGER.debug("Broadcast Message from server");
 //                    Request request = new Request(CodeRegistry.METHOD_GET, false);
@@ -230,11 +241,12 @@ public class CoapMessageParser extends AbstractMessageParser {
     }
 
     private void handleHereIAm() {
-        final byte macMSB = payload[0];
-        final byte macLSB = payload[1];
-        final String macStr = Converter.byteToString(macMSB) + Converter.byteToString(macLSB);
+            final byte macMSB = payload[0];
+            final byte macLSB = payload[1];
+            final String macStr = Converter.byteToString(macMSB) + Converter.byteToString(macLSB);
 //        if (macStr.contains("1ccd")) return;
-        if (!CoapServer.getInstance().registerEndpoint(".well-known/core", macStr)) return;
+        //if (!CoapServer.getInstance().registerEndpoint(".well-known/core", macStr)) return;
+        CoapServer.getInstance().registerEndpoint(".well-known/core", macStr);
         LOGGER.info("Requesting .well-known/core uri_host:" + macStr);
         Request request = CoapHelper.getWellKnown(macStr);
         CoapServer.getInstance().addRequest(macStr, request, null, false);

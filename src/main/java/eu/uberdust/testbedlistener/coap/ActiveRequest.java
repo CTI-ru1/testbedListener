@@ -16,10 +16,20 @@ public class ActiveRequest {
 
     private transient String uriPath;
     private transient int mid;
-    private transient final String token;
+    private transient String token;
     private transient final String host;
     private transient SocketAddress socketAddress;
     private transient boolean query;
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    private long timestamp;
 
     /**
      * @return the uri path of the request
@@ -72,9 +82,10 @@ public class ActiveRequest {
      * @param host          the host of the message
      * @param socketAddress the socket address of the sender
      * @param query         true if it is a query
+     * @param timestamp
      */
     public ActiveRequest(final String uriPath, final int mid, final String token, final String host,
-                         final SocketAddress socketAddress, final boolean query) {
+                         final SocketAddress socketAddress, final boolean query, long timestamp) {
         LOGGER.debug("new ActiveRequest");
         this.uriPath = uriPath;
         this.mid = mid;
@@ -82,6 +93,7 @@ public class ActiveRequest {
         this.host = host;
         this.socketAddress = socketAddress;
         this.query = query;
+        this.timestamp = timestamp;
     }
 
     public void setMid(int mid) {
@@ -98,5 +110,9 @@ public class ActiveRequest {
 
     public void setQuery(boolean query) {
         this.query = query;
+    }
+
+    public void setToken(String tokenString) {
+        this.token = tokenString;
     }
 }
