@@ -1,9 +1,6 @@
 package eu.uberdust.testbedlistener.test;
 
 
-import ch.ethz.inf.vs.californium.coap.Request;
-import eu.uberdust.testbedlistener.CoapHelper;
-import eu.uberdust.testbedlistener.util.Converter;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -36,22 +33,23 @@ public class HereIAmTest
      * Rigourous Test :-)
      */
     public void testApp() {
-        byte[] payload = new byte[3];
-        payload[1] = (byte) 0x99;
-        payload[2] = 0x79;
-        byte macMSB = payload[1];
-        byte macLSB = payload[2];
-        final String macStr = Converter.byteToString(macMSB) + Converter.byteToString(macLSB);
-        LOGGER.info(macStr);
 
-        Request request = CoapHelper.getWellKnown(macStr);
-        request.prettyPrint();
-        request = CoapHelper.getWellKnown(macStr, 0);
-        request.prettyPrint();
-        request = CoapHelper.getWellKnown(macStr, 1);
-        request.prettyPrint();
-        request = CoapHelper.getWellKnown(macStr, 2);
-        request.prettyPrint();
+//        byte[] payload = new byte[3];
+//        payload[1] = (byte) 0x99;
+//        payload[2] = 0x79;
+//        byte macMSB = payload[1];
+//        byte macLSB = payload[2];
+//        final String macStr = Converter.byteToString(macMSB) + Converter.byteToString(macLSB);
+//        LOGGER.info(macStr);
+//
+//        Request request = CoapHelper.getWellKnown(macStr);
+//        request.prettyPrint();
+//        request = CoapHelper.getWellKnown(macStr, 0);
+//        request.prettyPrint();
+//        request = CoapHelper.getWellKnown(macStr, 1);
+//        request.prettyPrint();
+//        request = CoapHelper.getWellKnown(macStr, 2);
+//        request.prettyPrint();
 
 
 //            try {
