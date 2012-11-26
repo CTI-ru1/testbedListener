@@ -329,6 +329,7 @@ public class CoapServer {
                         activeRequest.setMid(req.getMID());
                         activeRequest.setTimestamp(System.currentTimeMillis());
                         activeRequest.setToken(req.getTokenString());
+                        return;
                     }
                 }
             }
@@ -534,9 +535,6 @@ public class CoapServer {
                 byte[] tempToken = TokenManager.getInstance().acquireToken();
                 newToken[0] = (byte) 0xFF;
                 newToken[1] = (byte) 0xFF;
-//                for (int i = 0; i < tempToken.length; i++) {
-//                    newToken[2+i] = tempToken[i];
-//                }
                 System.arraycopy(tempToken,0,newToken,2,tempToken.length);
                 request.setToken(newToken);
 //                request.setToken(TokenManager.getInstance().acquireToken());

@@ -75,7 +75,7 @@ public class PendingRequestHandler {
                 socketAddress,
                 coapRequest.hasOption(OptionNumberRegistry.OBSERVE),
                 coapRequest.isConfirmable()));
-
+        LOGGER.info("added new pending " + pendingRequestList.isEmpty());
     }
 
     public synchronized SocketAddress isPending(final Message response) {
@@ -85,7 +85,7 @@ public class PendingRequestHandler {
         if (response.hasOption(OptionNumberRegistry.OBSERVE)) {
             observeCount = response.getOptions(OptionNumberRegistry.OBSERVE).get(0).getIntValue();
         }
-        LOGGER.debug("Looking for " + messageMID + "/" + messageTOKEN + " OBSC " + observeCount);
+        LOGGER.info("Looking for " + messageMID + "/" + messageTOKEN + " OBSC " + observeCount);
         SocketAddress socket = null;
 
         synchronized (PendingRequestHandler.class) {
@@ -99,7 +99,7 @@ public class PendingRequestHandler {
                     if ((messageTOKEN.equals(pendingRequest.getToken()))
                             && ((messageMID != pendingRequest.getMid()) || pendingRequest.isFirst())) {
                         LOGGER.debug("Looking for " + messageMID + "/" + messageTOKEN + "@" + pendingRequest.getMid() + "/" + pendingRequest.getToken() + " OBSC " + observeCount);
-                        mp = null;
+                        mp = pendingRequest;
                         LOGGER.debug("Updating message id to " + response.getMID());
                         pendingRequest.setFirst(false);
                         pendingRequest.setMID(response.getMID());
@@ -127,7 +127,7 @@ public class PendingRequestHandler {
                     maxAge = 60;
                 CacheHandler.getInstance().setValue(mp.getUriHost(), mp.getUriPath(), maxAge, response.getContentType(), response.getPayloadString());
             }
-            if (mp != null) {
+            if (mp != null && !response.hasOption(OptionNumberRegistry.OBSERVE)) {
                 pendingRequestList.remove(mp);
             }
         }

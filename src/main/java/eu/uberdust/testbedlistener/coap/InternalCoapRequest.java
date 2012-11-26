@@ -67,7 +67,7 @@ public class InternalCoapRequest {
             host.setStringValue(device);
             udpRequest.setOption(host);
 
-            if (udpRequest.getCode() == 1) {
+            if (udpRequest.getCode() == 1 && !udpRequest.hasOption(OptionNumberRegistry.OBSERVE)) {
                 Cache pair = CacheHandler.getInstance().getValue(device, uriPath.toString());
                 if (pair == null) {
                     return udpRequest;
@@ -109,7 +109,7 @@ public class InternalCoapRequest {
                         payload.append(" ");
                     }
                     payload.append(endpoint);
-                    payload.append("/" + uripath);
+                    payload.append("/").append(uripath);
                     payload.append("\n");
                 }
             }
@@ -118,16 +118,7 @@ public class InternalCoapRequest {
 //            CoapServer.getInstance().cleanActiveRequests();
             List<ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequests();
             for (ActiveRequest activeRequest : activeRequests) {
-                if (activeRequest.getHost().length() == 3) {
-                    payload.append(" ");
-                }
-                payload.append(
-                        String.format("%d- %s%s%s",
-                                activeRequest.getMid(),
-                                activeRequest.getHost(),
-                                activeRequest.getUriPath(),
-                                activeRequest.getToken())
-                ).append("\n");
+                payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\n");
 
             }
             response.setContentType(0);
