@@ -124,7 +124,7 @@ public class PendingRequestHandler {
                 if (response.hasOption(OptionNumberRegistry.MAX_AGE))
                     maxAge = response.getMaxAge();
                 else
-                    maxAge = 60;
+                    maxAge = 120;
                 CacheHandler.getInstance().setValue(mp.getUriHost(), mp.getUriPath(), maxAge, response.getContentType(), response.getPayloadString());
             }
             if (mp != null && !response.hasOption(OptionNumberRegistry.OBSERVE)) {
