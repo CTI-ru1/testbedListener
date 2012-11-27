@@ -6,10 +6,12 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Created by IntelliJ IDEA.
@@ -95,7 +97,30 @@ public class InternalCoapRequest {
             payload.append("\n");
             response.setContentType(40);
         } else if ("/status".equals(path)) {
-            payload.append("Working");
+            payload.append("Online").append("\n");
+            Properties prop = new Properties();
+            try {
+                prop.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("version.properties"));
+                payload.append("Version:").append(prop.get("version")).append("\n");
+                payload.append("Build:").append(prop.get("build")).append("\n");
+                payload.append("Running Threads:" + Thread.activeCount()).append("\n");
+                payload.append("Cache Size:" + CacheHandler.getInstance().getCache().keySet().size() + " nodes").append("\n");
+                payload.append("Pending Connections:" + PendingRequestHandler.getInstance().getPendingRequestList().size()).append("\n");
+                int mb = 1024 * 1024;
+                //Getting the runtime reference from system
+                Runtime runtime = Runtime.getRuntime();
+                //Print used memory
+                payload.append("Used Memory:").append((runtime.totalMemory() - runtime.freeMemory()) / mb).append(" MB").append("\n");
+                //Print free memory
+                payload.append("Free Memory:" + runtime.freeMemory() / mb).append(" MB").append("\n");
+                //Print total available memory
+                payload.append("Total Memory:" + runtime.totalMemory() / mb).append(" MB").append("\n");
+                //Print Maximum available memory
+                payload.append("Max Memory:" + runtime.maxMemory() / mb).append(" MB").append("\n");
+
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
             response.setContentType(0);
         } else if ("/endpoints".equals(path)) {
             Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
@@ -143,7 +168,7 @@ public class InternalCoapRequest {
                         stale = false;
                     }
 //                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(pair.getMaxAge()).append("-").append(stale?"out-of-date":"cached").append("\n");
-                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append((System.currentTimeMillis() - pair.getTimestamp())/1000).append("sec").append("\n");
+                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append((System.currentTimeMillis() - pair.getTimestamp()) / 1000).append("sec").append("\n");
 
                 }
             }
