@@ -3,7 +3,6 @@ package eu.uberdust.testbedlistener.datacollector.parsers;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.TokenManager;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.CoapHelper;
 import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
@@ -72,6 +71,7 @@ public class CoapMessageParser extends AbstractMessageParser {
         this.capabilityPrefix = PropertyReader.getInstance().getTestbedCapabilitiesPrefix();
         mid = new Random();
     }
+
     /**
      * When an object implementing interface <code>Runnable</code> is used
      * to create a thread, starting the thread causes the object's
@@ -147,7 +147,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info(capabilities.size());
                     for (String capability : capabilities) {
                         if (!capability.equals(".well-known/core")) {
-                            if (!CoapServer.getInstance().registerEndpoint(capability, mac)) continue;
+                            if (CoapServer.getInstance().isAlive(capability, mac)) continue;
                             try {
                                 Thread.sleep(1000);
                                 CoapServer.getInstance().requestForResource(capability, mac, true);
@@ -187,12 +187,13 @@ public class CoapMessageParser extends AbstractMessageParser {
                     if (response.isConfirmable()) {
                         CoapServer.getInstance().sendAck(response.getMID(), mac);
                     }
+                    CoapServer.getInstance().registerEndpoint(requestType, mac);
                     sendToUberdust(requestType, mac, response);
                     int maxAge;
-                    if(response.hasOption(OptionNumberRegistry.MAX_AGE))
+                    if (response.hasOption(OptionNumberRegistry.MAX_AGE))
                         maxAge = response.getMaxAge();
                     else
-                        maxAge = 60;
+                        maxAge = 120;
                     CacheHandler.getInstance().setValue(mac, "/" + requestType, maxAge, response.getContentType(), response.getPayloadString());
 
 //                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
@@ -241,9 +242,9 @@ public class CoapMessageParser extends AbstractMessageParser {
     }
 
     private void handleHereIAm() {
-            final byte macMSB = payload[0];
-            final byte macLSB = payload[1];
-            final String macStr = Converter.byteToString(macMSB) + Converter.byteToString(macLSB);
+        final byte macMSB = payload[0];
+        final byte macLSB = payload[1];
+        final String macStr = Converter.byteToString(macMSB) + Converter.byteToString(macLSB);
 //        if (macStr.contains("1ccd")) return;
         //if (!CoapServer.getInstance().registerEndpoint(".well-known/core", macStr)) return;
         CoapServer.getInstance().registerEndpoint(".well-known/core", macStr);

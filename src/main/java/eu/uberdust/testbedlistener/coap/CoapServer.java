@@ -6,15 +6,12 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.TokenManager;
-import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
 import eu.uberdust.testbedlistener.util.PropertyReader;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
+import eu.uberdust.testbedlistener.util.TokenManager;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
@@ -31,7 +28,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by IntelliJ IDEA.
@@ -119,14 +121,13 @@ public class CoapServer {
 
     public void cleanActiveRequests() {
         for (ActiveRequest activeRequest : activeRequests) {
-            if (System.currentTimeMillis() - activeRequest.getTimestamp() > 3*60*1000) {
+            if (System.currentTimeMillis() - activeRequest.getTimestamp() > 3 * 60 * 1000) {
 
-                try {
-
-                    TokenManager.getInstance().releaseToken(Hex.decodeHex(activeRequest.getToken().toCharArray()));
-                } catch (DecoderException e) {
-
-                }
+//                try {
+//                    TokenManager.getInstance().releaseToken(Hex.decodeHex(activeRequest.getToken().toCharArray()));
+//                } catch (DecoderException e) {
+//
+//                }
                 activeRequests.remove(activeRequest);
             }
         }
@@ -245,6 +246,34 @@ public class CoapServer {
                 map.put(path, System.currentTimeMillis());
                 endpoints.put(address, map);
                 return true;
+            }
+        }
+    }
+
+
+    /**
+     * Adds an address to the list of endpoints provided by the server.
+     *
+     * @param address an address address.
+     * @param path
+     * @return if the endoint existed in the server.
+     */
+    public boolean isAlive(final String path, final String address) {
+        LOGGER.error("isAlive-" + address + path);
+        synchronized (CoapServer.class) {
+            if (endpoints.containsKey(address)) {
+                if (endpoints.get(address).containsKey(path)) {
+                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > MILLIS_TO_STALE) {
+                        LOGGER.info("address was stale " + address + " " + path);
+                        return false;
+                    } else {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
             }
         }
     }
@@ -431,7 +460,13 @@ public class CoapServer {
             public void run() {
                 TestbedController.getInstance().sendMessage(payload, nodeUrn);
             }
-        }, 2000);
+        }, 1000);
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                TestbedController.getInstance().sendMessage(payload, nodeUrn);
+            }
+        }, 2500);
     }
 
     private void sendXbee(XBeeAddress16 address16, int i, int[] bytes, int counter) {
@@ -531,12 +566,7 @@ public class CoapServer {
             request.addOption(urihost);
             if (observe) {
                 request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-                byte[] newToken = new byte[8];
-                byte[] tempToken = TokenManager.getInstance().acquireToken();
-                newToken[0] = (byte) 0xFF;
-                newToken[1] = (byte) 0xFF;
-                System.arraycopy(tempToken,0,newToken,2,tempToken.length);
-                request.setToken(newToken);
+                request.setToken(TokenManager.getInstance().acquireToken());
 //                request.setToken(TokenManager.getInstance().acquireToken());
             }
             request.prettyPrint();
@@ -544,6 +574,8 @@ public class CoapServer {
             addRequest(address, request, null, false);
             LOGGER.info(request.getMID());
             sendRequest(request.toByteArray(), address);
+            
+
         }
     }
 
@@ -683,15 +715,13 @@ public class CoapServer {
 
     public boolean rejectDuplicate(String response) {
         if (duplicates.containsKey(response)) {
-            if ( System.currentTimeMillis() - duplicates.get(response) > 10*1000 ) {
+            if (System.currentTimeMillis() - duplicates.get(response) > 10 * 1000) {
                 duplicates.put(response, System.currentTimeMillis());
                 return false;
-            }
-            else {
+            } else {
                 return true;
             }
-        }
-        else {
+        } else {
             duplicates.put(response, System.currentTimeMillis());
             return false;
         }
