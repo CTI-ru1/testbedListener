@@ -1,6 +1,5 @@
 package eu.uberdust.testbedlistener.coap;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
@@ -8,7 +7,6 @@ import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -139,13 +137,13 @@ public class InternalCoapRequest {
                 for (String uriPath : cache.get(device).keySet()) {
                     Cache pair = cache.get(device).get(uriPath);
                     boolean stale;
-                    if ( System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge()*1000) {
+                    if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge() * 1000) {
                         stale = true;
-                    }
-                    else {
+                    } else {
                         stale = false;
                     }
-                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(pair.getMaxAge()).append("-").append(stale).append("\n");
+//                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(pair.getMaxAge()).append("-").append(stale?"out-of-date":"cached").append("\n");
+                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append((System.currentTimeMillis() - pair.getTimestamp())/1000).append("sec").append("\n");
 
                 }
             }
