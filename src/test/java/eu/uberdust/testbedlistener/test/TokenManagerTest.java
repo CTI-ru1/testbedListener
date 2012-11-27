@@ -39,7 +39,7 @@ public class TokenManagerTest extends TestCase {
      * Rigourous Test :-)
      */
     public void testApp() {
-        int count = 8000000;
+        int count = 2000000;
         generateTokens(count);
         LOGGER.info("Tested " + count);
 
