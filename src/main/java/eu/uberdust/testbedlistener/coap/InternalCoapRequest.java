@@ -100,9 +100,6 @@ public class InternalCoapRequest {
             payload.append("Online").append("\n");
             Properties prop = new Properties();
             try {
-                prop.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("version.properties"));
-                payload.append("Version:").append(prop.get("version")).append("\n");
-                payload.append("Build:").append(prop.get("build")).append("\n");
                 payload.append("Running Threads:" + Thread.activeCount()).append("\n");
                 payload.append("Cache Size:" + CacheHandler.getInstance().getCache().keySet().size() + " nodes").append("\n");
                 payload.append("Pending Connections:" + PendingRequestHandler.getInstance().getPendingRequestList().size()).append("\n");
@@ -117,6 +114,9 @@ public class InternalCoapRequest {
                 payload.append("Total Memory:" + runtime.totalMemory() / mb).append(" MB").append("\n");
                 //Print Maximum available memory
                 payload.append("Max Memory:" + runtime.maxMemory() / mb).append(" MB").append("\n");
+                prop.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("version.properties"));
+                payload.append("Version:").append(prop.get("version")).append("\n");
+                payload.append("Build:").append(prop.get("build")).append("\n");
 
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
