@@ -140,45 +140,43 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
     }
 
     public void sendMessage(byte[] newPayload, String destination) {
-        synchronized (TestbedRuntimeCollector.class) {
-            byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
+        byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
 
-            destination = CoapServer.getInstance().findGateway(destination);
-            destination = PropertyReader.getInstance().getTestbedPrefix() + "0x" + destination;
-            LOGGER.debug("Sending to " + destination);
-            byte[] framedPayload = new byte[newPayload.length + 1 + 2];
-            System.arraycopy(newPayload, 0, framedPayload, 3, newPayload.length);
-            framedPayload[0] = 0xa;
-            framedPayload[1] = destinationBytes[0];
-            framedPayload[2] = destinationBytes[1];
+        destination = CoapServer.getInstance().findGateway(destination);
+        destination = PropertyReader.getInstance().getTestbedPrefix() + "0x" + destination;
+        LOGGER.debug("Sending to " + destination);
+        byte[] framedPayload = new byte[newPayload.length + 1 + 2];
+        System.arraycopy(newPayload, 0, framedPayload, 3, newPayload.length);
+        framedPayload[0] = 0xa;
+        framedPayload[1] = destinationBytes[0];
+        framedPayload[2] = destinationBytes[1];
 
-            ByteString bs = ByteString.copyFrom(framedPayload);
-            WSNAppMessages.Message.Builder message = WSNAppMessages.Message.newBuilder()
-                    .setBinaryData(bs)
-                    .setSourceNodeId("gateway")
-                    .setTimestamp(String.valueOf(System.currentTimeMillis()));
+        ByteString bs = ByteString.copyFrom(framedPayload);
+        WSNAppMessages.Message.Builder message = WSNAppMessages.Message.newBuilder()
+                .setBinaryData(bs)
+                .setSourceNodeId("gateway")
+                .setTimestamp(String.valueOf(System.currentTimeMillis()));
 
-            WSNAppMessages.OperationInvocation.Builder oiBuilder = WSNAppMessages.OperationInvocation.newBuilder()
-                    .setOperation(WSNAppMessages.OperationInvocation.Operation.SEND)
-                    .setArguments(message.build().toByteString());
+        WSNAppMessages.OperationInvocation.Builder oiBuilder = WSNAppMessages.OperationInvocation.newBuilder()
+                .setOperation(WSNAppMessages.OperationInvocation.Operation.SEND)
+                .setArguments(message.build().toByteString());
 
 
-            Messages.Msg msg = Messages.Msg.newBuilder()
-                    .setMsgType(WSNApp.MSG_TYPE_OPERATION_INVOCATION_REQUEST)
-                    .setFrom("gateway")
-                    .setTo(destination)
-                    .setPayload(oiBuilder.build().toByteString())
-                    .setPriority(1)
-                    .build();
+        Messages.Msg msg = Messages.Msg.newBuilder()
+                .setMsgType(WSNApp.MSG_TYPE_OPERATION_INVOCATION_REQUEST)
+                .setFrom("gateway")
+                .setTo(destination)
+                .setPayload(oiBuilder.build().toByteString())
+                .setPriority(1)
+                .build();
 
-            if (channel.isConnected()) {
+        if (channel.isConnected()) {
 //        System.out.println("sending" + channel.getId());
-                channel.write(msg);
+            channel.write(msg);
 //        System.out.println("sent");
-                LOGGER.info("Sent@" + destination + ":" + Converter.getInstance().payloadToString(framedPayload));
-            } else {
-                System.err.println("Channel not connected!");
-            }
+            LOGGER.info("Sent@" + destination + ":" + Converter.getInstance().payloadToString(framedPayload));
+        } else {
+            System.err.println("Channel not connected!");
         }
     }
 

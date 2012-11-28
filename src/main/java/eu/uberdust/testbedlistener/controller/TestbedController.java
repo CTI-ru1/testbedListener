@@ -65,7 +65,11 @@ public final class TestbedController implements Observer {
     }
 
     public void sendMessage(byte[] payload, String destination) {
-        testbed.sendMessage(payload, destination);
+        try {
+            testbed.sendMessage(payload, destination);
+        } catch (Exception e) {
+            LOGGER.error(e, e);
+        }
     }
 
 
