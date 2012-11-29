@@ -9,6 +9,7 @@ import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
 import eu.uberdust.testbedlistener.coap.CacheHandler;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
+import eu.uberdust.testbedlistener.coap.viewer.IncomingMessage;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
 import eu.uberdust.testbedlistener.util.PropertyReader;
@@ -85,6 +86,8 @@ public class CoapMessageParser extends AbstractMessageParser {
     @Override
     public void run() {
         if (!(type == 0x69)) return;
+
+        new IncomingMessage(payload);
 //        LOGGER.info("from " + address + " {" + mac + "} with payload length " + payload.length + " fistByte " + payload[0]);
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
         LOGGER.info(Converter.getInstance().payloadToString(payload));
