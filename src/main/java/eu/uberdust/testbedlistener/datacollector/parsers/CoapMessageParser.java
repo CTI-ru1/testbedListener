@@ -6,9 +6,10 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.CoapHelper;
 import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
-import eu.uberdust.testbedlistener.coap.CacheHandler;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
+import eu.uberdust.testbedlistener.datacollector.notify.CacheNotify;
+import eu.uberdust.testbedlistener.datacollector.notify.UberdustNotify;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
 import eu.uberdust.testbedlistener.util.PropertyReader;
@@ -192,22 +193,17 @@ public class CoapMessageParser extends AbstractMessageParser {
                         CoapServer.getInstance().sendAck(response.getMID(), mac);
                     }
                     CoapServer.getInstance().registerEndpoint(requestType, mac);
-                    final String finalRequestType = requestType;
-                    Thread d = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            sendToUberdust(finalRequestType, mac, response);
-                        }
-                    });
-                    d.start();
+//                    Thread d = new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            sendToUberdust(finalRequestType, mac, response);
+//                        }
+//                    });
+//                    d.start();
 
+                    new Thread(new UberdustNotify(mac, requestType, response, testbedPrefix, capabilityPrefix)).start();
+                    new Thread(new CacheNotify(mac, requestType, response)).start();
 
-                    int maxAge;
-                    if (response.hasOption(OptionNumberRegistry.MAX_AGE))
-                        maxAge = response.getMaxAge();
-                    else
-                        maxAge = 120;
-                    CacheHandler.getInstance().setValue(mac, "/" + requestType, maxAge, response.getContentType(), response.getPayloadString());
 
 //                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
 //                    LOGGER.debug("Broadcast Message from server");
@@ -287,30 +283,9 @@ public class CoapMessageParser extends AbstractMessageParser {
         new WsCommiter(readings.build());
     }
 
-    private void sendToUberdust(final String uriPath, String address, final Message response) {
-        LOGGER.info(uriPath);
-        if (uriPath != null) {
-            String myuripath = "";
-            myuripath = uriPath.replaceAll("\\/", ":");
-            if (':' == myuripath.charAt(0)) {
-                myuripath = myuripath.substring(1);
-            }
-
-            if (myuripath.length() > 3) {
-
-                LOGGER.info(myuripath);
-                LOGGER.info(myuripath.length());
-            }
-
-            try {
-                Double capabilityValue = Double.valueOf(response.getPayloadString());
-                commitNodeReading("0x" + address, myuripath, capabilityValue);
-            } catch (final NumberFormatException e) {
-                String res = response.getPayloadString();
-                commitNodeReading("0x" + address, myuripath, res);
-            }
-        }
-    }
+//    private void sendToUberdust(final String uriPath, String address, final Message response) {
+//
+//    }
 
     private void commitNodeReading(final String nodeId, String capability, final Double value) {
         if (capability.equals("temp")) {
