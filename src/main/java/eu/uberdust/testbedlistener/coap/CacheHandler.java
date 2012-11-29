@@ -1,8 +1,8 @@
 package eu.uberdust.testbedlistener.coap;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
 import java.util.TreeMap;
 
 /**
@@ -14,7 +14,8 @@ import java.util.TreeMap;
  */
 public class CacheHandler {
     private static CacheHandler instance = null;
-    
+    private Timer timer;
+
     private transient Map<String, Map<String, Cache>> cache;
 
     public CacheHandler() {
@@ -24,6 +25,22 @@ public class CacheHandler {
                 return s.compareTo(s1);
             }
         });
+
+//        timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                for (String node : cache.keySet()) {
+//                    for (String capability : cache.get(node).keySet()) {
+//                        if (System.currentTimeMillis() - cache.get(node).get(capability).getTimestamp() < 120000) {
+//                            System.out.println("CacheCheck " + node + " @ " + capability + " : outofdate");
+//
+//                        }
+//                    }
+//                }
+//
+//            }
+//        }, 60000, 60000);
     }
 
     public static CacheHandler getInstance() {
@@ -37,11 +54,11 @@ public class CacheHandler {
 
     public Cache getValue(String uriHost, String uriPath) {
         for (String device : cache.keySet()) {
-            if ( device.equals(uriHost)) {
+            if (device.equals(uriHost)) {
                 for (String resource : cache.get(device).keySet()) {
-                    if ( resource.equals(uriPath)) {
+                    if (resource.equals(uriPath)) {
                         Cache pair = cache.get(device).get(resource);
-                        if ( pair.getTimestamp() > System.currentTimeMillis() - pair.getMaxAge()*1000) {
+                        if (pair.getTimestamp() > System.currentTimeMillis() - pair.getMaxAge() * 1000) {
                             return pair;
                         }
                     }
@@ -52,16 +69,14 @@ public class CacheHandler {
     }
 
     public void setValue(String uriHost, String uriPath, int maxAge, int contentType, String value) {
-        if ( cache.containsKey(uriHost)) {
-            if ( cache.get(uriHost).containsKey(uriPath)) {
+        if (cache.containsKey(uriHost)) {
+            if (cache.get(uriHost).containsKey(uriPath)) {
                 cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType);
-            }
-            else {
+            } else {
                 Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
                 cache.get(uriHost).put(uriPath, pair);
             }
-        }
-        else {
+        } else {
             Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
             TreeMap<String, Cache> map = new TreeMap<String, Cache>(new Comparator<String>() {
                 @Override

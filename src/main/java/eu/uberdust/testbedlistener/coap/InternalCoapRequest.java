@@ -168,7 +168,8 @@ public class InternalCoapRequest {
                         stale = false;
                     }
 //                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(pair.getMaxAge()).append("-").append(stale?"out-of-date":"cached").append("\n");
-                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append((System.currentTimeMillis() - pair.getTimestamp()) / 1000).append("sec").append("\n");
+                    long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
+                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > 120 ? " *" : "").append("\n");
 
                 }
             }

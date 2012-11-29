@@ -9,7 +9,6 @@ import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
 import eu.uberdust.testbedlistener.coap.CacheHandler;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
-import eu.uberdust.testbedlistener.coap.viewer.IncomingMessage;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
 import eu.uberdust.testbedlistener.util.PropertyReader;
@@ -87,10 +86,10 @@ public class CoapMessageParser extends AbstractMessageParser {
     public void run() {
         if (!(type == 0x69)) return;
 
-        new IncomingMessage(payload);
 //        LOGGER.info("from " + address + " {" + mac + "} with payload length " + payload.length + " fistByte " + payload[0]);
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
         LOGGER.info(Converter.getInstance().payloadToString(payload));
+
 
         if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
             LOGGER.info("Rejecting");
@@ -103,7 +102,9 @@ public class CoapMessageParser extends AbstractMessageParser {
         {
             handleHereIAm();
         } else {
-            Message response = Message.fromByteArray(payload);
+
+            final Message response = Message.fromByteArray(payload);
+//            response.prettyPrint();
             SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
             if (originSocketAddress != null) {
                 LOGGER.info("Valid External Coap Response Message from " + mac);
@@ -191,7 +192,16 @@ public class CoapMessageParser extends AbstractMessageParser {
                         CoapServer.getInstance().sendAck(response.getMID(), mac);
                     }
                     CoapServer.getInstance().registerEndpoint(requestType, mac);
-                    sendToUberdust(requestType, mac, response);
+                    final String finalRequestType = requestType;
+                    Thread d = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            sendToUberdust(finalRequestType, mac, response);
+                        }
+                    });
+                    d.start();
+
+
                     int maxAge;
                     if (response.hasOption(OptionNumberRegistry.MAX_AGE))
                         maxAge = response.getMaxAge();
