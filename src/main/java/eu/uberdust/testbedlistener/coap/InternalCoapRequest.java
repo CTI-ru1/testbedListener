@@ -141,7 +141,7 @@ public class InternalCoapRequest {
 //            CoapServer.getInstance().cleanActiveRequests();
             List<ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequests();
             for (ActiveRequest activeRequest : activeRequests) {
-                payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\n");
+                payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\n");
 
             }
             response.setContentType(0);
