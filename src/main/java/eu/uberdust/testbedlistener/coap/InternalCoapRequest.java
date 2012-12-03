@@ -139,9 +139,10 @@ public class InternalCoapRequest {
             response.setContentType(0);
         } else if ("/activeRequests".equals(path)) {
 //            CoapServer.getInstance().cleanActiveRequests();
-            List<ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequests();
-            for (ActiveRequest activeRequest : activeRequests) {
-                payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\n");
+            Map<String, ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequests();
+            for (String key : activeRequests.keySet()) {
+                ActiveRequest activeRequest = activeRequests.get(key);
+                payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getCount()).append("\n");
 
             }
             response.setContentType(0);

@@ -107,6 +107,7 @@ public class CoapMessageParser extends AbstractMessageParser {
             final Message response = Message.fromByteArray(payload);
 //            response.prettyPrint();
             SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
+            LOGGER.info(originSocketAddress);
             if (originSocketAddress != null) {
                 LOGGER.info("Valid External Coap Response Message from " + mac);
                 CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
@@ -190,9 +191,11 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info(requestType + " @ " + responseContents);
 
                     if (response.isConfirmable()) {
+                        LOGGER.info("WILL SEND ACK");
                         CoapServer.getInstance().sendAck(response.getMID(), mac);
                     }
                     CoapServer.getInstance().registerEndpoint(requestType, mac);
+
 //                    Thread d = new Thread(new Runnable() {
 //                        @Override
 //                        public void run() {
@@ -259,7 +262,7 @@ public class CoapMessageParser extends AbstractMessageParser {
         CoapServer.getInstance().registerEndpoint(".well-known/core", macStr);
         LOGGER.info("Requesting .well-known/core uri_host:" + macStr);
         Request request = CoapHelper.getWellKnown(macStr);
-        CoapServer.getInstance().addRequest(macStr, request, null, false);
+        CoapServer.getInstance().addRequest(macStr, request, false);
         CoapServer.getInstance().sendRequest(request.toByteArray(), macStr);
     }
 

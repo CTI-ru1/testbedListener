@@ -90,7 +90,6 @@ public class PendingRequestHandler {
 
         synchronized (PendingRequestHandler.class) {
             if (pendingRequestList.isEmpty()) {
-                LOGGER.error("pendig is empty");
                 return null;
             }
             PendingRequest mp = null;

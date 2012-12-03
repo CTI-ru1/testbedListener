@@ -30,7 +30,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -58,7 +57,7 @@ public class CoapServer {
     /**
      * Active Requests.
      */
-    private transient final List<ActiveRequest> activeRequests;
+    private transient final Map<String, ActiveRequest> activeRequests;
     /**
      * COAP Server socket.
      */
@@ -69,7 +68,7 @@ public class CoapServer {
      */
     //private transient final Random mid;
     private String testbedPrefix;
-    private static final long MILLIS_TO_STALE = 1 * 60 * 1000;
+    private static final long MILLIS_TO_STALE = 2 * 60 * 1000;
     private Map<Integer, String> ownRequests;
     private ArrayList<TokenItem> ownObserves;
     private Map<String, String> blockWisePending;
@@ -88,7 +87,7 @@ public class CoapServer {
         this.endpoints = new HashMap<String, Map<String, Long>>();
         blockWisePending = new HashMap<String, String>();
         ethernetBlockWisePending = new HashMap<Integer, String>();
-        this.activeRequests = new ArrayList<ActiveRequest>();
+        this.activeRequests = new HashMap<String, ActiveRequest>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
@@ -117,28 +116,28 @@ public class CoapServer {
 //            }
 //        },5*60*1000);
 
-        Timer activeRequestCleanupTimer = new Timer();
-        activeRequestCleanupTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                CoapServer.getInstance().cleanActiveRequests();
-            }
-        }, 60000, 60000);
+//        Timer activeRequestCleanupTimer = new Timer();
+//        activeRequestCleanupTimer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                CoapServer.getInstance().cleanActiveRequests();
+//            }
+//        }, 60000, 60000);
 
         LOGGER.info("started CoapServer");
     }
 
     public void cleanActiveRequests() {
         LOGGER.info("Cleaning acrive Requests");
-        for (ActiveRequest activeRequest : activeRequests) {
-            if (System.currentTimeMillis() - activeRequest.getTimestamp() > 3 * 60 * 1000) {
+        for (String key : activeRequests.keySet()) {
+            if (System.currentTimeMillis() - activeRequests.get(key).getTimestamp() > 3 * 60 * 1000) {
 
 //                try {
 //                    TokenManager.getInstance().releaseToken(Hex.decodeHex(activeRequest.getToken().toCharArray()));
 //                } catch (DecoderException e) {
 //
 //                }
-                activeRequests.remove(activeRequest);
+                activeRequests.remove(key);
             }
         }
 
@@ -245,7 +244,7 @@ public class CoapServer {
                         LOGGER.info("address was stale " + address + " " + path);
                         return true;
                     } else {
-//                        endpoints.get(address).put(path, System.currentTimeMillis());
+                        endpoints.get(address).put(path, System.currentTimeMillis());
                         return false;
                     }
                 } else {
@@ -279,6 +278,7 @@ public class CoapServer {
                         LOGGER.info("address was stale " + address + " " + path);
                         return false;
                     } else {
+
                         return true;
                     }
                 } else {
@@ -349,33 +349,29 @@ public class CoapServer {
     /**
      * Adds the req to the list of active requests.
      *
-     * @param address  the address from which the req originated.
-     * @param req      the req message.
-     * @param sAddress the socket address of the sender if any
+     * @param address the address from which the req originated.
+     * @param req     the req message.
      */
-    public void addRequest(final String address, final Message req, final SocketAddress sAddress, final boolean hasQuery) {
+    public void addRequest(final String address, final Message req, final boolean hasQuery) {
 
         synchronized (CoapServer.class) {
-            for (ActiveRequest activeRequest : activeRequests) {
-                if ((activeRequest.getMid() == req.getMID()) || (activeRequest.getToken().equals(req.getToken()))) {
-                    activeRequest.setUriPath(req.getUriPath());
-                    activeRequest.setMid(req.getMID());
-                    activeRequest.setSocketAddress(sAddress);
-                    activeRequest.setQuery(hasQuery);
-                    activeRequest.setTimestamp(System.currentTimeMillis());
+            for (String key : activeRequests.keySet()) {
+                if ((activeRequests.get(key).getMid() == req.getMID()) || (activeRequests.get(key).getToken().equals(req.getToken()))) {
+                    activeRequests.get(key).setUriPath(req.getUriPath());
+                    activeRequests.get(key).setMid(req.getMID());
+                    activeRequests.get(key).setQuery(hasQuery);
+                    activeRequests.get(key).setTimestamp(System.currentTimeMillis());
                     return;
                 }
-                if (activeRequest.getUriPath().equals(req.getUriPath()) && activeRequest.getHost().equals(address)) {
-                    if (activeRequest.getSocketAddress() == sAddress) {
-                        activeRequest.setMid(req.getMID());
-                        activeRequest.setTimestamp(System.currentTimeMillis());
-                        activeRequest.setToken(req.getTokenString());
-                        return;
-                    }
+                if (activeRequests.get(key).getUriPath().equals(req.getUriPath()) && activeRequests.get(key).getHost().equals(address)) {
+                    activeRequests.get(key).setMid(req.getMID());
+                    activeRequests.get(key).setTimestamp(System.currentTimeMillis());
+                    activeRequests.get(key).setToken(req.getTokenString());
+                    return;
                 }
             }
-            ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, sAddress, hasQuery, System.currentTimeMillis());
-            activeRequests.add(mRequest);
+            ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
+            activeRequests.put(req.getTokenString(), mRequest);
             LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
         }
     }
@@ -399,13 +395,15 @@ public class CoapServer {
 //            LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
 //            LOGGER.info(response.getOptionCount());
 //            LOGGER.info(address);
-            for (ActiveRequest activeRequest : activeRequests) {
+            for (String key : activeRequests.keySet()) {
+                ActiveRequest activeRequest = activeRequests.get(key);
                 if ((response.hasOption(OptionNumberRegistry.TOKEN))
                         && (responseTokenString.equals(activeRequest.getToken()))) {
                     LOGGER.info("Found By Token " + responseTokenString + "==" + activeRequest.getToken());
 //                    response.setPayload(payload);
 //                    LOGGER.info(response.getPayloadString());
                     activeRequest.setTimestamp(System.currentTimeMillis());
+                    activeRequest.incCount();
 
                     if (activeRequest.getMid() == response.getMID())
                         return activeRequest.getHost() + "," + activeRequest.getUriPath();
@@ -420,12 +418,12 @@ public class CoapServer {
 //                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
                 if (response.getMID() == activeRequest.getMid()) {
                     String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
-                    if (activeRequest.hasQuery()) {
-                        retVal = null;
-                    }
-//                    LOGGER.info("Found By MID" + retVal + " " + activeRequest.getHost());
+//                    if (activeRequest.hasQuery()) {
+//                        retVal = null;
+//                    }
+                    LOGGER.info("Found By MID" + retVal);
                     try {
-                        activeRequests.remove(activeRequest);
+                        activeRequests.remove(key);
                     } catch (Exception e) {
                         LOGGER.error(e, e);
                     }
@@ -546,7 +544,7 @@ public class CoapServer {
 //            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 //            request.setToken(TokenManager.getInstance().acquireToken());
 
-            addRequest(address, request, null, false);
+            addRequest(address, request, false);
             sendRequest(request.toByteArray(), address);
         }
 
@@ -585,7 +583,7 @@ public class CoapServer {
             }
             request.prettyPrint();
 //            ownRequests.put(request.getMID(), uri.toString());
-            addRequest(address, request, null, false);
+            addRequest(address, request, false);
             LOGGER.info(request.getMID());
             sendRequest(request.toByteArray(), address);
 
@@ -719,7 +717,7 @@ public class CoapServer {
         return endpoints;
     }
 
-    public List<ActiveRequest> getActiveRequests() {
+    public Map<String, ActiveRequest> getActiveRequests() {
         return activeRequests;
     }
 

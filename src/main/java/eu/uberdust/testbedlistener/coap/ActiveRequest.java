@@ -20,6 +20,7 @@ public class ActiveRequest {
     private transient final String host;
     private transient SocketAddress socketAddress;
     private transient boolean query;
+    private transient int count;
 
     public long getTimestamp() {
         return timestamp;
@@ -73,27 +74,30 @@ public class ActiveRequest {
         return query;
     }
 
+    public int getCount() {
+        return count;
+    }
+
     /**
      * Constructor.
      *
-     * @param uriPath       the uri path
-     * @param mid           the message id
-     * @param token         the message token
-     * @param host          the host of the message
-     * @param socketAddress the socket address of the sender
-     * @param query         true if it is a query
+     * @param uriPath   the uri path
+     * @param mid       the message id
+     * @param token     the message token
+     * @param host      the host of the message
+     * @param query     true if it is a query
      * @param timestamp
      */
     public ActiveRequest(final String uriPath, final int mid, final String token, final String host,
-                         final SocketAddress socketAddress, final boolean query, long timestamp) {
+                         final boolean query, long timestamp) {
         LOGGER.debug("new ActiveRequest");
         this.uriPath = uriPath;
         this.mid = mid;
         this.token = token;
         this.host = host;
-        this.socketAddress = socketAddress;
         this.query = query;
         this.timestamp = timestamp;
+        this.count = 0;
     }
 
     public void setMid(int mid) {
@@ -104,15 +108,15 @@ public class ActiveRequest {
         this.uriPath = uriPath;
     }
 
-    public void setSocketAddress(SocketAddress socketAddress) {
-        this.socketAddress = socketAddress;
-    }
-
     public void setQuery(boolean query) {
         this.query = query;
     }
 
     public void setToken(String tokenString) {
         this.token = tokenString;
+    }
+
+    public void incCount() {
+        this.count++;
     }
 }
