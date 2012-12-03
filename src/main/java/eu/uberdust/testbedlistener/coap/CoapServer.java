@@ -116,10 +116,20 @@ public class CoapServer {
 //                cleanActiveRequests();
 //            }
 //        },5*60*1000);
+
+        Timer activeRequestCleanupTimer = new Timer();
+        activeRequestCleanupTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                CoapServer.getInstance().cleanActiveRequests();
+            }
+        }, 60000, 60000);
+
         LOGGER.info("started CoapServer");
     }
 
     public void cleanActiveRequests() {
+        LOGGER.info("Cleaning acrive Requests");
         for (ActiveRequest activeRequest : activeRequests) {
             if (System.currentTimeMillis() - activeRequest.getTimestamp() > 3 * 60 * 1000) {
 
@@ -131,6 +141,8 @@ public class CoapServer {
                 activeRequests.remove(activeRequest);
             }
         }
+
+
     }
 
     private void loadGateways() {
@@ -574,7 +586,7 @@ public class CoapServer {
             addRequest(address, request, null, false);
             LOGGER.info(request.getMID());
             sendRequest(request.toByteArray(), address);
-            
+
 
         }
     }
