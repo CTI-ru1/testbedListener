@@ -405,8 +405,10 @@ public class CoapServer {
                     LOGGER.info("Found By Token " + responseTokenString + "==" + activeRequest.getToken());
 //                    response.setPayload(payload);
 //                    LOGGER.info(response.getPayloadString());
+                    activeRequest.setTimestamp(System.currentTimeMillis());
 
-                    if (activeRequest.getMid() == response.getMID()) return "";
+                    if (activeRequest.getMid() == response.getMID())
+                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
 
                     activeRequest.setMid(response.getMID());
                     if (activeRequest.hasQuery()) {

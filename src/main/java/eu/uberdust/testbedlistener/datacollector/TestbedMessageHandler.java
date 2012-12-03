@@ -62,4 +62,5 @@ public class TestbedMessageHandler {
         executorService.submit(new CoapMessageParser(message.getSourceNodeId(), message.getBinaryData().toByteArray()));
     }
 
+
 }
