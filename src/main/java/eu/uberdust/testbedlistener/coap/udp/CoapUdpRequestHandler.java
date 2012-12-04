@@ -100,10 +100,15 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
 
         String uriHost = getURIHost(udpRequest);
         LOGGER.info("UDP path:" + udpRequest.getUriPath());
+        udpRequest = InternalCoapRequest.getInstance().handleRequest(uriHost, udpRequest, packet.getSocketAddress());
         if ("".equals(uriHost)) {
-            udpRequest = InternalCoapRequest.getInstance().handleRequest(udpRequest, packet.getSocketAddress());
             uriHost = getURIHost(udpRequest);
         }
+
+//        if ("".equals(uriHost)) {
+//            udpRequest = InternalCoapRequest.getInstance().handleRequest(udpRequest, packet.getSocketAddress());
+//            uriHost = getURIHost(udpRequest);
+//        }
         if (udpRequest == null)   {
             LOGGER.info("UDP null");
             return;

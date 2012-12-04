@@ -91,20 +91,22 @@ public class CoapMessageParser extends AbstractMessageParser {
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
         LOGGER.info(Converter.getInstance().payloadToString(payload));
 
-
-        if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
-            LOGGER.info("Rejecting");
-            return;
-        }
-
         HereIamMessage hereIamMessage = new HereIamMessage(payload);
 
         if (hereIamMessage.isValid())   // check for broadcasting message
         {
+            if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
+                LOGGER.info("Rejecting here I am");
+                return;
+            }
             handleHereIAm();
         } else {
 
             final Message response = Message.fromByteArray(payload);
+            if (!response.hasOption(OptionNumberRegistry.OBSERVE) && CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
+                LOGGER.info("Rejecting normal response");
+                return;
+            }
 //            response.prettyPrint();
             SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
             LOGGER.info(originSocketAddress);
@@ -115,6 +117,10 @@ public class CoapMessageParser extends AbstractMessageParser {
                 LOGGER.info("Valid Internal Coap Response Message from " + mac);
 
                 String parts = CoapServer.getInstance().matchResponse(response);
+                if (parts == null)
+                    return;
+                if ("".equals(parts) )
+                    return;
                 String requestType = parts.split(",")[1];
                 mac = parts.split(",")[0];
                 LOGGER.info("RequstURI:" + requestType);
