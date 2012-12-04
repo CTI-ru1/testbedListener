@@ -115,6 +115,9 @@ public class CoapMessageParser extends AbstractMessageParser {
                 LOGGER.info("Valid Internal Coap Response Message from " + mac);
 
                 String parts = CoapServer.getInstance().matchResponse(response);
+                if ((parts == null) || ("".equals(parts))) {
+                    return;
+                }
                 String requestType = parts.split(",")[1];
                 mac = parts.split(",")[0];
                 LOGGER.info("RequstURI:" + requestType);

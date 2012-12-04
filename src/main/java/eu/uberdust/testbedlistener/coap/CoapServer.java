@@ -430,7 +430,7 @@ public class CoapServer {
                     return retVal;
                 }
             }
-            return "";
+            return null;
         }
     }
 
@@ -578,7 +578,7 @@ public class CoapServer {
             request.addOption(urihost);
             if (observe) {
                 request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-                request.setToken(TokenManager.getInstance().acquireToken());
+                request.setToken(TokenManager.getInstance().acquireToken(address));
 //                request.setToken(TokenManager.getInstance().acquireToken());
             }
             request.prettyPrint();
