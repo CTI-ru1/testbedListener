@@ -46,4 +46,23 @@ public class TokenManager {
 
         return tokenBytes;
     }
+
+    public byte[] acquireToken(String macAddress) {
+        byte[] tokenBytes = new byte[8];
+
+        do {
+            tokenBytes[0] = (byte) 0xaa;
+
+            for (int i = 0; i < macAddress.length(); i++) {
+                tokenBytes[1 + i] = (byte) macAddress.charAt(i);
+            }
+            for (int i = 1+macAddress.length(); i < 8; i++) {
+                tokenBytes[i] = (byte) (random.nextInt(255) - 127);
+            }
+        } while (existingTokens.containsKey(tokenBytes));
+        existingTokens.put(tokenBytes, 1);
+
+
+        return tokenBytes;
+    }
 }
