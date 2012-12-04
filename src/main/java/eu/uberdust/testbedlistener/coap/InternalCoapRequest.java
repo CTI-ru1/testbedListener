@@ -38,7 +38,7 @@ public class InternalCoapRequest {
         }
     }
 
-    public Message handleRequest(Message udpRequest, SocketAddress socketAddress) {
+    public Message handleRequest(String uriHost, Message udpRequest, SocketAddress socketAddress) {
         //To change body of created methods use File | Settings | File Templates.
         Message response = new Message();
         StringBuilder payload = new StringBuilder();
@@ -51,6 +51,8 @@ public class InternalCoapRequest {
         response.setMID(udpRequest.getMID());
 
         String path = udpRequest.getUriPath();
+        if (!"".equals(uriHost) && !path.equals("/cache"))
+            return udpRequest;
         if (path.contains("/device/")) {
             //forward to device or respond from cache
 
@@ -160,6 +162,8 @@ public class InternalCoapRequest {
         } else if ("/cache".equals(path)) {
             Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
             for (String device : cache.keySet()) {
+                if (!"".equals(uriHost) && !device.equals(uriHost))
+                    continue;
                 for (String uriPath : cache.get(device).keySet()) {
                     Cache pair = cache.get(device).get(uriPath);
                     boolean stale;
