@@ -77,6 +77,11 @@ public class CoapServer {
     private Map<String, Long> duplicates;
     private int currentMID;
     private Timer cleanupTimer;
+    private long startTime;
+
+    public long getStartTime() {
+        return startTime;
+    }
 
     /**
      * Constructor.
@@ -92,6 +97,7 @@ public class CoapServer {
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
         this.cleanupTimer = new Timer();
+        this.startTime = System.currentTimeMillis();
 //        Timer discoveryTimer = new Timer();
 //        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
 

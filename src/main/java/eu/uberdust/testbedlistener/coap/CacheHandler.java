@@ -92,4 +92,8 @@ public class CacheHandler {
     public Map<String, Map<String, Cache>> getCache() {
         return cache;
     }
+
+    public void clearCache() {
+        cache.clear();
+    }
 }
