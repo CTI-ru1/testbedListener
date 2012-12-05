@@ -69,7 +69,9 @@ public class CoapUdpResponseHandler implements Runnable {//NOPMD
             List<String> capabilities = Converter.extractCapabilities(payload);
             reportToUberdustCapability(capabilities, address);
             for (String capability : capabilities) {
-                if (capability.contains("well-known/core")) continue;
+                if (capability.contains("well-known/core")) {
+                    continue;
+                }
                 requestCapability(capability);
                 try {
                     Thread.sleep(200);
@@ -104,7 +106,9 @@ public class CoapUdpResponseHandler implements Runnable {//NOPMD
         Request request = new Request(CodeRegistry.METHOD_GET, false);
         request.setURI(capability);
         int newMID = rand.nextInt() % 65000;
-        if (newMID < 0) newMID = -newMID;
+        if (newMID < 0) {
+            newMID = -newMID;
+        }
         request.setMID(newMID);
         request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
         request.setToken(TokenManager.getInstance().acquireToken());
@@ -121,10 +125,9 @@ public class CoapUdpResponseHandler implements Runnable {//NOPMD
         LOGGER.info("needs blockwise");
 
         for (Option option : response.getOptions()) {
-            if (OptionNumberRegistry.BLOCK2 == option.getOptionNumber()) {
-                if (option.getIntValue() == 18) {
-                    return;
-                }
+            if (OptionNumberRegistry.BLOCK2 == option.getOptionNumber() && (option.getIntValue() == 18)) {
+                return;
+
             }
         }
         Request request = new Request(CodeRegistry.METHOD_GET, false);

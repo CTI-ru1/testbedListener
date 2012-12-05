@@ -414,8 +414,9 @@ public class CoapServer {
                     activeRequest.setTimestamp(System.currentTimeMillis());
                     activeRequest.incCount();
 
-                    if (activeRequest.getMid() == response.getMID())
+                    if (activeRequest.getMid() == response.getMID()) {
                         return activeRequest.getHost() + "," + activeRequest.getUriPath();
+                    }
 
                     activeRequest.setMid(response.getMID());
                     if (activeRequest.hasQuery()) {

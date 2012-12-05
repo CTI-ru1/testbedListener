@@ -85,7 +85,9 @@ public class CoapMessageParser extends AbstractMessageParser {
      */
     @Override
     public void run() {
-        if (!(type == 0x69)) return;
+        if (!(type == 0x69)) {
+            return;
+        }
 
 //        LOGGER.info("from " + address + " {" + mac + "} with payload length " + payload.length + " fistByte " + payload[0]);
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
@@ -158,16 +160,21 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info(capabilities.size());
                     for (String capability : capabilities) {
                         if (!capability.equals(".well-known/core")) {
-                            if (CoapServer.getInstance().isAlive(capability, mac)) continue;
+                            if (CoapServer.getInstance().isAlive(capability, mac)) {
+                                continue;
+                            }
                             try {
                                 Thread.sleep(1000);
                                 CoapServer.getInstance().requestForResource(capability, mac, true);
                             } catch (Exception e) {
+                                LOGGER.error(e, e);
                             }
                         }
                     }
 
-                    if (true) return;
+                    if (true) {
+                        return;
+                    }
 
                     if (isBlockwise) {
                         /**TODO : change**/

@@ -1,6 +1,10 @@
 package eu.uberdust.testbedlistener.coap;
 
-import ch.ethz.inf.vs.californium.coap.*;
+import ch.ethz.inf.vs.californium.coap.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import org.apache.log4j.Logger;
 
@@ -50,8 +54,9 @@ public class InternalCoapRequest {
         response.setMID(udpRequest.getMID());
 
         String path = udpRequest.getUriPath();
-        if (!"".equals(uriHost) && !path.equals("/cache"))
+        if (!"".equals(uriHost) && !path.equals("/cache")) {
             return udpRequest;
+        }
         if (path.contains("/device/")) {
             //forward to device or respond from cache
 
@@ -176,8 +181,9 @@ public class InternalCoapRequest {
                 List<PendingRequest> pendingRequests = PendingRequestHandler.getInstance().getPendingRequestList();
                 for (PendingRequest pendingRequest : pendingRequests) {
                     payload.append(pendingRequest.getUriHost());
-                    if (pendingRequest.getUriHost().length() == 3)
+                    if (pendingRequest.getUriHost().length() == 3) {
                         payload.append(" ");
+                    }
                     payload.append(" - ");
                     payload.append(pendingRequest.getSocketAddress()).append(" - ");
                     payload.append(pendingRequest.getMid()).append(" - ");
@@ -191,8 +197,9 @@ public class InternalCoapRequest {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
                 Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
                 for (String device : cache.keySet()) {
-                    if (!"".equals(uriHost) && !device.equals(uriHost))
+                    if (!"".equals(uriHost) && !device.equals(uriHost)) {
                         continue;
+                    }
                     for (String uriPath : cache.get(device).keySet()) {
                         Cache pair = cache.get(device).get(uriPath);
                         boolean stale;

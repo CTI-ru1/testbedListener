@@ -18,12 +18,18 @@ public class Payload {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Payload payload = (Payload) o;
 
-        if (!Arrays.equals(bytes, payload.bytes)) return false;
+        if (!Arrays.equals(bytes, payload.bytes)) {
+            return false;
+        }
 
         return true;
     }

@@ -9,7 +9,7 @@ import java.util.Locale;
 /**
  * Parses a message received and adds data to a wisedb database.
  */
-public class CommandLineParser extends AbstractMessageParser{ //NOPMD
+public class CommandLineParser extends AbstractMessageParser { //NOPMD
 
     /**
      * LOGGER.
@@ -50,7 +50,7 @@ public class CommandLineParser extends AbstractMessageParser{ //NOPMD
         try {
             parse();
         } catch (Exception e) {
-
+            LOGGER.error(e, e);
         }
     }
 
