@@ -30,6 +30,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -70,7 +71,7 @@ public class CoapServer {
     private String testbedPrefix;
     private static final long MILLIS_TO_STALE = 2 * 60 * 1000;
     private Map<Integer, String> ownRequests;
-    private ArrayList<TokenItem> ownObserves;
+    private List<TokenItem> ownObserves;
     private Map<String, String> blockWisePending;
     private Map<Integer, String> ethernetBlockWisePending;
     private Map<String, String> gateways;
@@ -731,7 +732,7 @@ public class CoapServer {
         return activeRequests;
     }
 
-    public ArrayList<TokenItem> getObservers() {
+    public List<TokenItem> getObservers() {
         return ownObserves;
     }
 
