@@ -78,6 +78,8 @@ public class CoapServer {
     private int currentMID;
     private Timer cleanupTimer;
     private long startTime;
+    private static final int MILLIS_IN_SECOND = 1000;
+    private static final int MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
 
     public long getStartTime() {
         return startTime;
@@ -136,7 +138,7 @@ public class CoapServer {
     public void cleanActiveRequests() {
         LOGGER.info("Cleaning acrive Requests");
         for (String key : activeRequests.keySet()) {
-            if (System.currentTimeMillis() - activeRequests.get(key).getTimestamp() > 3 * 60 * 1000) {
+            if (System.currentTimeMillis() - activeRequests.get(key).getTimestamp() > 2 * MILLIS_IN_MINUTE + 20 * MILLIS_IN_SECOND) {
 
 //                try {
 //                    TokenManager.getInstance().releaseToken(Hex.decodeHex(activeRequest.getToken().toCharArray()));
