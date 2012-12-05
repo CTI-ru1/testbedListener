@@ -362,7 +362,8 @@ public class CoapServer {
 
         synchronized (CoapServer.class) {
             for (String key : activeRequests.keySet()) {
-                if ((activeRequests.get(key).getMid() == req.getMID()) || (activeRequests.get(key).getToken().equals(req.getToken()))) {
+
+                if ((activeRequests.get(key).getMid() == req.getMID()) || (req.hasOption(OptionNumberRegistry.TOKEN) && (activeRequests.get(key).getToken().equals(req.getToken())))) {
                     activeRequests.get(key).setUriPath(req.getUriPath());
                     activeRequests.get(key).setMid(req.getMID());
                     activeRequests.get(key).setQuery(hasQuery);
