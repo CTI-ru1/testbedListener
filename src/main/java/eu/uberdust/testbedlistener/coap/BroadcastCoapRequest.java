@@ -21,7 +21,7 @@ public class BroadcastCoapRequest extends TimerTask {
      * LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(BroadcastCoapRequest.class);
-    private XBeeAddress16 remoteAddress;
+    private final XBeeAddress16 remoteAddress;
 
     public BroadcastCoapRequest() {
         remoteAddress = new XBeeAddress16();

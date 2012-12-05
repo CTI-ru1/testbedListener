@@ -30,16 +30,16 @@ public class Main {
 
         final String type = PropertyReader.getInstance().getProperties().getProperty("type");
 
-        if (type.equals("tr")) {
+        if ("tr".equals(type)) {
             TestbedRuntimeListenerFactory tr = new TestbedRuntimeListenerFactory();
             tr.run();
-        } else if (type.equals("xbee")) {
+        } else if ("xbee".equals(type)) {
             XbeeListenerFactory xbee = new XbeeListenerFactory();
             xbee.run();
-        } else if (type.equals("coap")) {
+        } else if ("coap".equals(type)) {
             COAPTRListenerFactory coap = new COAPTRListenerFactory();
             coap.run();
-        } else if (type.equals("cmd")) {
+        } else if ("cmd".equals(type)) {
             CommandLineListenerFactory cmd = new CommandLineListenerFactory();
             cmd.run();
         }

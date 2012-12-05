@@ -29,6 +29,9 @@ public class InternalCoapRequest {
 
     private static InternalCoapRequest instance = null;
 
+    /**
+     * Empty Constructor.
+     */
     public InternalCoapRequest() {
     }
 
@@ -54,7 +57,7 @@ public class InternalCoapRequest {
         response.setMID(udpRequest.getMID());
 
         String path = udpRequest.getUriPath();
-        if (!"".equals(uriHost) && !path.equals("/cache")) {
+        if (!"".equals(uriHost) && !"/cache".equals(path)) {
             return udpRequest;
         }
         if (path.contains("/device/")) {
@@ -63,7 +66,7 @@ public class InternalCoapRequest {
             String[] temp = path.split("/device/");
             temp = temp[1].split("/");
             String device = temp[0];
-            StringBuilder uriPath = new StringBuilder();
+            final StringBuilder uriPath = new StringBuilder();
             for (int i = 1; i < temp.length; i++) {
                 uriPath.append("/").append(temp[i]);
             }

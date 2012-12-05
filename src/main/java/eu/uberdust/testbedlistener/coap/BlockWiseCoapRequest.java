@@ -21,10 +21,10 @@ public class BlockWiseCoapRequest extends TimerTask {
      * LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(BlockWiseCoapRequest.class);
-    private String remoteAddress;
-    private byte[] blockIdx;
+    private final String remoteAddress;
+    private final byte[] blockIdx;
 
-    public BlockWiseCoapRequest(String address16, byte[] blockIdx) {
+    public BlockWiseCoapRequest(final String address16, final byte[] blockIdx) {
         remoteAddress = address16;
         this.blockIdx = blockIdx;
     }

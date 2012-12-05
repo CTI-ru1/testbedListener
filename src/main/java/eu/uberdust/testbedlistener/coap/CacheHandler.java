@@ -13,10 +13,10 @@ import java.util.TreeMap;
  * To change this template use File | Settings | File Templates.
  */
 public class CacheHandler {
+    private transient final Map<String, Map<String, Cache>> cache;
     private static CacheHandler instance = null;
-    private Timer timer;
 
-    private transient Map<String, Map<String, Cache>> cache;
+    private Timer timer;
 
     public CacheHandler() {
         cache = new TreeMap<String, Map<String, Cache>>(new Comparator<String>() {
@@ -53,16 +53,10 @@ public class CacheHandler {
     }
 
     public Cache getValue(String uriHost, String uriPath) {
-        for (String device : cache.keySet()) {
-            if (device.equals(uriHost)) {
-                for (String resource : cache.get(device).keySet()) {
-                    if (resource.equals(uriPath)) {
-                        Cache pair = cache.get(device).get(resource);
-                        if (pair.getTimestamp() > System.currentTimeMillis() - pair.getMaxAge() * 1000) {
-                            return pair;
-                        }
-                    }
-                }
+        if (cache.containsKey(uriHost) && cache.get(uriHost).containsKey(uriPath)) {
+            Cache element = cache.get(uriHost).get(uriPath);
+            if ((element.getTimestamp() > System.currentTimeMillis() - element.getMaxAge() * 1000)) {
+                return element;
             }
         }
         return null;

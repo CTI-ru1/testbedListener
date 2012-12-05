@@ -68,17 +68,16 @@ public class CoapServer {
      * Random number generator.
      */
     //private transient final Random mid;
-    private String testbedPrefix;
+    private final String testbedPrefix;
     private static final long MILLIS_TO_STALE = 2 * 60 * 1000;
-    private Map<Integer, String> ownRequests;
-    private List<TokenItem> ownObserves;
-    private Map<String, String> blockWisePending;
-    private Map<Integer, String> ethernetBlockWisePending;
+    private final Map<Integer, String> ownRequests;
+    private final List<TokenItem> ownObserves;
+    private final Map<String, String> blockWisePending;
+    private final Map<Integer, String> ethernetBlockWisePending;
     private Map<String, String> gateways;
-    private Map<String, Long> duplicates;
+    private final Map<String, Long> duplicates;
     private int currentMID;
-    private Timer cleanupTimer;
-    private long startTime;
+    private final long startTime;
     private static final int MILLIS_IN_SECOND = 1000;
     private static final int MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
 
@@ -99,7 +98,6 @@ public class CoapServer {
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
-        this.cleanupTimer = new Timer();
         this.startTime = System.currentTimeMillis();
 //        Timer discoveryTimer = new Timer();
 //        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
