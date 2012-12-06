@@ -1,11 +1,6 @@
 package eu.uberdust.testbedlistener.coap;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.*;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
@@ -14,26 +9,9 @@ import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
 import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.MalformedURLException;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -183,6 +161,8 @@ public class CoapServer {
                 final String value = row.split("\t")[3];
                 if ("1.0".equals(value)) {
                     gateways.put(urn, urn);
+                } else if (value.contains("0x")) {
+                    gateways.put(urn, value.split("0x")[1]);
                 }
             }
         } catch (MalformedURLException e) {
