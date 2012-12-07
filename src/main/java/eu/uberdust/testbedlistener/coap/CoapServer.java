@@ -541,9 +541,15 @@ public class CoapServer {
     }
 
     public int nextMID() {
-        currentMID = ++currentMID % 0x10000;
-
+        do {
+            currentMID = ++currentMID % 0x10000;
+        } while (isReserved(currentMID));
         return currentMID;
+    }
+
+    private boolean isReserved(int currentMID) {
+        if (activeRequests.containsKey(currentMID)) return true;
+        return false;
     }
 
 //    }
