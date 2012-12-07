@@ -33,7 +33,7 @@ public class CacheNotify implements Runnable {
         if (response.hasOption(OptionNumberRegistry.MAX_AGE)) {
             maxAge = response.getMaxAge();
         } else {
-            maxAge = 120;
+            maxAge = 60;
         }
         CacheHandler.getInstance().setValue(mac, "/" + requestType, maxAge, response.getContentType(), response.getPayloadString());
     }

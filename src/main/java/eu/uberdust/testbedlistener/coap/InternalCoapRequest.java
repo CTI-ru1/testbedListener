@@ -201,15 +201,15 @@ public class InternalCoapRequest {
                     }
                     for (String uriPath : cache.get(device).keySet()) {
                         Cache pair = cache.get(device).get(uriPath);
-                        boolean stale;
-                        if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge() * 1000) {
-                            stale = true;
-                        } else {
-                            stale = false;
-                        }
+//                        boolean stale;
+//                        if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge() * 1000) {
+//                            stale = true;
+//                        } else {
+//                            stale = false;
+//                        }
 //                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(pair.getMaxAge()).append("-").append(stale?"out-of-date":"cached").append("\n");
                         long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
-                        payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > 120 ? " *" : "").append("\n");
+                        payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\n");
 
                     }
                 }

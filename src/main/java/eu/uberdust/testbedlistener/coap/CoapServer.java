@@ -261,7 +261,7 @@ public class CoapServer {
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
-                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > MILLIS_TO_STALE) {
+                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > CacheHandler.getInstance().getValue(address,path).getMaxAge() * 1000) {
                         LOGGER.info("address was stale " + address + " " + path);
                         return false;
                     } else {
