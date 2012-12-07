@@ -378,48 +378,48 @@ public class CoapServer {
                 return null;
             }
 //            final byte[] payload = response.getPayload();
-            int mid = response.getMID();
+//            int mid = response.getMID();
 
 //            LOGGER.info(response.getPayloadString());
 //            LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
 //            LOGGER.info(response.getOptionCount());
 //            LOGGER.info(address);
-//            for (String key : activeRequests.keySet()) {
-            ActiveRequest activeRequest = activeRequests.get(mid);
-            if ((response.hasOption(OptionNumberRegistry.TOKEN))
-                    && (response.getTokenString().equals(activeRequest.getToken()))) {
-                LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
+            for (int key : activeRequests.keySet()) {
+                ActiveRequest activeRequest = activeRequests.get(key);
+                if ((response.hasOption(OptionNumberRegistry.TOKEN))
+                        && (response.getTokenString().equals(activeRequest.getToken()))) {
+                    LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
 //                    response.setPayload(payload);
 //                    LOGGER.info(response.getPayloadString());
-                activeRequest.setTimestamp(System.currentTimeMillis());
-                activeRequest.incCount();
+                    activeRequest.setTimestamp(System.currentTimeMillis());
+                    activeRequest.incCount();
 
-                if (activeRequest.getMid() == response.getMID()) {
-                    return activeRequest.getHost() + "," + activeRequest.getUriPath();
-                }
+                    if (activeRequest.getMid() == response.getMID()) {
+                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
+                    }
 
-                activeRequest.setMid(response.getMID());
-                if (activeRequest.hasQuery()) {
-                    return null;
-                } else {
-                    return activeRequest.getHost() + "," + activeRequest.getUriPath();
+                    activeRequest.setMid(response.getMID());
+                    if (activeRequest.hasQuery()) {
+                        return null;
+                    } else {
+                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
+                    }
                 }
-            }
 //                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
-            if (response.getMID() == activeRequest.getMid()) {
-                String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
+                if (response.getMID() == activeRequest.getMid()) {
+                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
 //                    if (activeRequest.hasQuery()) {
 //                        retVal = null;
 //                    }
-                LOGGER.info("Found By MID" + retVal);
-                try {
-                    activeRequests.remove(mid);
-                } catch (Exception e) {
-                    LOGGER.error(e, e);
+                    LOGGER.info("Found By MID" + retVal);
+                    try {
+                        activeRequests.remove(key);
+                    } catch (Exception e) {
+                        LOGGER.error(e, e);
+                    }
+                    return retVal;
                 }
-                return retVal;
             }
-//            }
             return null;
         }
     }
