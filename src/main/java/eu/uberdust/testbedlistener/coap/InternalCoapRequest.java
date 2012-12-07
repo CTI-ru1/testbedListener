@@ -1,10 +1,6 @@
 package eu.uberdust.testbedlistener.coap;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.*;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import org.apache.log4j.Logger;
 
@@ -169,8 +165,8 @@ public class InternalCoapRequest {
             }
         } else if ("/activeRequests".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                Map<String, ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequests();
-                for (String key : activeRequests.keySet()) {
+                Map<Integer, ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequests();
+                for (int key : activeRequests.keySet()) {
                     ActiveRequest activeRequest = activeRequests.get(key);
                     payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getCount()).append("\n");
 

@@ -36,7 +36,7 @@ public class CoapServer {
     /**
      * Active Requests.
      */
-    private transient final Map<String, ActiveRequest> activeRequests;
+    private transient final Map<Integer, ActiveRequest> activeRequests;
     /**
      * COAP Server socket.
      */
@@ -72,7 +72,7 @@ public class CoapServer {
         this.endpoints = new HashMap<String, Map<String, Long>>();
         blockWisePending = new HashMap<String, String>();
         ethernetBlockWisePending = new HashMap<Integer, String>();
-        this.activeRequests = new HashMap<String, ActiveRequest>();
+        this.activeRequests = new HashMap<Integer, ActiveRequest>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
@@ -114,7 +114,7 @@ public class CoapServer {
 
     public void cleanActiveRequests() {
         LOGGER.info("Cleaning acrive Requests");
-        for (String key : activeRequests.keySet()) {
+        for (int key : activeRequests.keySet()) {
             if (System.currentTimeMillis() - activeRequests.get(key).getTimestamp() > 2 * MILLIS_IN_MINUTE + 20 * MILLIS_IN_SECOND) {
 
 //                try {
@@ -342,9 +342,9 @@ public class CoapServer {
     public void addRequest(final String address, final Message req, final boolean hasQuery) {
 
         synchronized (CoapServer.class) {
-            for (String key : activeRequests.keySet()) {
+            for (int key : activeRequests.keySet()) {
 
-                if ((activeRequests.get(key).getMid() == req.getMID()) || (req.hasOption(OptionNumberRegistry.TOKEN) && (activeRequests.get(key).getToken().equals(req.getToken())))) {
+                if ((activeRequests.get(key).getMid() == req.getMID()) || (req.hasOption(OptionNumberRegistry.TOKEN) && (activeRequests.get(key).getToken().equals(req.getTokenString())))) {
                     activeRequests.get(key).setUriPath(req.getUriPath());
                     activeRequests.get(key).setMid(req.getMID());
                     activeRequests.get(key).setQuery(hasQuery);
@@ -359,7 +359,7 @@ public class CoapServer {
                 }
             }
             ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
-            activeRequests.put(req.getTokenString(), mRequest);
+            activeRequests.put(req.getMID(), mRequest);
             LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
         }
     }
@@ -378,47 +378,48 @@ public class CoapServer {
                 return null;
             }
 //            final byte[] payload = response.getPayload();
-            String responseTokenString = response.getTokenString();
+            int mid = response.getMID();
+
 //            LOGGER.info(response.getPayloadString());
 //            LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
 //            LOGGER.info(response.getOptionCount());
 //            LOGGER.info(address);
-            for (String key : activeRequests.keySet()) {
-                ActiveRequest activeRequest = activeRequests.get(key);
-                if ((response.hasOption(OptionNumberRegistry.TOKEN))
-                        && (responseTokenString.equals(activeRequest.getToken()))) {
-                    LOGGER.info("Found By Token " + responseTokenString + "==" + activeRequest.getToken());
+//            for (String key : activeRequests.keySet()) {
+            ActiveRequest activeRequest = activeRequests.get(mid);
+            if ((response.hasOption(OptionNumberRegistry.TOKEN))
+                    && (response.getTokenString().equals(activeRequest.getToken()))) {
+                LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
 //                    response.setPayload(payload);
 //                    LOGGER.info(response.getPayloadString());
-                    activeRequest.setTimestamp(System.currentTimeMillis());
-                    activeRequest.incCount();
+                activeRequest.setTimestamp(System.currentTimeMillis());
+                activeRequest.incCount();
 
-                    if (activeRequest.getMid() == response.getMID()) {
-                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
-                    }
-
-                    activeRequest.setMid(response.getMID());
-                    if (activeRequest.hasQuery()) {
-                        return null;
-                    } else {
-                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
-                    }
+                if (activeRequest.getMid() == response.getMID()) {
+                    return activeRequest.getHost() + "," + activeRequest.getUriPath();
                 }
+
+                activeRequest.setMid(response.getMID());
+                if (activeRequest.hasQuery()) {
+                    return null;
+                } else {
+                    return activeRequest.getHost() + "," + activeRequest.getUriPath();
+                }
+            }
 //                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
-                if (response.getMID() == activeRequest.getMid()) {
-                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
+            if (response.getMID() == activeRequest.getMid()) {
+                String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
 //                    if (activeRequest.hasQuery()) {
 //                        retVal = null;
 //                    }
-                    LOGGER.info("Found By MID" + retVal);
-                    try {
-                        activeRequests.remove(key);
-                    } catch (Exception e) {
-                        LOGGER.error(e, e);
-                    }
-                    return retVal;
+                LOGGER.info("Found By MID" + retVal);
+                try {
+                    activeRequests.remove(mid);
+                } catch (Exception e) {
+                    LOGGER.error(e, e);
                 }
+                return retVal;
             }
+//            }
             return null;
         }
     }
@@ -706,7 +707,7 @@ public class CoapServer {
         return endpoints;
     }
 
-    public Map<String, ActiveRequest> getActiveRequests() {
+    public Map<Integer, ActiveRequest> getActiveRequests() {
         return activeRequests;
     }
 
