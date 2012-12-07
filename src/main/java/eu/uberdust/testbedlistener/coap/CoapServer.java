@@ -47,7 +47,9 @@ public class CoapServer {
      */
     //private transient final Random mid;
     private final String testbedPrefix;
-    private static final long MILLIS_TO_STALE = 2 * 60 * 1000;
+    private static final int MILLIS_IN_SECOND = 1000;
+    private static final int MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
+    private static final long MILLIS_TO_STALE = 2 * MILLIS_IN_MINUTE;
     private final Map<Integer, String> ownRequests;
     private final List<TokenItem> ownObserves;
     private final Map<String, String> blockWisePending;
@@ -56,8 +58,6 @@ public class CoapServer {
     private final Map<String, Long> duplicates;
     private int currentMID;
     private final long startTime;
-    private static final int MILLIS_IN_SECOND = 1000;
-    private static final int MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
 
     public long getStartTime() {
         return startTime;

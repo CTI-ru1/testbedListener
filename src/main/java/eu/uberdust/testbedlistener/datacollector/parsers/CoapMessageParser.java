@@ -161,7 +161,6 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info(capabilities.size());
                     for (String capability : capabilities) {
                         if (!capability.equals(".well-known/core")) {
-                            if (!capability.equals("led")) continue;
                             if (CoapServer.getInstance().isAlive(capability, mac)) {
                                 continue;
                             }
