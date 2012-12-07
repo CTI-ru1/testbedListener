@@ -200,6 +200,7 @@ public class CoapMessageParser extends AbstractMessageParser {
 
                         LOGGER.info("is a response to a SREQ");
                         requestType = requestType.substring(1);
+                        new Evaluator("TokenMatch ", requestType, "millis");
                         String responseContents = response.getPayloadString();
                         LOGGER.info(requestType + " @ " + responseContents);
 

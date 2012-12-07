@@ -24,4 +24,8 @@ public class Evaluator {
     public Evaluator(final String message, long value, final String unit) {
 //        LOGGER.info(new StringBuilder().append(message).append(" ").append(+value).append(" ").append(unit).toString());
     }
+
+    public Evaluator(final String message, String requestType) {
+        LOGGER.info(new StringBuilder().append(message).append(" ").append(requestType).toString());
+    }
 }
