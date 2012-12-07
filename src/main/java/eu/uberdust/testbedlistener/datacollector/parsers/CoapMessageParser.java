@@ -85,128 +85,129 @@ public class CoapMessageParser extends AbstractMessageParser {
      */
     @Override
     public void run() {
-        if (!(type == 0x69)) {
-            return;
-        }
+        synchronized (CoapMessageParser.class) {
+            if (!(type == 0x69)) {
+                return;
+            }
 
 //        LOGGER.info("from " + address + " {" + mac + "} with payload length " + payload.length + " fistByte " + payload[0]);
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
-        LOGGER.info(Converter.getInstance().payloadToString(payload));
+            LOGGER.info(Converter.getInstance().payloadToString(payload));
 
-        HereIamMessage hereIamMessage = new HereIamMessage(payload);
+            HereIamMessage hereIamMessage = new HereIamMessage(payload);
 
-        if (hereIamMessage.isValid())   // check for broadcasting message
-        {
-            if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
-                LOGGER.info("Rejecting here I am");
-                return;
-            }
-            handleHereIAm();
-        } else {
+            if (hereIamMessage.isValid())   // check for broadcasting message
+            {
+                if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
+                    LOGGER.info("Rejecting here I am");
+                    return;
+                }
+                handleHereIAm();
+            } else {
 
-            final Message response = Message.fromByteArray(payload);
-            if (!response.hasOption(OptionNumberRegistry.OBSERVE) && CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
-                LOGGER.info("Rejecting normal response");
-                return;
-            }
+                final Message response = Message.fromByteArray(payload);
+                if (!response.hasOption(OptionNumberRegistry.OBSERVE) && CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
+                    LOGGER.info("Rejecting normal response");
+                    return;
+                }
 //            response.prettyPrint();
-            SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
-            LOGGER.info(originSocketAddress);
-            if (originSocketAddress != null) {
-                LOGGER.info("Valid External Coap Response Message from " + mac);
-                CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
-            } else {  //getting .well-known/core autoconfig phase
-                LOGGER.info("Valid Internal Coap Response Message from " + mac);
+                SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
+                LOGGER.info(originSocketAddress);
+                if (originSocketAddress != null) {
+                    LOGGER.info("Valid External Coap Response Message from " + mac);
+                    CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
+                } else {  //getting .well-known/core autoconfig phase
+                    LOGGER.info("Valid Internal Coap Response Message from " + mac);
 
-                String parts = CoapServer.getInstance().matchResponse(response);
-                if ((parts == null) || ("".equals(parts))) {
-                    return;
-                }
-                String requestType = parts.split(",")[1];
-                mac = parts.split(",")[0];
-                LOGGER.info("RequstURI:" + requestType);
-                if ("".equals(requestType)) {
-                    //Unknown or duplicate request
-                    return;
-                }
+                    String parts = CoapServer.getInstance().matchResponse(response);
+                    if ((parts == null) || ("".equals(parts))) {
+                        return;
+                    }
+                    String requestType = parts.split(",")[1];
+                    mac = parts.split(",")[0];
+                    LOGGER.info("RequstURI:" + requestType);
+                    if ("".equals(requestType)) {
+                        //Unknown or duplicate request
+                        return;
+                    }
 
-                if (requestType.equals("/.well-known/core")) {
-                    LOGGER.info("WELL-KNOWN " + mac);
+                    if (requestType.equals("/.well-known/core")) {
+                        LOGGER.info("WELL-KNOWN " + mac);
 
-                    CoapServer.getInstance().updateEndpoint(mac, requestType.substring(1));
+                        CoapServer.getInstance().updateEndpoint(mac, requestType.substring(1));
 
-                    final String payloadStr = response.getPayloadString();
+                        final String payloadStr = response.getPayloadString();
 
-                    List<String> capabilities = Converter.extractCapabilities(payloadStr);
+                        List<String> capabilities = Converter.extractCapabilities(payloadStr);
 
-                    isBlockwise = false;
-                    if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
-                        LOGGER.info("REQ BLOCKWISE");
+                        isBlockwise = false;
+                        if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
+                            LOGGER.info("REQ BLOCKWISE");
 //                    isBlockwise = true;
 //                    String remainder = Converter.extractRemainder(payloadStr);
 //                    LOGGER.info(remainder);
 //                    CoapServer.getInstance().addPending(address, remainder);
-                    }
-
-                    LOGGER.info(capabilities.size());
-                    reportToUberdustCapability(capabilities, mac);
-
-                    for (String capability : capabilities) {
-                        if (!capability.equals(".well-known/core")) {
-                            LOGGER.info("cap:" + capability);
                         }
-                    }
 
-                    LOGGER.info(capabilities.size());
-                    for (String capability : capabilities) {
-                        if (!capability.equals(".well-known/core")) {
-                            if (CoapServer.getInstance().isAlive(capability, mac)) {
-                                continue;
-                            }
-                            try {
-                                Thread.sleep(1000);
-                                CoapServer.getInstance().requestForResource(capability, mac, true);
-                            } catch (Exception e) {
-                                LOGGER.error(e, e);
+                        LOGGER.info(capabilities.size());
+                        reportToUberdustCapability(capabilities, mac);
+
+                        for (String capability : capabilities) {
+                            if (!capability.equals(".well-known/core")) {
+                                LOGGER.info("cap:" + capability);
                             }
                         }
-                    }
 
-                    if (true) {
-                        return;
-                    }
-
-                    if (isBlockwise) {
-                        /**TODO : change**/
-                        byte[] blockIdx = response.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
-                        byte m = blockIdx[0];
-                        m = (byte) (m >> 4);
-                        m = (byte) (m & 0x01);
-                        if (m == 0x00) {
-
-                            try {
-                                Thread.sleep(2000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        LOGGER.info(capabilities.size());
+                        for (String capability : capabilities) {
+                            if (!capability.equals(".well-known/core")) {
+                                if (CoapServer.getInstance().isAlive(capability, mac)) {
+                                    continue;
+                                }
+                                try {
+                                    Thread.sleep(1000);
+                                    CoapServer.getInstance().requestForResource(capability, mac, true);
+                                } catch (Exception e) {
+                                    LOGGER.error(e, e);
+                                }
                             }
-                            LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
-                            BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(mac, blockIdx);
-                            nextBlock.run();
                         }
-                    }
 
-                } else {
+                        if (true) {
+                            return;
+                        }
 
-                    LOGGER.info("is a response to a SREQ");
-                    requestType = requestType.substring(1);
-                    String responseContents = response.getPayloadString();
-                    LOGGER.info(requestType + " @ " + responseContents);
+                        if (isBlockwise) {
+                            /**TODO : change**/
+                            byte[] blockIdx = response.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
+                            byte m = blockIdx[0];
+                            m = (byte) (m >> 4);
+                            m = (byte) (m & 0x01);
+                            if (m == 0x00) {
 
-                    if (response.isConfirmable()) {
-                        LOGGER.info("WILL SEND ACK");
-                        CoapServer.getInstance().sendAck(response.getMID(), mac);
-                    }
-                    CoapServer.getInstance().registerEndpoint(requestType, mac);
+                                try {
+                                    Thread.sleep(2000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                }
+                                LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
+                                BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(mac, blockIdx);
+                                nextBlock.run();
+                            }
+                        }
+
+                    } else {
+
+                        LOGGER.info("is a response to a SREQ");
+                        requestType = requestType.substring(1);
+                        String responseContents = response.getPayloadString();
+                        LOGGER.info(requestType + " @ " + responseContents);
+
+                        if (response.isConfirmable()) {
+                            LOGGER.info("WILL SEND ACK");
+                            CoapServer.getInstance().sendAck(response.getMID(), mac);
+                        }
+                        CoapServer.getInstance().registerEndpoint(requestType, mac);
 
 //                    Thread d = new Thread(new Runnable() {
 //                        @Override
@@ -216,8 +217,8 @@ public class CoapMessageParser extends AbstractMessageParser {
 //                    });
 //                    d.start();
 
-                    new Thread(new UberdustNotify(mac, requestType, response, testbedPrefix, capabilityPrefix)).start();
-                    new Thread(new CacheNotify(mac, requestType, response)).start();
+                        new Thread(new UberdustNotify(mac, requestType, response, testbedPrefix, capabilityPrefix)).start();
+                        new Thread(new CacheNotify(mac, requestType, response)).start();
 
 
 //                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
@@ -240,8 +241,8 @@ public class CoapMessageParser extends AbstractMessageParser {
 //            }
 
 //                }
+                    }
                 }
-            }
 // else {
 //                LOGGER.info("was sent here? ? ");
 //                /**TODO: fix response to uberdust to store readings
@@ -259,10 +260,10 @@ public class CoapMessageParser extends AbstractMessageParser {
 //                 sendToUberdust(uriPath, address, mess);
 //                 **/
 //            }
+            }
+
+            new Evaluator("TRCoAPMessageParser", (System.currentTimeMillis() - timeStart), "millis");
         }
-
-        new Evaluator("TRCoAPMessageParser", (System.currentTimeMillis() - timeStart), "millis");
-
     }
 
     private void handleHereIAm() {
