@@ -36,7 +36,8 @@ public class CoapServer {
     /**
      * Active Requests.
      */
-    private transient final Map<Integer, ActiveRequest> activeRequests;
+    private transient final Map<Integer, ActiveRequest> activeRequestsMID;
+    private transient final Map<String, ActiveRequest> activeRequestsTOKEN;
     /**
      * COAP Server socket.
      */
@@ -72,7 +73,8 @@ public class CoapServer {
         this.endpoints = new HashMap<String, Map<String, Long>>();
         blockWisePending = new HashMap<String, String>();
         ethernetBlockWisePending = new HashMap<Integer, String>();
-        this.activeRequests = new HashMap<Integer, ActiveRequest>();
+        this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
+        this.activeRequestsTOKEN = new HashMap<String, ActiveRequest>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
@@ -114,15 +116,15 @@ public class CoapServer {
 
     public void cleanActiveRequests() {
         LOGGER.info("Cleaning acrive Requests");
-        for (int key : activeRequests.keySet()) {
-            if (System.currentTimeMillis() - activeRequests.get(key).getTimestamp() > 2 * MILLIS_IN_MINUTE + 20 * MILLIS_IN_SECOND) {
+        for (int key : activeRequestsMID.keySet()) {
+            if (System.currentTimeMillis() - activeRequestsMID.get(key).getTimestamp() > 2 * MILLIS_IN_MINUTE + 20 * MILLIS_IN_SECOND) {
 
 //                try {
 //                    TokenManager.getInstance().releaseToken(Hex.decodeHex(activeRequest.getToken().toCharArray()));
 //                } catch (DecoderException e) {
 //
 //                }
-                activeRequests.remove(key);
+                activeRequestsMID.remove(key);
             }
         }
 
@@ -350,25 +352,39 @@ public class CoapServer {
     public void addRequest(final String address, final Message req, final boolean hasQuery) {
 
         synchronized (CoapServer.class) {
-            for (int key : activeRequests.keySet()) {
-
-                if ((activeRequests.get(key).getMid() == req.getMID()) || (req.hasOption(OptionNumberRegistry.TOKEN) && (activeRequests.get(key).getToken().equals(req.getTokenString())))) {
-                    activeRequests.get(key).setUriPath(req.getUriPath());
-                    activeRequests.get(key).setMid(req.getMID());
-                    activeRequests.get(key).setQuery(hasQuery);
-                    activeRequests.get(key).setTimestamp(System.currentTimeMillis());
-                    return;
-                }
-                if (activeRequests.get(key).getUriPath().equals(req.getUriPath()) && activeRequests.get(key).getHost().equals(address)) {
-                    activeRequests.get(key).setMid(req.getMID());
-                    activeRequests.get(key).setTimestamp(System.currentTimeMillis());
-                    activeRequests.get(key).setToken(req.getTokenString());
-                    return;
+            if (req.hasOption(OptionNumberRegistry.TOKEN)) {
+                if (!activeRequestsTOKEN.containsKey(req.getTokenString())) {
+                    ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
+                    activeRequestsTOKEN.put(req.getTokenString(), mRequest);
+                    LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
                 }
             }
-            ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
-            activeRequests.put(req.getMID(), mRequest);
-            LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
+            else {
+                if (!activeRequestsMID.containsKey(req.getMID())) {
+                    ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
+                    activeRequestsMID.put(req.getMID(), mRequest);
+                    LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
+                }
+            }
+//            for (int key : activeRequests.keySet()) {
+//
+//                if ((activeRequests.get(key).getMid() == req.getMID()) || (req.hasOption(OptionNumberRegistry.TOKEN) && (activeRequests.get(key).getToken().equals(req.getTokenString())))) {
+//                    activeRequests.get(key).setUriPath(req.getUriPath());
+//                    activeRequests.get(key).setMid(req.getMID());
+//                    activeRequests.get(key).setQuery(hasQuery);
+//                    activeRequests.get(key).setTimestamp(System.currentTimeMillis());
+//                    return;
+//                }
+//                if (activeRequests.get(key).getUriPath().equals(req.getUriPath()) && activeRequests.get(key).getHost().equals(address)) {
+//                    activeRequests.get(key).setMid(req.getMID());
+//                    activeRequests.get(key).setTimestamp(System.currentTimeMillis());
+//                    activeRequests.get(key).setToken(req.getTokenString());
+//                    return;
+//                }
+//            }
+//            ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
+//            activeRequests.put(req.getMID(), mRequest);
+//            LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
         }
     }
 
@@ -381,10 +397,40 @@ public class CoapServer {
 
     public String matchResponse(final Message response) {
         synchronized (CoapServer.class) {
-            if (activeRequests.isEmpty()) {
-                LOGGER.info("no active request");
-                return null;
+            if (response.hasOption(OptionNumberRegistry.TOKEN)) {
+                if (activeRequestsTOKEN.isEmpty()) {
+                    return null;
+                }
+                else if (activeRequestsTOKEN.containsKey(response.getTokenString())) {
+                    ActiveRequest activeRequest = activeRequestsTOKEN.get(response.getTokenString());
+                    activeRequest.setTimestamp(System.currentTimeMillis());
+                    activeRequest.incCount();
+                    activeRequest.setMid(response.getMID());
+                    activeRequestsTOKEN.put(response.getTokenString(),activeRequest);
+                    return activeRequest.getHost() + "," + activeRequest.getUriPath();
+                }
+                else {
+                    return null;
+                }
             }
+            else {
+                if (activeRequestsMID.isEmpty()) {
+                    return null;
+                }
+                else if (activeRequestsMID.containsKey(response.getMID())) {
+                    ActiveRequest activeRequest = activeRequestsMID.get(response.getMID());
+                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
+                    activeRequestsMID.remove(response.getMID());
+                    return retVal;
+                }
+                else {
+                    return null;
+                }
+            }
+//            if (activeRequests.isEmpty()) {
+//                LOGGER.info("no active request");
+//                return null;
+//            }
 //            final byte[] payload = response.getPayload();
 //            int mid = response.getMID();
 
@@ -392,43 +438,44 @@ public class CoapServer {
 //            LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
 //            LOGGER.info(response.getOptionCount());
 //            LOGGER.info(address);
-            for (int key : activeRequests.keySet()) {
-                ActiveRequest activeRequest = activeRequests.get(key);
-                if ((response.hasOption(OptionNumberRegistry.TOKEN))
-                        && (response.getTokenString().equals(activeRequest.getToken()))) {
-                    LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
-//                    response.setPayload(payload);
-//                    LOGGER.info(response.getPayloadString());
-                    activeRequest.setTimestamp(System.currentTimeMillis());
-                    activeRequest.incCount();
 
-                    if (activeRequest.getMid() == response.getMID()) {
-                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
-                    }
-
-                    activeRequest.setMid(response.getMID());
-                    if (activeRequest.hasQuery()) {
-                        return null;
-                    } else {
-                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
-                    }
-                }
-//                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
-                if (response.getMID() == activeRequest.getMid()) {
-                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
-//                    if (activeRequest.hasQuery()) {
-//                        retVal = null;
+//            for (int key : activeRequests.keySet()) {
+//                ActiveRequest activeRequest = activeRequests.get(key);
+//                if ((response.hasOption(OptionNumberRegistry.TOKEN))
+//                        && (response.getTokenString().equals(activeRequest.getToken()))) {
+//                    LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
+////                    response.setPayload(payload);
+////                    LOGGER.info(response.getPayloadString());
+//                    activeRequest.setTimestamp(System.currentTimeMillis());
+//                    activeRequest.incCount();
+//
+//                    if (activeRequest.getMid() == response.getMID()) {
+//                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
 //                    }
-                    LOGGER.info("Found By MID" + retVal);
-                    try {
-                        activeRequests.remove(key);
-                    } catch (Exception e) {
-                        LOGGER.error(e, e);
-                    }
-                    return retVal;
-                }
-            }
-            return null;
+//
+//                    activeRequest.setMid(response.getMID());
+//                    if (activeRequest.hasQuery()) {
+//                        return null;
+//                    } else {
+//                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
+//                    }
+//                }
+////                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
+//                if (response.getMID() == activeRequest.getMid()) {
+//                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
+////                    if (activeRequest.hasQuery()) {
+////                        retVal = null;
+////                    }
+//                    LOGGER.info("Found By MID" + retVal);
+//                    try {
+//                        activeRequests.remove(key);
+//                    } catch (Exception e) {
+//                        LOGGER.error(e, e);
+//                    }
+//                    return retVal;
+//                }
+//            }
+//            return null;
         }
     }
 
@@ -551,12 +598,12 @@ public class CoapServer {
     public int nextMID() {
         do {
             currentMID = ++currentMID % 0x10000;
-        } while (isReserved(currentMID));
+        } while (isReservedMID(currentMID));
         return currentMID;
     }
 
-    private boolean isReserved(int currentMID) {
-        if (activeRequests.containsKey(currentMID)) return true;
+    private boolean isReservedMID(int currentMID) {
+        if (activeRequestsMID.containsKey(currentMID)) return true;
         return false;
     }
 
@@ -721,10 +768,14 @@ public class CoapServer {
         return endpoints;
     }
 
-    public Map<Integer, ActiveRequest> getActiveRequests() {
-        return activeRequests;
+    public Map<Integer, ActiveRequest> getActiveRequestsMID() {
+        return activeRequestsMID;
     }
 
+    public Map<String, ActiveRequest> getActiveRequestsTOKEN() {
+        return activeRequestsTOKEN;
+    }
+    
     public List<TokenItem> getObservers() {
         return ownObserves;
     }

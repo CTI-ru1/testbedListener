@@ -165,9 +165,16 @@ public class InternalCoapRequest {
             }
         } else if ("/activeRequests".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                Map<Integer, ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequests();
+                Map<Integer, ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequestsMID();
                 for (int key : activeRequests.keySet()) {
                     ActiveRequest activeRequest = activeRequests.get(key);
+                    payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getCount()).append("\n");
+
+                }
+                payload.append("\n");
+                Map<String, ActiveRequest> activeRequests2 = CoapServer.getInstance().getActiveRequestsTOKEN();
+                for (String key : activeRequests2.keySet()) {
+                    ActiveRequest activeRequest = activeRequests2.get(key);
                     payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getCount()).append("\n");
 
                 }
