@@ -6,8 +6,6 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 
-import java.util.Random;
-
 /**
  * Created with IntelliJ IDEA.
  * User: amaxilatis
@@ -36,10 +34,11 @@ public class CoapHelper {
             urihostOption.setStringValue(macStr);
             request.addOption(urihostOption);
             request.setMID(CoapServer.getInstance().nextMID());
+            int mid = CoapServer.getInstance().nextMID();
 //            int mid = new Random().nextInt(5000);
 //            if ( mid < 0 )
 //                mid = -mid;
-//            request.setMID(mid);
+            request.setMID(mid);
             request.prettyPrint();
             return request;
         }
