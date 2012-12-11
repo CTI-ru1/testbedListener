@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.test;
+package eu.uberdust.testbedlistener.util.test;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import eu.uberdust.testbedlistener.util.TokenManager;

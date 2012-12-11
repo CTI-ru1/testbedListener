@@ -1,16 +1,14 @@
 package eu.uberdust.testbedlistener.test;
 
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
+import eu.uberdust.testbedlistener.CoapHelper;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.apache.log4j.Logger;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Random;
 
 /**
  * Unit test for simple App.
@@ -18,6 +16,7 @@ import java.util.Random;
 public class CoapRequestTest
         extends TestCase {
     private static final Logger LOGGER = Logger.getLogger(CoapRequestTest.class);
+    private static final String MAC= "123";
 
     /**
      * Create the test case
@@ -26,6 +25,7 @@ public class CoapRequestTest
      */
     public CoapRequestTest(String testName) {
         super(testName);
+        PropertyReader.getInstance().setFile("listener.properties");
     }
 
     /**
@@ -36,43 +36,30 @@ public class CoapRequestTest
     }
 
     /**
-     * Rigourous Test :-)
+     * Test Two requests have differenet MIDs.
      */
-    public void testApp() {
-        Random mid = new Random();
-        URI uri = null;
-        try {
-            uri = new URI(new StringBuilder().append("/").append("pir").toString());
-        } catch (URISyntaxException e) {
-            LOGGER.error(e.getLocalizedMessage(), e);
-        }
-        final Request request = new Request(CodeRegistry.METHOD_GET, false);
-        request.setMID(mid.nextInt() % 65535);
-        request.setURI(uri);
-//            List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
-//            request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
-//            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-//            request.setToken(TokenManager.getInstance().acquireToken());
-
-        sendRequest(request.toByteArray(), "9a8");
-
+    public void testNotEqualMIDs() {
+        Request request1 = CoapHelper.getWellKnown(MAC);
+        Request request2 = CoapHelper.getWellKnown(MAC);
+        assertNotSame(request1.getMID(), request2.getMID());
     }
 
+    /**
+     * Test the Request contains well-known/core.
+     */
+    public void testContainsWellKnownCore() {
+        Request request1 = CoapHelper.getWellKnown(MAC);
+        assertEquals("/.well-known/core", request1.getUriPath());
+    }
 
-    public void sendRequest(final byte[] data, final String nodeUrn) {
-        final int[] bytes = new int[data.length + 1];
-        bytes[0] = 51;
-        for (int i = 0; i < data.length; i++) {
-            final short read = (short) ((short) data[i] & 0xff);
-            bytes[i + 1] = read;
-        }
+    /**
+     * Test the Request contains the MAC.
+     */
+    public void testContainsURIhost() {
 
-        final StringBuilder messageBinary = new StringBuilder("Requesting[Bytes]:");
-        for (int i = 0; i < data.length + 1; i++) {
-            messageBinary.append(bytes[i]).append("|");
-        }
-        LOGGER.info(messageBinary.toString());
-
+        Request request1 = CoapHelper.getWellKnown(MAC);
+        assertTrue(request1.hasOption(OptionNumberRegistry.URI_HOST));
+        assertEquals(MAC, request1.getFirstOption(OptionNumberRegistry.URI_HOST).getStringValue());
     }
 }
 

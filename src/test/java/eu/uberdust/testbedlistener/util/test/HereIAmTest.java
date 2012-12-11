@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.test;
+package eu.uberdust.testbedlistener.util.test;
 
 
 import junit.framework.Test;
