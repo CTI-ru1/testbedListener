@@ -15,6 +15,13 @@ import eu.uberdust.testbedlistener.coap.CoapServer;
  */
 public class CoapHelper {
 
+    /**
+     * Generates a Well-known/core request for the selected macStr and the Selected block for blockwise-transfers.
+     *
+     * @param macStr the destination mac.
+     * @param i      the block to request.
+     * @return the CoAP request.
+     */
     public static Request getWellKnown(String macStr, int i) {
         Request request = getWellKnown(macStr);
         Option blockwiseOption = new Option(OptionNumberRegistry.BLOCK2);
@@ -26,6 +33,12 @@ public class CoapHelper {
         return request;
     }
 
+    /**
+     * Generates a Well-known/core request for the selected macStr.
+     *
+     * @param macStr the destination mac.
+     * @return the CoAP request.
+     */
     public static Request getWellKnown(String macStr) {
         synchronized (CoapHelper.class) {
             Request request = new Request(CodeRegistry.METHOD_GET, false);
@@ -34,11 +47,6 @@ public class CoapHelper {
             urihostOption.setStringValue(macStr);
             request.addOption(urihostOption);
             request.setMID(CoapServer.getInstance().nextMID());
-            int mid = CoapServer.getInstance().nextMID();
-//            int mid = new Random().nextInt(5000);
-//            if ( mid < 0 )
-//                mid = -mid;
-            request.setMID(mid);
             request.prettyPrint();
             return request;
         }
