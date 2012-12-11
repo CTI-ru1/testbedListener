@@ -163,15 +163,18 @@ public class CoapMessageParser extends AbstractMessageParser {
                         if (!capability.equals(".well-known/core")) {
                             if (CoapServer.getInstance().isAlive(capability, mac)) {
                                 continue;
+                            } else {
+                                try {
+                                    Thread.sleep(250);
+                                } catch (Exception e) {
+                                    LOGGER.error(e, e);
+                                }
                             }
-                            try {
-                                Thread.sleep(1000);
-                                CoapServer.getInstance().requestForResource(capability, mac, true);
-                            } catch (Exception e) {
-                                LOGGER.error(e, e);
-                            }
+                            CoapServer.getInstance().requestForResource(capability, mac, true);
+
                         }
                     }
+
 
                     if (true) {
                         return;
