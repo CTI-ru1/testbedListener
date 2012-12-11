@@ -55,7 +55,6 @@ public class CoapServer {
     private final List<TokenItem> ownObserves;
     private final Map<String, String> blockWisePending;
     private final Map<Integer, String> ethernetBlockWisePending;
-    private Map<String, String> gateways;
     private final Map<String, Long> duplicates;
     private int currentMID;
     private final long startTime;
@@ -89,7 +88,8 @@ public class CoapServer {
             LOGGER.error(e.getMessage(), e);
         }
 
-        loadGateways();
+        GatewayManager.getInstance();
+
 //        //Start the handler
         final UDPhandler thread = new UDPhandler(socket);
         thread.start();
@@ -131,75 +131,6 @@ public class CoapServer {
 
     }
 
-    private void loadGateways() {
-        gateways = new HashMap<String, String>();
-        loadGatewaysFromUberdust();
-        loadGatewaysFromFile();
-    }
-
-    private void loadGatewaysFromUberdust() {
-        try {
-            URL url = new URL(new StringBuilder()
-                    .append("http://")
-                    .append(PropertyReader.getInstance().getProperties().get("uberdust.server"))
-                    .append(PropertyReader.getInstance().getProperties().get("uberdust.basepath"))
-                    .append("/rest/testbed/")
-                    .append(PropertyReader.getInstance().getProperties().get("wisedb.testbedid"))
-                    .append("/capability/gateway/tabdelimited").toString());
-            final URLConnection con = url.openConnection();
-            final InputStream out = con.getInputStream();
-            final StringBuilder response = new StringBuilder();
-            int str = out.read();
-            while (str != -1) {
-                response.append((char) str);
-                str = out.read();
-            }
-
-            out.close();
-            final String[] splitted = response.toString().split("\n");
-            for (final String row : splitted) {
-                String urn = row.split("\t")[0];
-                urn = urn.substring(urn.lastIndexOf(":0x") + 3);
-                final String value = row.split("\t")[3];
-                if ("1.0".equals(value)) {
-                    gateways.put(urn, urn);
-                } else if (value.contains("0x")) {
-                    gateways.put(urn, value.split("0x")[1]);
-                }
-            }
-        } catch (MalformedURLException e) {
-            LOGGER.error(e, e);
-        } catch (IOException e) {
-            LOGGER.error(e, e);
-        }
-    }
-
-    private void loadGatewaysFromFile() {
-        BufferedReader bin = null;
-        try {
-            bin = new BufferedReader(new FileReader("gateways"));
-            String str = bin.readLine();
-            while (str != null) {
-                if (str.contains(",")) {
-                    final String source = str.split(",")[0].substring(str.split(",")[0].lastIndexOf(":0x") + 3);
-                    final String from = str.split(",")[1].substring(str.split(",")[1].lastIndexOf(":0x") + 3);
-                    gateways.put(source, from);
-
-                } else {
-                    if (str.contains(":")) {
-                        str = str.substring(str.lastIndexOf(":0x") + 3);
-                    }
-                    gateways.put(str, str);
-                }
-                LOGGER.info("adding " + str);
-                str = bin.readLine();
-            }
-        } catch (FileNotFoundException e) {
-            LOGGER.error(e, e);
-        } catch (IOException e) {
-            LOGGER.error(e, e);
-        }
-    }
 
     /**
      * Singleton Class.
@@ -517,13 +448,13 @@ public class CoapServer {
             public void run() {
                 TestbedController.getInstance().sendMessage(payload, nodeUrn);
             }
-        }, 1000);
+        }, 100);
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 TestbedController.getInstance().sendMessage(payload, nodeUrn);
             }
-        }, 2500);
+        }, 250);
     }
 
     private void sendXbee(XBeeAddress16 address16, int i, int[] bytes, int counter) {
@@ -756,8 +687,8 @@ public class CoapServer {
     }
 
     public String findGateway(final String destination) {
-        if (gateways.containsKey(destination)) {
-            return gateways.get(destination);
+        if (GatewayManager.getInstance().hasGateway(destination)) {
+            return GatewayManager.getInstance().getGateway(destination);
         } else {
             return "1ccd";
         }
