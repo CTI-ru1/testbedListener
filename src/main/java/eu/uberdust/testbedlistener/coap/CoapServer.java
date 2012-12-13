@@ -61,6 +61,7 @@ public class CoapServer {
     private int requestWellKnownCounter;
     private int requestObserveCounter;
     public int responseObserveCounter;
+    private int observeLostCounter;
 
     public long getStartTime() {
         return startTime;
@@ -84,6 +85,7 @@ public class CoapServer {
         this.requestWellKnownCounter = 0;
         this.requestObserveCounter = 0;
         this.responseObserveCounter = 0;
+        this.observeLostCounter = 0;
 //        Timer discoveryTimer = new Timer();
 //        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
 
@@ -168,6 +170,7 @@ public class CoapServer {
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > MILLIS_TO_STALE) {
                         endpoints.get(address).put(path, System.currentTimeMillis());
                         LOGGER.info("address was stale " + address + " " + path);
+                        observeLostCounter++;
                         return true;
                     } else {
                         endpoints.get(address).put(path, System.currentTimeMillis());
@@ -771,6 +774,10 @@ public class CoapServer {
 
     public int getResponseObserveCounter() {
         return responseObserveCounter;
+    }
+
+    public int getObserveLostCounter() {
+        return observeLostCounter;
     }
 
 

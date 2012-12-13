@@ -137,6 +137,12 @@ public class InternalCoapRequest {
                     payload.append("Version:").append(prop.get("version")).append("\n");
                     payload.append("Build:").append(prop.get("build")).append("\n");
 
+                    payload.append("\n").append("****").append("\n");
+                    payload.append(".well-known/core requests: ").append(CoapServer.getInstance().getRequestWellKnownCounter()).append("\n");
+                    payload.append("Observe Requests:").append(CoapServer.getInstance().getRequestObserveCounter()).append("\n");
+                    payload.append("Observe Responses:").append(CoapServer.getInstance().getResponseObserveCounter()).append("\n");
+                    payload.append("Observe Lost:").append(CoapServer.getInstance().getObserveLostCounter()).append("\n");
+
                 } catch (IOException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
@@ -221,11 +227,6 @@ public class InternalCoapRequest {
             } else {
                 response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
             }
-        } else if ("/statistics".equals(path)) {
-            payload.append(".well-known/core requests: ").append(CoapServer.getInstance().getRequestWellKnownCounter()).append("\n");
-            payload.append("observe requests: ").append(CoapServer.getInstance().getRequestObserveCounter()).append("\n");
-            payload.append("observe responses: ").append(CoapServer.getInstance().getResponseObserveCounter()).append("\n");
-            //payload.append("Observe lost")
         } else if ("/wakeup".equals(path) && udpRequest.getCode() == 2) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_POST) {
                 String device = udpRequest.getPayloadString();
