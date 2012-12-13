@@ -10,6 +10,7 @@ import java.net.SocketAddress;
 public class Cache {
 
     private String value;
+    private int observelostCounter;
 
     public int getContentType() {
         return contentType;
@@ -54,12 +55,22 @@ public class Cache {
         this.timestamp = timestamp;
         this.maxAge = maxAge;
         this.contentType = contentType;
+        this.observelostCounter = 0;
     }
 
-    public void put(final String value, final long timestamp, final int maxAge, final int contentType ) {
+    public void put(final String value, final long timestamp, final int maxAge, final int contentType, int lostCounter) {
         this.value = value;
         this.timestamp = timestamp;
         this.maxAge = maxAge;
         this.contentType = contentType;
+        this.observelostCounter = lostCounter;
+    }
+
+    public void incLostCounter() {
+        observelostCounter++;
+    }
+
+    public int getLostCounter() {
+        return observelostCounter;
     }
 }

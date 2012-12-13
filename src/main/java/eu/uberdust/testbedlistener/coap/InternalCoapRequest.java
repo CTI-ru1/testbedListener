@@ -215,7 +215,7 @@ public class InternalCoapRequest {
                     for (String uriPath : cache.get(device).keySet()) {
                         Cache pair = cache.get(device).get(uriPath);
                         long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
-                        payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\n");
+                        payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\t").append(pair.getLostCounter()).append("\n");
                     }
                 }
                 response.setContentType(MediaTypeRegistry.TEXT_PLAIN);

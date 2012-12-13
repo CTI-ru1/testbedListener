@@ -65,7 +65,7 @@ public class CacheHandler {
     public void setValue(String uriHost, String uriPath, int maxAge, int contentType, String value) {
         if (cache.containsKey(uriHost)) {
             if (cache.get(uriHost).containsKey(uriPath)) {
-                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType);
+                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType, cache.get(uriHost).get(uriPath).getLostCounter());
             } else {
                 Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
                 cache.get(uriHost).put(uriPath, pair);
