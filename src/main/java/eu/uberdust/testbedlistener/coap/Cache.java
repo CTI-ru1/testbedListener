@@ -16,28 +16,16 @@ public class Cache {
         return contentType;
     }
 
-    public void setContentType(int contentType) {
-        this.contentType = contentType;
-    }
-
     private int contentType;
 
     public int getMaxAge() {
         return maxAge;
     }
 
-    public void setMaxAge(int maxAge) {
-        this.maxAge = maxAge;
-    }
-
     private int maxAge;
 
     public String getValue() {
         return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
     }
 
     public Long getTimestamp() {
@@ -50,7 +38,7 @@ public class Cache {
 
     private Long timestamp;
 
-    public Cache(final String value, final Long timestamp, final int maxAge, final int contentType ) {
+    public Cache(final String value, final Long timestamp, final int maxAge, final int contentType) {
         this.value = value;
         this.timestamp = timestamp;
         this.maxAge = maxAge;

@@ -12,10 +12,6 @@ import org.apache.log4j.Logger;
  * Time: 3:18 PM
  */
 public class CacheNotify implements Runnable {
-    /**
-     * LOGGER.
-     */
-    private static final Logger LOGGER = Logger.getLogger(CacheNotify.class);
 
     private transient final Message response;
     private transient final String requestType;

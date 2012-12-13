@@ -140,10 +140,6 @@ public class PendingRequestHandler {
 
     }
 
-    public void respond(final SocketAddress originSocketAddress, final Message response) {
-
-    }
-
     public String matchMID4Host(final Message udpRequest) {
         final int messageMID = udpRequest.getMID();
 

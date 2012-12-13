@@ -16,8 +16,6 @@ public class CacheHandler {
     private transient final Map<String, Map<String, Cache>> cache;
     private static CacheHandler instance = null;
 
-    private Timer timer;
-
     public CacheHandler() {
         cache = new TreeMap<String, Map<String, Cache>>(new Comparator<String>() {
             @Override
