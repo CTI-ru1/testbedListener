@@ -46,12 +46,12 @@ public class Cache {
         this.observelostCounter = 0;
     }
 
-    public void put(final String value, final long timestamp, final int maxAge, final int contentType, int lostCounter) {
+    public void put(final String value, final long timestamp, final int maxAge, final int contentType) {
         this.value = value;
         this.timestamp = timestamp;
         this.maxAge = maxAge;
         this.contentType = contentType;
-        this.observelostCounter = lostCounter;
+        //this.observelostCounter = lostCounter;
     }
 
     public void incLostCounter() {

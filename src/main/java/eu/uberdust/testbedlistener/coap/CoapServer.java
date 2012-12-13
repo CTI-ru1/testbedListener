@@ -212,7 +212,9 @@ public class CoapServer {
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
                         LOGGER.info("address was stale " + address + " " + path);
                         observeLostCounter++;
-                        CacheHandler.getInstance().getCache().get(address).get(path).incLostCounter();
+                        if (pair != null) {
+                            pair.incLostCounter();
+                        }
                         return false;
                     } else {
 
