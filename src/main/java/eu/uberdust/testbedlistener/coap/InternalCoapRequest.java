@@ -120,7 +120,7 @@ public class InternalCoapRequest {
                     );
                     payload.append("Uptime:").append(elapsedString).append("\n");
                     payload.append("Running Threads:").append(Thread.activeCount()).append("\n");
-                    payload.append("Cache Size:" + CacheHandler.getInstance().getCache().keySet().size() + " nodes").append("\n");
+                    payload.append("Cache Size:").append(CacheHandler.getInstance().getCache().keySet().size()).append(" nodes").append("\n");
                     payload.append("Pending Connections:").append(PendingRequestHandler.getInstance().getPendingRequestList().size()).append("\n");
                     int mb = 1024 * 1024;
                     //Getting the runtime reference from system
