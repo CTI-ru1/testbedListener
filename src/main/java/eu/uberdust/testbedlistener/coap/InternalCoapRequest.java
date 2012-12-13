@@ -208,16 +208,8 @@ public class InternalCoapRequest {
                     }
                     for (String uriPath : cache.get(device).keySet()) {
                         Cache pair = cache.get(device).get(uriPath);
-//                        boolean stale;
-//                        if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge() * 1000) {
-//                            stale = true;
-//                        } else {
-//                            stale = false;
-//                        }
-//                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(pair.getMaxAge()).append("-").append(stale?"out-of-date":"cached").append("\n");
                         long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
                         payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\n");
-
                     }
                 }
                 response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
@@ -229,6 +221,11 @@ public class InternalCoapRequest {
             } else {
                 response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
             }
+        } else if ("/statistics".equals(path)) {
+            payload.append(".well-known/core requests: ").append(CoapServer.getInstance().getRequestWellKnownCounter()).append("\n");
+            payload.append("observe requests: ").append(CoapServer.getInstance().getRequestObserveCounter()).append("\n");
+            payload.append("observe responses: ").append(CoapServer.getInstance().getResponseObserveCounter()).append("\n");
+            //payload.append("Observe lost")
         } else if ("/wakeup".equals(path) && udpRequest.getCode() == 2) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_POST) {
                 String device = udpRequest.getPayloadString();
