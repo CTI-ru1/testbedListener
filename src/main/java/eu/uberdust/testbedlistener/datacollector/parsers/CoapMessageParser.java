@@ -223,6 +223,7 @@ public class CoapMessageParser extends AbstractMessageParser {
 
                     new Thread(new UberdustNotify(mac, requestType, response, testbedPrefix, capabilityPrefix)).start();
                     new Thread(new CacheNotify(mac, requestType, response)).start();
+                    CoapServer.getInstance().incResponseObserveCounter();
 
 
 //                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
@@ -281,6 +282,7 @@ public class CoapMessageParser extends AbstractMessageParser {
         Request request = CoapHelper.getWellKnown(macStr);
         CoapServer.getInstance().addRequest(macStr, request, false);
         CoapServer.getInstance().sendRequest(request.toByteArray(), macStr);
+        CoapServer.getInstance().incRequestWellKnownCounter();
     }
 
     private void reportToUberdustCapability(List<String> capabilities, String address) {

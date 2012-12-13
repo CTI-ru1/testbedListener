@@ -58,6 +58,9 @@ public class CoapServer {
     private final Map<String, Long> duplicates;
     private int currentMID;
     private final long startTime;
+    private int requestWellKnownCounter;
+    private int requestObserveCounter;
+    public int responseObserveCounter;
 
     public long getStartTime() {
         return startTime;
@@ -78,6 +81,9 @@ public class CoapServer {
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
         this.startTime = System.currentTimeMillis();
+        this.requestWellKnownCounter = 0;
+        this.requestObserveCounter = 0;
+        this.responseObserveCounter = 0;
 //        Timer discoveryTimer = new Timer();
 //        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
 
@@ -283,16 +289,33 @@ public class CoapServer {
     public void addRequest(final String address, final Message req, final boolean hasQuery) {
 
         synchronized (CoapServer.class) {
+            int count = 0;
             if (req.hasOption(OptionNumberRegistry.TOKEN)) {
                 if (!activeRequestsTOKEN.containsKey(req.getTokenString())) {
+                    for (String key : activeRequestsTOKEN.keySet()) {
+                        if ( activeRequestsTOKEN.get(key).getHost().equals(address) && activeRequestsTOKEN.get(key).getUriPath().equals(req.getUriPath())) {
+                            count = activeRequestsTOKEN.get(key).getCount();
+                            activeRequestsTOKEN.remove(key);
+                            break;
+                        }
+                    }
                     ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
+                    mRequest.setCount(count);
                     activeRequestsTOKEN.put(req.getTokenString(), mRequest);
                     LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
                 }
             }
             else {
                 if (!activeRequestsMID.containsKey(req.getMID())) {
+                    for (Integer key : activeRequestsMID.keySet()) {
+                        if ( activeRequestsMID.get(key).getHost().equals(address) && activeRequestsMID.get(key).getUriPath().equals(req.getUriPath())) {
+                            count = activeRequestsMID.get(key).getCount();
+                            activeRequestsMID.remove(key);
+                            break;
+                        }
+                    }
                     ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
+                    mRequest.setCount(count);
                     activeRequestsMID.put(req.getMID(), mRequest);
                     LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
                 }
@@ -561,6 +584,7 @@ public class CoapServer {
             if (observe) {
                 request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
                 request.setToken(TokenManager.getInstance().acquireToken(address));
+                requestObserveCounter++;
 //                request.setToken(TokenManager.getInstance().acquireToken());
             }
             request.prettyPrint();
@@ -723,6 +747,30 @@ public class CoapServer {
             duplicates.put(response, System.currentTimeMillis());
             return false;
         }
+    }
+
+    public void incRequestWellKnownCounter() {
+        requestWellKnownCounter++;
+    }
+
+    public int getRequestWellKnownCounter() {
+        return requestWellKnownCounter;
+    }
+
+    public int getRequestObserveCounter() {
+        return requestObserveCounter;
+    }
+
+    public void incRequestObserveCounter() {
+        requestObserveCounter++;
+    }
+
+    public void incResponseObserveCounter() {
+        responseObserveCounter++;
+    }
+
+    public int getResponseObserveCounter() {
+        return responseObserveCounter;
     }
 
 
