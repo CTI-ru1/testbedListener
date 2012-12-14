@@ -1,16 +1,12 @@
 package eu.uberdust.testbedlistener.coap;
 
-import org.apache.log4j.Logger;
-
-import java.net.SocketAddress;
-
 /**
  * Contains all information about an active request from a source.
  */
 public class Cache {
 
     private String value;
-    private int observelostCounter;
+    private int observeLostCounter;
 
     public int getContentType() {
         return contentType;
@@ -32,7 +28,7 @@ public class Cache {
         return timestamp;
     }
 
-    public void setTimestamp(Long timestamp) {
+    public void setTimestamp(final Long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -43,10 +39,10 @@ public class Cache {
         this.timestamp = timestamp;
         this.maxAge = maxAge;
         this.contentType = contentType;
-        this.observelostCounter = 0;
+        this.observeLostCounter = 0;
     }
 
-    public void put(final String value, final long timestamp, final int maxAge, final int contentType, int counter) {
+    public void put(final String value, final long timestamp, final int maxAge, final int contentType) {
         this.value = value;
         this.timestamp = timestamp;
         this.maxAge = maxAge;
@@ -57,10 +53,10 @@ public class Cache {
     }
 
     public int getLostCounter() {
-        return observelostCounter;
+        return observeLostCounter;
     }
 
     public void incLostCounter() {
-        observelostCounter++;
+        observeLostCounter++;
     }
 }

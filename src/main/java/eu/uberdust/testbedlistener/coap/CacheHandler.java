@@ -2,7 +2,6 @@ package eu.uberdust.testbedlistener.coap;
 
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Timer;
 import java.util.TreeMap;
 
 /**
@@ -19,7 +18,7 @@ public class CacheHandler {
     public CacheHandler() {
         cache = new TreeMap<String, Map<String, Cache>>(new Comparator<String>() {
             @Override
-            public int compare(String s, String s1) {
+            public int compare(final String s, final String s1) {
                 return s.compareTo(s1);
             }
         });
@@ -50,7 +49,7 @@ public class CacheHandler {
         }
     }
 
-    public Cache getValue(String uriHost, String uriPath) {
+    public Cache getValue(final String uriHost, final String uriPath) {
         if (cache.containsKey(uriHost)) {
             if (cache.get(uriHost).containsKey(uriPath)) {
                 return cache.get(uriHost).get(uriPath);
@@ -59,21 +58,19 @@ public class CacheHandler {
         return null;
     }
 
-    public void setValue(String uriHost, String uriPath, int maxAge, int contentType, String value) {
+    public void setValue(final String uriHost, final String uriPath, final int maxAge, final int contentType, final String value) {
         if (cache.containsKey(uriHost)) {
             if (cache.get(uriHost).containsKey(uriPath)) {
-                Cache pair = cache.get(uriHost).get(uriPath);
-                int counter = pair.getLostCounter();
-                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType, counter);
+                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType);
             } else {
                 Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
                 cache.get(uriHost).put(uriPath, pair);
             }
         } else {
-            Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
-            TreeMap<String, Cache> map = new TreeMap<String, Cache>(new Comparator<String>() {
+            final Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
+            final TreeMap<String, Cache> map = new TreeMap<String, Cache>(new Comparator<String>() {
                 @Override
-                public int compare(String s, String s1) {
+                public int compare(final String s, final String s1) {
                     return s.compareTo(s1);
                 }
             });
