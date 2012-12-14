@@ -66,7 +66,6 @@ public class InternalCoapRequest {
             for (int i = 1; i < temp.length; i++) {
                 uriPath.append("/").append(temp[i]);
             }
-            //String uriPath = temp[1];
             udpRequest.setURI(uriPath.toString());
             Option host = new Option(OptionNumberRegistry.URI_HOST);
             host.setStringValue(device);
@@ -74,7 +73,7 @@ public class InternalCoapRequest {
 
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET && !udpRequest.hasOption(OptionNumberRegistry.OBSERVE)) {
                 Cache pair = CacheHandler.getInstance().getValue(device, uriPath.toString());
-                if (pair == null) {
+                if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge()*1000) {
                     return udpRequest;
                 } else {
                     response.setContentType(pair.getContentType());
@@ -208,6 +207,7 @@ public class InternalCoapRequest {
         } else if ("/cache".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
                 Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
+                payload.append("Host\tPath\tValue\tTimestamp\t\t\tAge\tObserves lost\n");
                 for (String device : cache.keySet()) {
                     if (!"".equals(uriHost) && !device.equals(uriHost)) {
                         continue;

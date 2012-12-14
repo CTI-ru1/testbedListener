@@ -167,7 +167,14 @@ public class CoapServer {
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
-                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > MILLIS_TO_STALE) {
+                    Cache pair = CacheHandler.getInstance().getValue(address, path);
+                    long millis;
+                    if (pair == null) {
+                        millis = MILLIS_TO_STALE;
+                    } else {
+                        millis = pair.getMaxAge() * 1000;
+                    }
+                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
                         endpoints.get(address).put(path, System.currentTimeMillis());
                         LOGGER.info("address was stale " + address + " " + path);
                         return true;
@@ -202,7 +209,7 @@ public class CoapServer {
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
-                    Cache pair = CacheHandler.getInstance().getValue(address, path);
+                    Cache pair = CacheHandler.getInstance().getValue(address, "/"+path);
                     long millis;
                     if (pair == null) {
                         millis = MILLIS_TO_STALE;
@@ -211,10 +218,10 @@ public class CoapServer {
                     }
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
                         LOGGER.info("address was stale " + address + " " + path);
-                        observeLostCounter++;
                         if (pair != null) {
                             pair.incLostCounter();
                         }
+                        observeLostCounter++;
                         return false;
                     } else {
 

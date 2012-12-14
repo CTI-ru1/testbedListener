@@ -46,19 +46,21 @@ public class Cache {
         this.observelostCounter = 0;
     }
 
-    public void put(final String value, final long timestamp, final int maxAge, final int contentType) {
+    public void put(final String value, final long timestamp, final int maxAge, final int contentType, int counter) {
         this.value = value;
         this.timestamp = timestamp;
         this.maxAge = maxAge;
         this.contentType = contentType;
-        //this.observelostCounter = lostCounter;
-    }
-
-    public void incLostCounter() {
-        observelostCounter++;
+//        if (System.currentTimeMillis() -timestamp > maxAge*1000) {
+//            this.observelostCounter++;
+//        }
     }
 
     public int getLostCounter() {
         return observelostCounter;
+    }
+
+    public void incLostCounter() {
+        observelostCounter++;
     }
 }

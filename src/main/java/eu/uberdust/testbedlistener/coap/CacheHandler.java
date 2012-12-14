@@ -51,10 +51,9 @@ public class CacheHandler {
     }
 
     public Cache getValue(String uriHost, String uriPath) {
-        if (cache.containsKey(uriHost) && cache.get(uriHost).containsKey(uriPath)) {
-            Cache element = cache.get(uriHost).get(uriPath);
-            if ((element.getTimestamp() > System.currentTimeMillis() - element.getMaxAge() * 1000)) {
-                return element;
+        if (cache.containsKey(uriHost)) {
+            if (cache.get(uriHost).containsKey(uriPath)) {
+                return cache.get(uriHost).get(uriPath);
             }
         }
         return null;
@@ -63,7 +62,9 @@ public class CacheHandler {
     public void setValue(String uriHost, String uriPath, int maxAge, int contentType, String value) {
         if (cache.containsKey(uriHost)) {
             if (cache.get(uriHost).containsKey(uriPath)) {
-                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType);
+                Cache pair = cache.get(uriHost).get(uriPath);
+                int counter = pair.getLostCounter();
+                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType, counter);
             } else {
                 Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
                 cache.get(uriHost).put(uriPath, pair);
