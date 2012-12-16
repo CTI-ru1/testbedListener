@@ -471,19 +471,19 @@ public class CoapServer {
         payload[0] = 51;
         System.arraycopy(data, 0, payload, 1, data.length);
         TestbedController.getInstance().sendMessage(payload, nodeUrn);
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                TestbedController.getInstance().sendMessage(payload, nodeUrn);
-            }
-        }, 100);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                TestbedController.getInstance().sendMessage(payload, nodeUrn);
-            }
-        }, 250);
+//        Timer timer = new Timer();
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                TestbedController.getInstance().sendMessage(payload, nodeUrn);
+//            }
+//        }, 100);
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                TestbedController.getInstance().sendMessage(payload, nodeUrn);
+//            }
+//        }, 250);
     }
 
     private void sendXbee(XBeeAddress16 address16, int i, int[] bytes, int counter) {
