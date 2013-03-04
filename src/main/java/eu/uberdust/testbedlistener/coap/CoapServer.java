@@ -61,6 +61,7 @@ public class CoapServer {
     private int requestWellKnownCounter;
     private int requestObserveCounter;
     public int responseObserveCounter;
+    private int observeLostCounter;
 
     public long getStartTime() {
         return startTime;
@@ -84,6 +85,7 @@ public class CoapServer {
         this.requestWellKnownCounter = 0;
         this.requestObserveCounter = 0;
         this.responseObserveCounter = 0;
+        this.observeLostCounter = 0;
 //        Timer discoveryTimer = new Timer();
 //        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
 
@@ -165,7 +167,14 @@ public class CoapServer {
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
-                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > MILLIS_TO_STALE) {
+                    Cache pair = CacheHandler.getInstance().getValue(address, path);
+                    long millis;
+                    if (pair == null) {
+                        millis = MILLIS_TO_STALE;
+                    } else {
+                        millis = pair.getMaxAge() * 1000;
+                    }
+                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
                         endpoints.get(address).put(path, System.currentTimeMillis());
                         LOGGER.info("address was stale " + address + " " + path);
                         return true;
@@ -200,16 +209,19 @@ public class CoapServer {
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
-                    Cache pair = CacheHandler.getInstance().getValue(address, path);
+                    Cache pair = CacheHandler.getInstance().getValue(address, "/"+path);
                     long millis;
                     if (pair == null) {
                         millis = MILLIS_TO_STALE;
-                    }
-                    else {
+                    } else {
                         millis = pair.getMaxAge() * 1000;
                     }
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
                         LOGGER.info("address was stale " + address + " " + path);
+                        if (pair != null) {
+                            pair.incLostCounter();
+                        }
+                        observeLostCounter++;
                         return false;
                     } else {
 
@@ -293,7 +305,7 @@ public class CoapServer {
             if (req.hasOption(OptionNumberRegistry.TOKEN)) {
                 if (!activeRequestsTOKEN.containsKey(req.getTokenString())) {
                     for (String key : activeRequestsTOKEN.keySet()) {
-                        if ( activeRequestsTOKEN.get(key).getHost().equals(address) && activeRequestsTOKEN.get(key).getUriPath().equals(req.getUriPath())) {
+                        if (activeRequestsTOKEN.get(key).getHost().equals(address) && activeRequestsTOKEN.get(key).getUriPath().equals(req.getUriPath())) {
                             count = activeRequestsTOKEN.get(key).getCount();
                             activeRequestsTOKEN.remove(key);
                             break;
@@ -304,11 +316,10 @@ public class CoapServer {
                     activeRequestsTOKEN.put(req.getTokenString(), mRequest);
                     LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
                 }
-            }
-            else {
+            } else {
                 if (!activeRequestsMID.containsKey(req.getMID())) {
                     for (Integer key : activeRequestsMID.keySet()) {
-                        if ( activeRequestsMID.get(key).getHost().equals(address) && activeRequestsMID.get(key).getUriPath().equals(req.getUriPath())) {
+                        if (activeRequestsMID.get(key).getHost().equals(address) && activeRequestsMID.get(key).getUriPath().equals(req.getUriPath())) {
                             count = activeRequestsMID.get(key).getCount();
                             activeRequestsMID.remove(key);
                             break;
@@ -354,30 +365,25 @@ public class CoapServer {
             if (response.hasOption(OptionNumberRegistry.TOKEN)) {
                 if (activeRequestsTOKEN.isEmpty()) {
                     return null;
-                }
-                else if (activeRequestsTOKEN.containsKey(response.getTokenString())) {
+                } else if (activeRequestsTOKEN.containsKey(response.getTokenString())) {
                     ActiveRequest activeRequest = activeRequestsTOKEN.get(response.getTokenString());
                     activeRequest.setTimestamp(System.currentTimeMillis());
                     activeRequest.incCount();
                     activeRequest.setMid(response.getMID());
-                    activeRequestsTOKEN.put(response.getTokenString(),activeRequest);
+                    activeRequestsTOKEN.put(response.getTokenString(), activeRequest);
                     return activeRequest.getHost() + "," + activeRequest.getUriPath();
-                }
-                else {
+                } else {
                     return null;
                 }
-            }
-            else {
+            } else {
                 if (activeRequestsMID.isEmpty()) {
                     return null;
-                }
-                else if (activeRequestsMID.containsKey(response.getMID())) {
+                } else if (activeRequestsMID.containsKey(response.getMID())) {
                     ActiveRequest activeRequest = activeRequestsMID.get(response.getMID());
                     String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
                     activeRequestsMID.remove(response.getMID());
                     return retVal;
-                }
-                else {
+                } else {
                     return null;
                 }
             }
@@ -730,7 +736,7 @@ public class CoapServer {
     public Map<String, ActiveRequest> getActiveRequestsTOKEN() {
         return activeRequestsTOKEN;
     }
-    
+
     public List<TokenItem> getObservers() {
         return ownObserves;
     }
@@ -771,6 +777,10 @@ public class CoapServer {
 
     public int getResponseObserveCounter() {
         return responseObserveCounter;
+    }
+
+    public int getObserveLostCounter() {
+        return observeLostCounter;
     }
 
 

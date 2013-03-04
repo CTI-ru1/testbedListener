@@ -21,8 +21,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class InternalCoapRequest {
 
-    private static final Logger LOGGER = Logger.getLogger(InternalCoapRequest.class);
-
     private static InternalCoapRequest instance = null;
 
     /**
@@ -40,10 +38,10 @@ public class InternalCoapRequest {
         }
     }
 
-    public Message handleRequest(String uriHost, Message udpRequest, SocketAddress socketAddress) {
+    public Message handleRequest(final String uriHost, final Message udpRequest, final SocketAddress socketAddress) {
         //To change body of created methods use File | Settings | File Templates.
-        Message response = new Message();
-        StringBuilder payload = new StringBuilder();
+        final Message response = new Message();
+        final StringBuilder payload = new StringBuilder();
         if (udpRequest.isConfirmable()) {
             response.setType(Message.messageType.ACK);
         } else if (udpRequest.isNonConfirmable()) {
@@ -52,8 +50,8 @@ public class InternalCoapRequest {
         response.setCode(CodeRegistry.RESP_CONTENT);
         response.setMID(udpRequest.getMID());
 
-        String path = udpRequest.getUriPath();
-        if (!"".equals(uriHost) && !"/cache".equals(path) && !"/routes".equals(path)) {
+        final String path = udpRequest.getUriPath();
+        if (!"".equals(uriHost) && !"/cache".equals(path)) {
             return udpRequest;
         }
         if (path.contains("/device/")) {
@@ -61,26 +59,25 @@ public class InternalCoapRequest {
 
             String[] temp = path.split("/device/");
             temp = temp[1].split("/");
-            String device = temp[0];
+            final String device = temp[0];
             final StringBuilder uriPath = new StringBuilder();
             for (int i = 1; i < temp.length; i++) {
                 uriPath.append("/").append(temp[i]);
             }
-            //String uriPath = temp[1];
             udpRequest.setURI(uriPath.toString());
-            Option host = new Option(OptionNumberRegistry.URI_HOST);
+            final Option host = new Option(OptionNumberRegistry.URI_HOST);
             host.setStringValue(device);
             udpRequest.setOption(host);
 
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET && !udpRequest.hasOption(OptionNumberRegistry.OBSERVE)) {
-                Cache pair = CacheHandler.getInstance().getValue(device, uriPath.toString());
-                if (pair == null) {
+                final Cache pair = CacheHandler.getInstance().getValue(device, uriPath.toString());
+                if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge()*1000) {
                     return udpRequest;
                 } else {
                     response.setContentType(pair.getContentType());
 //                    payload.append("CACHE - ").append(new Date(pair.getTimestamp())).append(" - ").append(pair.getValue());
                     payload.append(pair.getValue());
-                    Option etag = new Option(OptionNumberRegistry.ETAG);
+                    final Option etag = new Option(OptionNumberRegistry.ETAG);
                     etag.setIntValue((int) (System.currentTimeMillis() - pair.getTimestamp()));
                     response.setOption(etag);
                     response.setMaxAge(pair.getMaxAge());
@@ -109,10 +106,10 @@ public class InternalCoapRequest {
         } else if ("/status".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
                 payload.append("Online").append("\n");
-                Properties prop = new Properties();
+                final Properties prop = new Properties();
                 try {
-                    long elapsed = System.currentTimeMillis() - CoapServer.getInstance().getStartTime();
-                    String elapsedString = String.format("%d days, %d hours, %d min, %d sec",
+                    final long elapsed = System.currentTimeMillis() - CoapServer.getInstance().getStartTime();
+                    final String elapsedString = String.format("%d days, %d hours, %d min, %d sec",
                             TimeUnit.MILLISECONDS.toDays(elapsed),
                             TimeUnit.MILLISECONDS.toHours(elapsed) - TimeUnit.DAYS.toHours(TimeUnit.MILLISECONDS.toDays(elapsed)),
                             TimeUnit.MILLISECONDS.toMinutes(elapsed) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(elapsed)),
@@ -120,11 +117,11 @@ public class InternalCoapRequest {
                     );
                     payload.append("Uptime:").append(elapsedString).append("\n");
                     payload.append("Running Threads:").append(Thread.activeCount()).append("\n");
-                    payload.append("Cache Size:" + CacheHandler.getInstance().getCache().keySet().size() + " nodes").append("\n");
+                    payload.append("Cache Size:").append(CacheHandler.getInstance().getCache().keySet().size()).append(" nodes").append("\n");
                     payload.append("Pending Connections:").append(PendingRequestHandler.getInstance().getPendingRequestList().size()).append("\n");
-                    int mb = 1024 * 1024;
+                    final int mb = 1024 * 1024;
                     //Getting the runtime reference from system
-                    Runtime runtime = Runtime.getRuntime();
+                    final Runtime runtime = Runtime.getRuntime();
                     //Print used memory
                     payload.append("Used Memory:").append((runtime.totalMemory() - runtime.freeMemory()) / mb).append(" MB").append("\n");
                     //Print free memory
@@ -137,6 +134,12 @@ public class InternalCoapRequest {
                     payload.append("Version:").append(prop.get("version")).append("\n");
                     payload.append("Build:").append(prop.get("build")).append("\n");
 
+                    payload.append("\n").append("****").append("\n");
+                    payload.append(".well-known/core requests: ").append(CoapServer.getInstance().getRequestWellKnownCounter()).append("\n");
+                    payload.append("Observe Requests:").append(CoapServer.getInstance().getRequestObserveCounter()).append("\n");
+                    payload.append("Observe Responses:").append(CoapServer.getInstance().getResponseObserveCounter()).append("\n");
+                    payload.append("Observe Lost:").append(CoapServer.getInstance().getObserveLostCounter()).append("\n");
+
                 } catch (IOException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
@@ -146,7 +149,7 @@ public class InternalCoapRequest {
             }
         } else if ("/endpoints".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
+                final Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
                 for (String endpoint : endpoints.keySet()) {
                     for (String uripath : endpoints.get(endpoint).keySet()) {
                         payload.append(new Date(endpoints.get(endpoint).get(uripath)));
@@ -165,16 +168,16 @@ public class InternalCoapRequest {
             }
         } else if ("/activeRequests".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                Map<Integer, ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequestsMID();
+                final Map<Integer, ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequestsMID();
                 for (int key : activeRequests.keySet()) {
-                    ActiveRequest activeRequest = activeRequests.get(key);
+                    final ActiveRequest activeRequest = activeRequests.get(key);
                     payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getCount()).append("\n");
 
                 }
                 payload.append("\n");
-                Map<String, ActiveRequest> activeRequests2 = CoapServer.getInstance().getActiveRequestsTOKEN();
+                final Map<String, ActiveRequest> activeRequests2 = CoapServer.getInstance().getActiveRequestsTOKEN();
                 for (String key : activeRequests2.keySet()) {
-                    ActiveRequest activeRequest = activeRequests2.get(key);
+                    final ActiveRequest activeRequest = activeRequests2.get(key);
                     payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getCount()).append("\n");
 
                 }
@@ -184,7 +187,7 @@ public class InternalCoapRequest {
             }
         } else if ("/pendingRequests".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                List<PendingRequest> pendingRequests = PendingRequestHandler.getInstance().getPendingRequestList();
+                final List<PendingRequest> pendingRequests = PendingRequestHandler.getInstance().getPendingRequestList();
                 for (PendingRequest pendingRequest : pendingRequests) {
                     payload.append(pendingRequest.getUriHost());
                     if (pendingRequest.getUriHost().length() == 3) {
@@ -201,15 +204,16 @@ public class InternalCoapRequest {
             }
         } else if ("/cache".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
+                final Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
+                payload.append("Host\tPath\tValue\tTimestamp\t\t\tAge\tObserves lost\n");
                 for (String device : cache.keySet()) {
                     if (!"".equals(uriHost) && !device.equals(uriHost)) {
                         continue;
                     }
                     for (String uriPath : cache.get(device).keySet()) {
-                        Cache pair = cache.get(device).get(uriPath);
-                        long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
-                        payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\n");
+                        final Cache pair = cache.get(device).get(uriPath);
+                        final long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
+                        payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\t").append(pair.getLostCounter()).append("\n");
                     }
                 }
                 response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
@@ -221,11 +225,6 @@ public class InternalCoapRequest {
             } else {
                 response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
             }
-        } else if ("/statistics".equals(path)) {
-            payload.append(".well-known/core requests: ").append(CoapServer.getInstance().getRequestWellKnownCounter()).append("\n");
-            payload.append("observe requests: ").append(CoapServer.getInstance().getRequestObserveCounter()).append("\n");
-            payload.append("observe responses: ").append(CoapServer.getInstance().getResponseObserveCounter()).append("\n");
-            //payload.append("Observe lost")
         } else if ("/wakeup".equals(path) && udpRequest.getCode() == 2) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_POST) {
                 String device = udpRequest.getPayloadString();
@@ -247,7 +246,7 @@ public class InternalCoapRequest {
                 data[pos++] = 0x61;
                 data[pos] = 0x6D;
 
-                Thread parser = new Thread(new CoapMessageParser("0x" + udpRequest.getPayloadString(), data));
+                final Thread parser = new Thread(new CoapMessageParser("0x" + udpRequest.getPayloadString(), data));
                 parser.start();
 
                 payload.append("Here I am simulation on ").append(udpRequest.getPayloadString());
