@@ -53,7 +53,7 @@ public class InternalCoapRequest {
         response.setMID(udpRequest.getMID());
 
         String path = udpRequest.getUriPath();
-        if (!"".equals(uriHost) && !"/cache".equals(path)) {
+        if (!"".equals(uriHost) && !"/cache".equals(path) && !"/routes".equals(path)) {
             return udpRequest;
         }
         if (path.contains("/device/")) {
@@ -90,7 +90,7 @@ public class InternalCoapRequest {
             }
         } else if ("/.well-known/core".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>,<wakeup>");
+                payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>,<wakeup>,<routes>");
                 Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
                 for (String endpoint : endpoints.keySet()) {
                     for (String resource : endpoints.get(endpoint).keySet()) {
@@ -254,6 +254,11 @@ public class InternalCoapRequest {
                 response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
             } else {
                 response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+            }
+        } else if ("/routes".equals(path)) {
+            GatewayManager.getInstance().getGateways();
+            for (String key : GatewayManager.getInstance().getGateways().keySet()) {
+                payload.append(key).append("<-->").append(GatewayManager.getInstance().getGateway(key)).append("\n");
             }
         } else {
             response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found

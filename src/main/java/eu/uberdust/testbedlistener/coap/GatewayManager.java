@@ -94,6 +94,7 @@ public class GatewayManager {
             LOGGER.error(e, e);
         }
     }
+
     private void loadGatewaysFromFile() {
         BufferedReader bin = null;
         try {
@@ -119,6 +120,10 @@ public class GatewayManager {
         } catch (IOException e) {
             LOGGER.error(e, e);
         }
+    }
+
+    public Map<String, String> getGateways() {
+        return gateways;
     }
 
     public boolean hasGateway(final String destination) {
