@@ -1,11 +1,14 @@
 package eu.uberdust.testbedlistener.controller;
 
 import eu.uberdust.DeviceCommand;
+import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.datacollector.collector.TestbedRuntimeCollector;
 import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -49,9 +52,11 @@ public final class TestbedController implements Observer {
      */
     private TestbedController() {
         PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
+        LOGGER.info("Starting TestbedController...");
     }
 
     public void sendCommand(final String destination, final String payloadIn) {
+
 
         // Send a message to nodes via uart (to receive them enable RX_UART_MSGS in the fronts_config.h-file)
 //        final Message msg = new Message();
@@ -61,7 +66,12 @@ public final class TestbedController implements Observer {
         }
         LOGGER.debug(payloadIn);
         final byte[] payload = Converter.getInstance().commaPayloadtoBytes(payloadIn);
-        testbed.sendMessage(payload, destination);
+        if (testbed != null) {
+            testbed.sendMessage(payload, destination);
+        } else {
+            LOGGER.debug("Testbed==null");
+        }
+
     }
 
     public void sendMessage(byte[] payload, String destination) {
@@ -79,15 +89,24 @@ public final class TestbedController implements Observer {
 
     @Override
     public void update(final Observable observable, final Object o) {
-        LOGGER.debug("called update ");
+        LOGGER.info("called update ");
         if (o instanceof DeviceCommand) {
             final DeviceCommand command = (DeviceCommand) o;
-            LOGGER.debug("TO:" + command.getDestination() + " BYTES:" + command.getPayload());
-            sendCommand(command.getDestination(), command.getPayload());
+
+            try {
+                InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":") + 1));
+                CoapServer.getInstance().sendEthernetRequest(command);
+                LOGGER.debug("EthernetTO:" + command.getDestination() + " BYTES:" + command.getPayload());
+            } catch (UnknownHostException e) {
+                sendCommand(command.getDestination(), command.getPayload());
+                LOGGER.debug("TO:" + command.getDestination() + " BYTES:" + command.getPayload());
+
+            }
         }
     }
 
     public void setTestbed(TestbedRuntimeCollector testbed) {
+        LOGGER.info("setting testbed to " + testbed);
         this.testbed = testbed;
     }
 }

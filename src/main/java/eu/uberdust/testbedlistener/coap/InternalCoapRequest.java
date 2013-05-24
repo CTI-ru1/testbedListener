@@ -2,7 +2,6 @@ package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.*;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -71,7 +70,7 @@ public class InternalCoapRequest {
 
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET && !udpRequest.hasOption(OptionNumberRegistry.OBSERVE)) {
                 final Cache pair = CacheHandler.getInstance().getValue(device, uriPath.toString());
-                if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge()*1000) {
+                if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge() * 1000) {
                     return udpRequest;
                 } else {
                     response.setContentType(pair.getContentType());
@@ -87,7 +86,7 @@ public class InternalCoapRequest {
             }
         } else if ("/.well-known/core".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>,<wakeup>,<routes>");
+                payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>,<wakeup>,<routes>,<ethernet>");
                 Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
                 for (String endpoint : endpoints.keySet()) {
                     for (String resource : endpoints.get(endpoint).keySet()) {
@@ -255,9 +254,24 @@ public class InternalCoapRequest {
                 response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
             }
         } else if ("/routes".equals(path)) {
-            GatewayManager.getInstance().getGateways();
+            if (udpRequest.getCode() == 2) {
+                String myPayload = udpRequest.getPayloadString();
+                if (myPayload.contains("->")) {
+                    final String dest = myPayload.split("->")[0];
+                    final String source = myPayload.split("->")[1];
+                    GatewayManager.getInstance().setGateway(dest, source);
+                }
+            }
             for (String key : GatewayManager.getInstance().getGateways().keySet()) {
-                payload.append(key).append("<-->").append(GatewayManager.getInstance().getGateway(key)).append("\n");
+                payload.append(key).append("->").append(GatewayManager.getInstance().getGateway(key)).append("\n");
+            }
+        } else if ("/ethernet".equals(path)) {
+            if (udpRequest.getCode() == 2) {
+                (new EthernetSupport(CoapServer.getInstance().getEthernetUDPHandler(), udpRequest.getPayloadString())).start();
+            } else {
+                for (CoapServer.TokenItem item : CoapServer.getInstance().getObservers()) {
+                    payload.append(item.getBytes()).append(" > ").append(item.getPath()).append("\n");
+                }
             }
         } else {
             response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found
@@ -267,3 +281,5 @@ public class InternalCoapRequest {
         return null;
     }
 }
+
+

@@ -3,13 +3,16 @@ package eu.uberdust.testbedlistener.coap;
 import ch.ethz.inf.vs.californium.coap.*;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
+import eu.uberdust.DeviceCommand;
+import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
+import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
 import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
@@ -62,6 +65,7 @@ public class CoapServer {
     private int requestObserveCounter;
     public int responseObserveCounter;
     private int observeLostCounter;
+    private EthernetUDPhandler ethernetUDPHandler;
 
     public long getStartTime() {
         return startTime;
@@ -209,7 +213,7 @@ public class CoapServer {
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
-                    Cache pair = CacheHandler.getInstance().getValue(address, "/"+path);
+                    Cache pair = CacheHandler.getInstance().getValue(address, "/" + path);
                     long millis;
                     if (pair == null) {
                         millis = MILLIS_TO_STALE;
@@ -702,6 +706,16 @@ public class CoapServer {
         return "";
     }
 
+    public void ackEthernet(EthernetUDPhandler udPhandler, Response response, SocketAddress address) {
+        Message ack = new Message(Message.messageType.ACK, 0);
+        ack.setMID(response.getMID());
+        try {
+            udPhandler.send(ack, address);
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
     public void ackEthernet(UDPhandler udPhandler, Response response, String address) {
         Message ack = new Message(Message.messageType.ACK, 0);
         ack.setMID(response.getMID());
@@ -781,6 +795,36 @@ public class CoapServer {
 
     public int getObserveLostCounter() {
         return observeLostCounter;
+    }
+
+    public void sendEthernetRequest(DeviceCommand command) {
+        System.out.println("sending dgram to ");
+
+        InetAddress inetAddr;
+        try {
+            inetAddr = InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":")+1));
+
+            String payloadIn = command.getPayload().substring(3);
+            final byte[] payload = Converter.getInstance().commaPayloadtoBytes(payloadIn);
+            //payload[payload.length-2]-=32;
+            System.out.println("sending dgram with" + Arrays.toString(payload));
+            DatagramPacket packet = new DatagramPacket(payload, payload.length, inetAddr, 5683);
+            socket.send(packet);
+        } catch (UnknownHostException e) {
+            LOGGER.error(e, e);
+            return;
+        } catch (IOException e) {
+            LOGGER.error(e, e);
+            return;
+        }
+    }
+
+    public void setEthernetUDPHandler(EthernetUDPhandler ethernetUDPHandler) {
+        this.ethernetUDPHandler = ethernetUDPHandler;
+    }
+
+    public EthernetUDPhandler getEthernetUDPHandler() {
+        return ethernetUDPHandler;
     }
 
 

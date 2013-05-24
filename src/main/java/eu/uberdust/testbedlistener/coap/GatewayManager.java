@@ -1,19 +1,13 @@
 package eu.uberdust.testbedlistener.coap;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.SocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,6 +52,7 @@ public class GatewayManager {
             return instance;
         }
     }
+
     private void loadGatewaysFromUberdust() {
         try {
             URL url = new URL(new StringBuilder()
@@ -126,11 +121,17 @@ public class GatewayManager {
         return gateways;
     }
 
-    public boolean hasGateway(final String destination) {
+    public boolean hasGateway(String destination) {
+        if (destination.contains("0x"))
+            destination = destination.split("0x")[1].substring(2);
         return gateways.containsKey(destination);
     }
 
     public String getGateway(final String destination) {
         return gateways.get(destination);
+    }
+
+    public void setGateway(final String dest, final String source) {
+        gateways.put(dest, source);
     }
 }

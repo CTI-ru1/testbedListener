@@ -2,9 +2,14 @@ package eu.uberdust.testbedlistener.factory;
 
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.coap.EthernetSupport;
+import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
 import eu.uberdust.testbedlistener.datacollector.collector.TestbedRuntimeCollector;
 import eu.uberdust.testbedlistener.util.PropertyReader;
+
+import java.net.DatagramSocket;
+import java.net.SocketException;
 
 /**
  * The testbed Listener Connects to Uberdust and Testbed Runtime to forward command and readings Both Ways.
@@ -54,6 +59,26 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
             LOGGER.info("Starting TestbedRuntimeCollector...");
             final Thread dataCollector = new Thread(new TestbedRuntimeCollector());
             dataCollector.start();
+
+            DatagramSocket ds;
+            try {
+                ds = new DatagramSocket(6665);
+            } catch (SocketException e) {
+                LOGGER.info("exiting...");
+                return;
+            }
+
+            PropertyReader.getInstance().setFile("listener.properties");
+            String devices = (String) PropertyReader.getInstance().getProperties().get("polldevices");
+
+            EthernetUDPhandler udphandler = new EthernetUDPhandler(ds);
+            udphandler.start();
+            CoapServer.getInstance().setEthernetUDPHandler(udphandler);
+
+            for (String device : devices.split(",")) {
+                (new EthernetSupport(udphandler, device)).start();
+            }
+
         }
 
 
