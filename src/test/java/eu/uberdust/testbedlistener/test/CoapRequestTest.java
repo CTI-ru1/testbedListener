@@ -64,7 +64,7 @@ public class CoapRequestTest
         request.setURI("/.well-known/core");
         request.setMID(1234);
         request.prettyPrint();
-        System.out.println(Arrays.toString(request.toByteArray()));
+//        System.out.println(Arrays.toString(request.toByteArray()));
     }
 
 

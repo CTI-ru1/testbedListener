@@ -71,6 +71,7 @@ public class UberdustNotify implements Runnable {
                 .setDoubleReading(value)
                 .build();
 
+//        System.out.println(reading);
         new WsCommiter(reading);
     }
 

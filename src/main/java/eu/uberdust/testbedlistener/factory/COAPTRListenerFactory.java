@@ -1,12 +1,15 @@
 package eu.uberdust.testbedlistener.factory;
 
+import eu.mksense.XBeeRadio;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.EthernetSupport;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
 import eu.uberdust.testbedlistener.datacollector.collector.TestbedRuntimeCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.XbeeCollector;
 import eu.uberdust.testbedlistener.util.PropertyReader;
+import org.apache.log4j.BasicConfigurator;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -40,6 +43,7 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
         LOGGER.info("Starting Coap Server");
         CoapServer.getInstance();
 
+        BasicConfigurator.configure();
 
         if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
                 PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
@@ -57,8 +61,22 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
         //Listens to new Messages from the TestbedRuntime
         if (ENABLED.equals(PropertyReader.getInstance().getProperties().get("use.datacollector"))) {
             LOGGER.info("Starting TestbedRuntimeCollector...");
-            final Thread dataCollector = new Thread(new TestbedRuntimeCollector());
-            dataCollector.start();
+
+//            final Thread dataCollector = new Thread(new TestbedRuntimeCollector());
+//            dataCollector.start();
+
+            final String xbeePort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
+            final String xbeeBaudrate = PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate");
+            if (xbeePort != null) {
+                try {
+                    XBeeRadio.getInstance().open(xbeePort, Integer.parseInt(xbeeBaudrate));
+                    XBeeRadio.getInstance().setChannel(12);
+                    final Thread xbeeCollector = new Thread(new XbeeCollector());
+                    xbeeCollector.start();
+                } catch (Exception e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
 
             DatagramSocket ds;
             try {
@@ -70,13 +88,14 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
 
             PropertyReader.getInstance().setFile("listener.properties");
             String devices = (String) PropertyReader.getInstance().getProperties().get("polldevices");
+            if (devices != null) {
+                EthernetUDPhandler udphandler = new EthernetUDPhandler(ds);
+                udphandler.start();
+                CoapServer.getInstance().setEthernetUDPHandler(udphandler);
 
-            EthernetUDPhandler udphandler = new EthernetUDPhandler(ds);
-            udphandler.start();
-            CoapServer.getInstance().setEthernetUDPHandler(udphandler);
-
-            for (String device : devices.split(",")) {
-                (new EthernetSupport(udphandler, device)).start();
+                for (String device : devices.split(",")) {
+                    (new EthernetSupport(udphandler, device)).start();
+                }
             }
 
         }

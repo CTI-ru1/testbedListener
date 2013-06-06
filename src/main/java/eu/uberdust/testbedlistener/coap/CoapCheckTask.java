@@ -34,24 +34,24 @@ public class CoapCheckTask {
 
 
         mess.prettyPrint();
-        System.out.println(Arrays.toString(mess.toByteArray()));
+//        System.out.println(Arrays.toString(mess.toByteArray()));
         //Start the udp socket
-        try {
-            socket = new DatagramSocket(5632);
-            System.out.println(socket.getPort());
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            socket = new DatagramSocket(5632);
+//            System.out.println(socket.getPort());
+//        } catch (SocketException e) {
+//            e.printStackTrace();
+//        }
 
 
-        byte[] buf = new byte[1024];
-        final DatagramPacket packet = new DatagramPacket(buf, 1024);
-
-        try {
-            if (socket == null) {
-                System.out.println("EEEEEERRROOORR");
-            }
-            DatagramPacket p = new DatagramPacket(mess.toByteArray(), 0, mess.toByteArray().length, InetAddress.getByName("150.140.5.64"), 5632);
+//        byte[] buf = new byte[1024];
+//        final DatagramPacket packet = new DatagramPacket(buf, 1024);
+//
+//        try {
+//            if (socket == null) {
+//                System.out.println("EEEEEERRROOORR");
+//            }
+//            DatagramPacket p = new DatagramPacket(mess.toByteArray(), 0, mess.toByteArray().length, InetAddress.getByName("150.140.5.64"), 5632);
 //            new Thread((new Runnable() {
 //                @Override
 //                public void run() {
@@ -65,14 +65,14 @@ public class CoapCheckTask {
 //                }
 //            })).start();
 
-            System.out.println("send");
-            socket.send(p);
-            System.out.println("sent");
+//            System.out.println("send");
+//            socket.send(p);
+//            System.out.println("sent");
 
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//            socket.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
     }
 

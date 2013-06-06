@@ -67,9 +67,6 @@ public class Converter {
         return stringBuilder.toString().substring(0, stringBuilder.toString().length() - 1) + "]";
     }
 
-    public int[] toIntArray(byte[] bytes) {
-        return new int[0];  //To change body of created methods use File | Settings | File Templates.
-    }
 
     /**
      * Converts a Byte Array to a hex String.

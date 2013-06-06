@@ -3,10 +3,15 @@ package eu.uberdust.testbedlistener.datacollector.collector;
 import com.rapplogic.xbee.api.wpan.RxResponse16;
 import eu.mksense.MessageListener;
 import eu.mksense.XBeeRadio;
+import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import eu.uberdust.testbedlistener.datacollector.parsers.XbeeMessageParser;
+import eu.uberdust.testbedlistener.util.Converter;
+import eu.uberdust.testbedlistener.util.HereIamMessage;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+import org.simpleframework.xml.convert.Convert;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,7 +19,7 @@ import java.util.concurrent.Executors;
 /**
  * Opens a connection to the XBee and receives messages from all nodes to collect data.
  */
-public class XbeeCollector extends AbstractCollector implements MessageListener {
+public class XbeeCollector extends AbstractCollector implements MessageListener, Runnable {
 
     /**
      * Logger.
@@ -62,66 +67,44 @@ public class XbeeCollector extends AbstractCollector implements MessageListener 
         LOGGER.info(testbedId);
 
         executorService = Executors.newCachedThreadPool();
-        XBeeRadio.getInstance().addMessageListener(112, this);
     }
 
     @Override
     public void receive(final RxResponse16 rxResponse16) {
-        executorService.submit(new XbeeMessageParser(rxResponse16.getRemoteAddress(), rxResponse16.getData()
-                , testbedPrefix, testbedId, capabilityPrefix));
+
+        String macAddress = "0x"
+                + Integer.toHexString(rxResponse16.getRemoteAddress().getMsb());
+        if (Integer.toHexString(rxResponse16.getRemoteAddress().getLsb()).length() == 1) {
+            macAddress += "0";
+        }
+        macAddress += Integer.toHexString(rxResponse16.getRemoteAddress().getLsb());
+
+        int[] data = rxResponse16.getData();
+        byte byteData[] = new byte[data.length + 2];
+        byteData[0] = (byte) (rxResponse16.getRemoteAddress().getMsb());
+        byteData[1] = (byte) (rxResponse16.getRemoteAddress().getLsb());
+        for (int i = 0; i < data.length; i++) {
+            byteData[i + 2] = (byte) data[i];
+        }
+        HereIamMessage mess = new HereIamMessage(byteData);
+        if (mess.isValid()) {
+            byte finalData[] = new byte[byteData.length + 2];
+            finalData[0]=0x69;
+            finalData[1]=0x69;
+            System.arraycopy(byteData,0,finalData,2,byteData.length);
+            executorService.submit(new CoapMessageParser(macAddress, finalData));
+        } else {
+            byte finalData[] = new byte[data.length + 1];
+            finalData[0]=0x69;
+            finalData[1]=0x69;
+            System.arraycopy(byteData,3,finalData,2,data.length-1);
+            executorService.submit(new CoapMessageParser(macAddress, finalData));
+        }
     }
-//
-//    public static void main(String[] args) {
-//        PropertyReader.getInstance().setFile("listener.properties");
-//        final String xbeePort = PropertyReader.getInstance().getProperties().getProperty("xbee.port");
-//        final Integer rate =
-//                Integer.valueOf(PropertyReader.getInstance().getProperties().getProperty("xbee.baudrate"));
-//        try {
-//            XBeeRadio.getInstance().open(xbeePort, rate);
-//        } catch (final Exception e) {
-//            LOGGER.error(e);
-//            return;
-//        }
-//
-//        XBeeAddress16 address
-//                = new XBeeAddress16();
-//        address.setLsb(0xb0);
-//        address.setMsb(0x02);
-//
-//        int[] payload = new int[3];
-//        payload[0] = 1;
-//        payload[1] = 1;
-//        payload[2] = 1;
-//        int[] payload1 = new int[3];
-//        payload[0] = 1;
-//        payload[1] = 2;
-//        payload[2] = 1;
-//        while (true) {
-//            try {
-//                XBeeRadio.getInstance().send(address, 112, payload);
-//                LOGGER.info("sending1");
-//            } catch (Exception e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            }
-//            try {
-//                Thread.sleep(500);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            }
-//            try {
-//                XBeeRadio.getInstance().send(address, 112, payload1);
-//                LOGGER.info("sending2");
-//            } catch (Exception e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            }
-//            try {
-//                Thread.sleep(60000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            }
-//        }
-////        new XbeeCollector();
-//
-//    }
+
+    @Override
+    public void run() {
+        XBeeRadio.getInstance().addMessageListener(112, this);
+    }
 }
 

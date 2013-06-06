@@ -80,8 +80,6 @@ public class TestbedRuntimeCollector extends AbstractCollector implements Runnab
      * @return true when connection was success
      */
     public final boolean start() {
-        System.out.println("Calling Start");
-
         ChannelFuture connectFuture = null;
         // Make a new connection.
         connectFuture = bootstrap.connect(new InetSocketAddress(host, port));

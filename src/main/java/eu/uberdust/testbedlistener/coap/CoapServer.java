@@ -7,6 +7,7 @@ import eu.uberdust.DeviceCommand;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
+import eu.uberdust.testbedlistener.controller.XbeeController;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
@@ -474,20 +475,21 @@ public class CoapServer {
         final byte[] payload = new byte[data.length + 1];
         payload[0] = 51;
         System.arraycopy(data, 0, payload, 1, data.length);
-        TestbedController.getInstance().sendMessage(payload, nodeUrn);
+//        TestbedController.getInstance().sendMessage(payload, nodeUrn);
+        XbeeController.getInstance().sendPayload(nodeUrn,payload);
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                TestbedController.getInstance().sendMessage(payload, nodeUrn);
-            }
-        }, 100);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                TestbedController.getInstance().sendMessage(payload, nodeUrn);
-            }
-        }, 250);
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                TestbedController.getInstance().sendMessage(payload, nodeUrn);
+//            }
+//        }, 100);
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                TestbedController.getInstance().sendMessage(payload, nodeUrn);
+//            }
+//        }, 250);
     }
 
     private void sendXbee(XBeeAddress16 address16, int i, int[] bytes, int counter) {
@@ -798,7 +800,7 @@ public class CoapServer {
     }
 
     public void sendEthernetRequest(DeviceCommand command) {
-        System.out.println("sending dgram to ");
+//        System.out.println("sending dgram to ");
 
         InetAddress inetAddr;
         try {
@@ -807,7 +809,7 @@ public class CoapServer {
             String payloadIn = command.getPayload().substring(3);
             final byte[] payload = Converter.getInstance().commaPayloadtoBytes(payloadIn);
             //payload[payload.length-2]-=32;
-            System.out.println("sending dgram with" + Arrays.toString(payload));
+//            System.out.println("sending dgram with" + Arrays.toString(payload));
             DatagramPacket packet = new DatagramPacket(payload, payload.length, inetAddr, 5683);
             socket.send(packet);
         } catch (UnknownHostException e) {

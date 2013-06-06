@@ -17,6 +17,7 @@ import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -63,6 +64,8 @@ public class CoapMessageParser extends AbstractMessageParser {
      */
     public CoapMessageParser(String address, byte[] payloadin) {
         this.timeStart = System.currentTimeMillis();
+//        this.apayload = new byte[payloadin.length - 2];
+//        System.arraycopy(payloadin, 2, this.apayload, 0, payloadin.length - 2);
         this.payload = new byte[payloadin.length - 2];
         System.arraycopy(payloadin, 2, this.payload, 0, payloadin.length - 2);
         this.address = address;
@@ -93,6 +96,7 @@ public class CoapMessageParser extends AbstractMessageParser {
 //        LOGGER.info("from " + address + " {" + mac + "} with payload length " + payload.length + " fistByte " + payload[0]);
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
         LOGGER.info(Converter.getInstance().payloadToString(payload));
+//        System.out.println("has Type :"+address);
 
         HereIamMessage hereIamMessage = new HereIamMessage(payload);
 
@@ -106,6 +110,8 @@ public class CoapMessageParser extends AbstractMessageParser {
         } else {
 
             final Message response = Message.fromByteArray(payload);
+//            System.out.println(Arrays.toString(payload)+"MID:"+response.getMID());
+
             if (!response.hasOption(OptionNumberRegistry.OBSERVE) && CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
                 LOGGER.info("Rejecting normal response");
                 return;
@@ -115,6 +121,7 @@ public class CoapMessageParser extends AbstractMessageParser {
             LOGGER.info(originSocketAddress);
             if (originSocketAddress != null) {
                 LOGGER.info("Valid External Coap Response Message from " + mac);
+//                System.out.println("Valid External Coap Response Message from " + mac);
                 CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
             } else {  //getting .well-known/core autoconfig phase
                 LOGGER.info("Valid Internal Coap Response Message from " + mac);
@@ -281,6 +288,7 @@ public class CoapMessageParser extends AbstractMessageParser {
         LOGGER.info("Requesting .well-known/core uri_host:" + macStr);
         Request request = CoapHelper.getWellKnown(macStr);
         CoapServer.getInstance().addRequest(macStr, request, false);
+//        System.out.println("request"+request.toByteArray().length);
         CoapServer.getInstance().sendRequest(request.toByteArray(), macStr);
         CoapServer.getInstance().incRequestWellKnownCounter();
     }

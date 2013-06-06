@@ -1,6 +1,7 @@
 package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.*;
+import eu.mksense.XBeeRadio;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 
 import java.io.IOException;
@@ -86,7 +87,7 @@ public class InternalCoapRequest {
             }
         } else if ("/.well-known/core".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>,<wakeup>,<routes>,<ethernet>");
+                payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>,<wakeup>,<routes>,<ethernet>,<xbee>");
                 Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
                 for (String endpoint : endpoints.keySet()) {
                     for (String resource : endpoints.get(endpoint).keySet()) {
@@ -273,6 +274,15 @@ public class InternalCoapRequest {
                     payload.append(item.getBytes()).append(" > ").append(item.getPath()).append("\n");
                 }
             }
+        }else if ("/xbee".equals(path)){
+            try {
+                XBeeRadio.getInstance().setChannel(12);
+                payload.append(XBeeRadio.getInstance().getMyXbeeAddress().toString()).append("\n");
+                payload.append(XBeeRadio.getInstance().getMyAddress()).append("\n");
+            } catch (Exception e) {
+                payload.append(e.getMessage()).append("\n");
+            }
+
         } else {
             response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found
         }

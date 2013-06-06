@@ -19,7 +19,6 @@ public class HereIamMessage {
     public HereIamMessage(byte[] payload) {
         this.payload = payload;
         StringBuilder sb = new StringBuilder();
-//        System.out.println(payload.length);
 
         for (int i = 2; i < payload.length; i++) {
             sb.append((char) payload[i]);
@@ -28,6 +27,7 @@ public class HereIamMessage {
     }
 
     public boolean isValid() {
+//        System.out.println("HereIamMessageTest:"+mess);
         return mess.equals("hereiam");
     }
 }

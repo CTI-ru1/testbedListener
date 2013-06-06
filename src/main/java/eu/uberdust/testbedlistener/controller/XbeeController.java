@@ -4,6 +4,7 @@ import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.DeviceCommand;
 import eu.uberdust.network.NetworkManager;
+import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.util.Converter;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -97,6 +98,27 @@ public final class XbeeController implements Observer {
         }
     }
 
+    public void sendPayload(final String destination, final byte[] payloadIn) {
+
+
+        final int[] macAddress = Converter.getInstance().addressToInteger(destination);
+        final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
+//        System.out.println(address16 + ":" + payloadIn.length);
+        final int[] data = new int[payloadIn.length];
+
+        for (int i = 0; i < data.length; i++) {
+            data[i] = payloadIn[i];
+//            System.out.println(payloadIn[i] + ":" + data[i] + "/" + Integer.toHexString(data[i]));
+        }
+
+        try {
+            LOGGER.info(address16);
+            XBeeRadio.getInstance().send(address16, 112, data);
+        } catch (final Exception e) {
+            LOGGER.error(e);
+        }
+    }
+
     public static void main(final String[] args) {
         NetworkManager.getInstance().start("192.168.1.5:8080/uberdust/", 2);
         NetworkManager.getInstance().addObserver(XbeeController.getInstance());
@@ -104,6 +126,7 @@ public final class XbeeController implements Observer {
 
 
     }
+
 
     @Override
     public void update(final Observable observable, final Object o) {
