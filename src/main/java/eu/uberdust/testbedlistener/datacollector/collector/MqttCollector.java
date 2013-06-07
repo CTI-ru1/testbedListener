@@ -1,11 +1,14 @@
 package eu.uberdust.testbedlistener.datacollector.collector;
 
+import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.datacollector.parsers.MqttMessageHandler;
 import org.fusesource.mqtt.client.*;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,6 +35,7 @@ public class MqttCollector implements Runnable {
     private long listenerLastSuccessfulSubscription;
 
     private String NEW_LINE = System.getProperty("line.separator");
+    private CallbackConnection connection;
 
     public MqttCollector(String listenerHostURI, String listenerTopic, boolean debug) {
         this(listenerHostURI, listenerTopic, DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, debug);
@@ -46,10 +50,12 @@ public class MqttCollector implements Runnable {
         this.listenerTopic = listenerTopic;
         this.listenerSleepBeforeReAttemptInSeconds = listenerSleepBeforeReAttemptInSeconds;
         this.listenerMaxReAttemptDurationInSeconds = listenerMaxReAttemptDurationInSeconds;
+
         initMQTT();
     }
 
     private void initMQTT() {
+        CoapServer.getInstance().setMqtt(this);
         mqtt = new MQTT();
         listenerLastSuccessfulSubscription = System.currentTimeMillis();
 
@@ -81,7 +87,7 @@ public class MqttCollector implements Runnable {
     }
 
     private void listen() {
-        final CallbackConnection connection = mqtt.callbackConnection();
+        connection = mqtt.callbackConnection();
         final CountDownLatch done = new CountDownLatch(1);
 
 
@@ -115,29 +121,29 @@ public class MqttCollector implements Runnable {
 
 
         connection.resume();
-        new Thread() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    connection.publish("inTopic", "test".getBytes(), QoS.AT_MOST_ONCE, false, new Callback() {
-                        @Override
-                        public void onSuccess(Object o) {
-                            LOGGER.info("onSuccess");
-                        }
-
-                        @Override
-                        public void onFailure(Throwable throwable) {
-                            LOGGER.info("onFailure");
-                        }
-                    });
-                }
-            }
-        };
+//        new Thread() {
+//            @Override
+//            public void run() {
+//                while (true) {
+//                    try {
+//                        Thread.sleep(5000);
+//                    } catch (InterruptedException e) {
+//                        LOGGER.error(e.getMessage(), e);
+//                    }
+//                    connection.publish("inTopic", "test".getBytes(), QoS.AT_MOST_ONCE, false, new Callback() {
+//                        @Override
+//                        public void onSuccess(Object o) {
+//                            LOGGER.info("onSuccess");
+//                        }
+//
+//                        @Override
+//                        public void onFailure(Throwable throwable) {
+//                            LOGGER.info("onFailure");
+//                        }
+//                    });
+//                }
+//            }
+//        };
         //.start();
 
         connection.connect(new Callback<Void>() {
@@ -184,6 +190,20 @@ public class MqttCollector implements Runnable {
         }
 
         listenerReAttemptsOver();
+    }
+
+    public void sendPayload(final String destination, final byte[] payloadIn) {
+        connection.publish("arduinoGateway", payloadIn, QoS.AT_MOST_ONCE, false, new Callback() {
+            @Override
+            public void onSuccess(Object o) {
+                LOGGER.info("onSuccess");
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                LOGGER.info("onFailure");
+            }
+        });
     }
 
 

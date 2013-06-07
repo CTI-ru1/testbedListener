@@ -1,6 +1,7 @@
 package eu.uberdust.testbedlistener.test;
 
 import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
+import eu.uberdust.testbedlistener.util.PropertyReader;
 
 import java.net.SocketException;
 
@@ -15,6 +16,7 @@ public class MqttTest {
 
     public static void main(String[] args) throws SocketException {
 
+        PropertyReader.getInstance().setFile("listener.properties");
         MqttCollector mqList = new MqttCollector("tcp://localhost:1883", "testbed1/#", true);
         new Thread(mqList).start();
     }

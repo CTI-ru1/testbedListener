@@ -14,6 +14,7 @@ import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;

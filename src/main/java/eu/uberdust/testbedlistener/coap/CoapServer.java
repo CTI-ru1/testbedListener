@@ -8,6 +8,7 @@ import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
 import eu.uberdust.testbedlistener.controller.XbeeController;
+import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
@@ -67,6 +68,7 @@ public class CoapServer {
     public int responseObserveCounter;
     private int observeLostCounter;
     private EthernetUDPhandler ethernetUDPHandler;
+    private MqttCollector mqtt;
 
     public long getStartTime() {
         return startTime;
@@ -475,9 +477,11 @@ public class CoapServer {
         final byte[] payload = new byte[data.length + 1];
         payload[0] = 51;
         System.arraycopy(data, 0, payload, 1, data.length);
+        LOGGER.info("sending request");
 //        TestbedController.getInstance().sendMessage(payload, nodeUrn);
-        XbeeController.getInstance().sendPayload(nodeUrn,payload);
-        Timer timer = new Timer();
+//        XbeeController.getInstance().sendPayload(nodeUrn,payload);
+        mqtt.sendPayload(nodeUrn,payload);
+//        Timer timer = new Timer();
 //        timer.schedule(new TimerTask() {
 //            @Override
 //            public void run() {
@@ -827,6 +831,10 @@ public class CoapServer {
 
     public EthernetUDPhandler getEthernetUDPHandler() {
         return ethernetUDPHandler;
+    }
+
+    public void setMqtt(MqttCollector mqtt) {
+        this.mqtt = mqtt;
     }
 
 
