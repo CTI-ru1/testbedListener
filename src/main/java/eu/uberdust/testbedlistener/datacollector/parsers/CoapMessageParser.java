@@ -63,7 +63,7 @@ public class CoapMessageParser extends AbstractMessageParser {
      * @param address   the address of the node
      * @param payloadin the payload message to be parsed.
      */
-    public CoapMessageParser(String address, byte[] payloadin) {
+    public CoapMessageParser(String address, byte[] payloadin, final String testbedPrefix, final String capabilityPrefix) {
         this.timeStart = System.currentTimeMillis();
 //        this.apayload = new byte[payloadin.length - 2];
 //        System.arraycopy(payloadin, 2, this.apayload, 0, payloadin.length - 2);
@@ -72,8 +72,8 @@ public class CoapMessageParser extends AbstractMessageParser {
         this.address = address;
         this.type = payloadin[0];
         this.mac = address.split("0x")[1];
-        this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
-        this.capabilityPrefix = PropertyReader.getInstance().getTestbedCapabilitiesPrefix();
+        this.testbedPrefix = testbedPrefix;
+        this.capabilityPrefix = capabilityPrefix;
         mid = new Random();
     }
 
@@ -121,11 +121,11 @@ public class CoapMessageParser extends AbstractMessageParser {
             SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
             LOGGER.info(originSocketAddress);
             if (originSocketAddress != null) {
-                LOGGER.info("Valid External Coap Response Message from " + mac);
+                LOGGER.info("External Coap Message from:" + mac);
 //                System.out.println("Valid External Coap Response Message from " + mac);
                 CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
             } else {  //getting .well-known/core autoconfig phase
-                LOGGER.info("Valid Internal Coap Response Message from " + mac);
+                LOGGER.info("Coap Observe Response from: " + mac);
 
                 String parts = CoapServer.getInstance().matchResponse(response);
                 if ((parts == null) || ("".equals(parts))) {
@@ -184,9 +184,9 @@ public class CoapMessageParser extends AbstractMessageParser {
                     }
 
 
-                    if (true) {
-                        return;
-                    }
+//                    if (true) {
+//                        return;
+//                    }
 
                     if (isBlockwise) {
                         /**TODO : change**/
@@ -209,14 +209,12 @@ public class CoapMessageParser extends AbstractMessageParser {
 
                 } else {
 
-                    LOGGER.info("is a response to a SREQ");
                     requestType = requestType.substring(1);
                     new Evaluator("TokenMatch ", requestType);
                     String responseContents = response.getPayloadString();
-                    LOGGER.info(requestType + " @ " + responseContents);
 
                     if (response.isConfirmable()) {
-                        LOGGER.info("WILL SEND ACK");
+                        LOGGER.info("Sending ack message...");
                         CoapServer.getInstance().sendAck(response.getMID(), mac);
                     }
                     CoapServer.getInstance().registerEndpoint(requestType, mac);

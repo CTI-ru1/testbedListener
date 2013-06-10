@@ -24,6 +24,7 @@ public class MqttCollector implements Runnable {
     private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttCollector.class);
     private static final long DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS = 5000;
     private static final long DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS = 3600 * 3;
+    private int testbedID;
 
     private long listenerSleepBeforeReAttemptInSeconds;
     private long listenerMaxReAttemptDurationInSeconds;
@@ -34,8 +35,12 @@ public class MqttCollector implements Runnable {
     private String listenerTopic;
     private long listenerLastSuccessfulSubscription;
 
-    private String NEW_LINE = System.getProperty("line.separator");
     private CallbackConnection connection;
+
+    public MqttCollector(String mqttBroker, int i) {
+        this(mqttBroker, "testbed" + i + "/#", DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, true);
+        this.testbedID = i;
+    }
 
     public MqttCollector(String listenerHostURI, String listenerTopic, boolean debug) {
         this(listenerHostURI, listenerTopic, DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, debug);
@@ -116,7 +121,8 @@ public class MqttCollector implements Runnable {
             }
         });
         */
-        MqttMessageHandler mqttMessageHandler = new MqttMessageHandler();;
+        MqttMessageHandler mqttMessageHandler = new MqttMessageHandler(testbedID);
+
         connection.listener(mqttMessageHandler);
 
 

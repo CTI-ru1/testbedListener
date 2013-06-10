@@ -169,7 +169,7 @@ public class CoapServer {
      * @return if the endoint existed in the server.
      */
     public boolean registerEndpoint(final String path, final String address) {
-        LOGGER.error("registerEndpoint-" + address + path);
+        LOGGER.error("Register resource" + path + " from device " + address);
 
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
@@ -183,7 +183,7 @@ public class CoapServer {
                     }
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
                         endpoints.get(address).put(path, System.currentTimeMillis());
-                        LOGGER.info("address was stale " + address + " " + path);
+                        LOGGER.info("Resource was out of date " + address + "/" + path);
                         return true;
                     } else {
                         endpoints.get(address).put(path, System.currentTimeMillis());
@@ -194,7 +194,7 @@ public class CoapServer {
                     return true;
                 }
             } else {
-                LOGGER.info("inserting address");
+                LOGGER.info("Adding new device: " + address);
                 HashMap<String, Long> map = new HashMap<String, Long>();
                 map.put(path, System.currentTimeMillis());
                 endpoints.put(address, map);
@@ -480,7 +480,7 @@ public class CoapServer {
         LOGGER.info("sending request");
 //        TestbedController.getInstance().sendMessage(payload, nodeUrn);
 //        XbeeController.getInstance().sendPayload(nodeUrn,payload);
-        mqtt.sendPayload(nodeUrn,payload);
+        mqtt.sendPayload(nodeUrn, payload);
 //        Timer timer = new Timer();
 //        timer.schedule(new TimerTask() {
 //            @Override
@@ -808,7 +808,7 @@ public class CoapServer {
 
         InetAddress inetAddr;
         try {
-            inetAddr = InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":")+1));
+            inetAddr = InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":") + 1));
 
             String payloadIn = command.getPayload().substring(3);
             final byte[] payload = Converter.getInstance().commaPayloadtoBytes(payloadIn);

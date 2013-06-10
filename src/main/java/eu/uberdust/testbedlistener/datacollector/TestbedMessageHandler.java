@@ -1,8 +1,10 @@
 package eu.uberdust.testbedlistener.datacollector;
 
 import de.uniluebeck.itm.tr.runtime.wsnapp.WSNAppMessages;
+import eu.uberdust.communication.UberdustClient;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import org.apache.log4j.Logger;
+import org.json.JSONException;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,8 +24,9 @@ public class TestbedMessageHandler {
      * executors for handling incoming messages.
      */
     private final transient ExecutorService executorService;
-    private String testbedPrefix;
     private int testbedId;
+    private String testbedPrefix;
+    private String capabilityPrefix;
 
     public String getTestbedPrefix() {
         return testbedPrefix;
@@ -39,6 +42,16 @@ public class TestbedMessageHandler {
 
     public void setTestbedId(final int testbedId) {
         this.testbedId = testbedId;
+
+        testbedPrefix = null;
+        capabilityPrefix = null;
+        try {
+            testbedPrefix = UberdustClient.getInstance().getUrnPrefix(testbedId);
+            capabilityPrefix = UberdustClient.getInstance().getUrnCapabilityPrefix(testbedId);
+        } catch (JSONException e) {
+            LOGGER.error(e, e);
+        }
+
     }
 
     public TestbedMessageHandler() {
@@ -59,7 +72,7 @@ public class TestbedMessageHandler {
     }
 
     public synchronized void handle(final WSNAppMessages.Message message) {
-        executorService.submit(new CoapMessageParser(message.getSourceNodeId(), message.getBinaryData().toByteArray()));
+        executorService.submit(new CoapMessageParser(message.getSourceNodeId(), message.getBinaryData().toByteArray(),testbedPrefix,capabilityPrefix));
 //        Thread d = new Thread(new CoapMessageParser(message.getSourceNodeId(), message.getBinaryData().toByteArray()));
 //        d.start();
     }

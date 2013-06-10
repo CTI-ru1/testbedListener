@@ -246,7 +246,7 @@ public class InternalCoapRequest {
                 data[pos++] = 0x61;
                 data[pos] = 0x6D;
 
-                final Thread parser = new Thread(new CoapMessageParser("0x" + udpRequest.getPayloadString(), data));
+                final Thread parser = new Thread(new CoapMessageParser("0x" + udpRequest.getPayloadString(), data,null,null));
                 parser.start();
 
                 payload.append("Here I am simulation on ").append(udpRequest.getPayloadString());
