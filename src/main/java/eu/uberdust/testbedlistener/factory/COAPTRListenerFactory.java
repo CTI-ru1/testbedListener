@@ -9,14 +9,13 @@ import eu.uberdust.testbedlistener.coap.EthernetSupport;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
 import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.MqttHeartbeatListener;
 import eu.uberdust.testbedlistener.datacollector.collector.TestbedRuntimeCollector;
 import eu.uberdust.testbedlistener.datacollector.collector.XbeeCollector;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.BasicConfigurator;
-import org.eclipse.jetty.util.ajax.JSON;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -56,14 +55,15 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
                 PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
             LOGGER.info("Connecting Network Manager");
             JSONArray testbeds = null;
-            try {
-                testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
-                for (int i = 0; i < testbeds.length(); i++) {
-                    NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, i + 1);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
+            NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, 5);
+//            try {
+//                testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
+//                for (int i = 0; i < testbeds.length(); i++) {
+//                    NetworkManager.getInstance().listenFor(i+1);
+//                }
+//            } catch (JSONException e) {
+//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//            }
 
         }
 
@@ -102,6 +102,9 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
                             MqttCollector mqList = new MqttCollector(mqttBroker, i + 1);
                             new Thread(mqList).start();
                         }
+                        MqttHeartbeatListener mhl = new MqttHeartbeatListener(mqttBroker);
+                        new Thread(mhl).start();
+
                     } catch (JSONException e) {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }

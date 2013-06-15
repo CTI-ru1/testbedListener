@@ -1,13 +1,10 @@
-package eu.uberdust.testbedlistener.test;
+package eu.uberdust.testbedlistener.datacollector.collector;
 
-import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
-import eu.uberdust.testbedlistener.util.PropertyReader;
+import eu.uberdust.testbedlistener.coap.CoapServer;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.mqtt.client.*;
 
-import java.io.IOException;
-import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -15,30 +12,17 @@ import java.util.concurrent.CountDownLatch;
 /**
  * Created with IntelliJ IDEA.
  * User: amaxilatis
- * Date: 6/4/13
- * Time: 12:07 PM
+ * Date: 6/7/13
+ * Time: 12:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class MqttTest {
-
-    public static void main(String[] args) throws SocketException {
-
-        PropertyReader.getInstance().setFile("listener.properties");
-        MqttTestClient mqList = new MqttTestClient("tcp://uberdust.cti.gr:1883", "heartbeat/#", true);
-        new Thread(mqList).start();
-    }
-
-}
-
-
-class MqttTestClient implements Runnable, Listener {
+public class MqttHeartbeatListener implements Runnable, Listener {
     /**
      * LOGGER.
      */
-    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttCollector.class);
+    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttHeartbeatListener.class);
     private static final long DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS = 5000;
     private static final long DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS = 3600 * 3;
-    private int testbedID;
 
     private long listenerSleepBeforeReAttemptInSeconds;
     private long listenerMaxReAttemptDurationInSeconds;
@@ -51,11 +35,15 @@ class MqttTestClient implements Runnable, Listener {
 
     private CallbackConnection connection;
 
-    public MqttTestClient(String listenerHostURI, String listenerTopic, boolean debug) {
+    public MqttHeartbeatListener(String mqttBroker) {
+        this(mqttBroker, "heartbeat/#", DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, true);
+    }
+
+    public MqttHeartbeatListener(String listenerHostURI, String listenerTopic, boolean debug) {
         this(listenerHostURI, listenerTopic, DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, debug);
     }
 
-    public MqttTestClient(String listenerHostURI, String listenerTopic, long listenerSleepBeforeReAttemptInSeconds, long listenerMaxReAttemptDurationInSeconds, boolean debug) {
+    public MqttHeartbeatListener(String listenerHostURI, String listenerTopic, long listenerSleepBeforeReAttemptInSeconds, long listenerMaxReAttemptDurationInSeconds, boolean debug) {
         init(listenerHostURI, listenerTopic, listenerSleepBeforeReAttemptInSeconds, listenerMaxReAttemptDurationInSeconds, debug);
     }
 
@@ -102,34 +90,6 @@ class MqttTestClient implements Runnable, Listener {
     private void listen() {
         connection = mqtt.callbackConnection();
         final CountDownLatch done = new CountDownLatch(1);
-
-
-
-       /* Runtime.getRuntime().addShutdownHook(new Thread(){
-            @Override
-            public void run() {
-                setName("MQTT client shutdown");
-                stderr("Disconnecting the client.");
-
-                connection.getDispatchQueue().execute(new Runnable() {
-                    public void run() {
-                        connection.disconnect(new Callback<Void>() {
-                            public void onSuccess(Void value) {
-                                stdout("Disconnecting onSuccess.");
-                                done.countDown();
-                            }
-                            public void onFailure(Throwable value) {
-                                stderr("Disconnecting onFailure: " + value);
-                                stderr(value);
-                                done.countDown();
-                            }
-                        });
-                    }
-                });
-            }
-        });
-        */
-
 
         connection.listener(this);
 
@@ -182,7 +142,6 @@ class MqttTestClient implements Runnable, Listener {
         listenerReAttemptsOver();
     }
 
-
     @Override
     public void onConnected() {
         //To change body of implemented methods use File | Settings | File Templates.
@@ -195,15 +154,9 @@ class MqttTestClient implements Runnable, Listener {
 
     @Override
     public void onPublish(UTF8Buffer topic, Buffer body, Runnable ack) {
-//        if (!body.toString().contains("reset")) {
-//            try {
-//                Runtime.getRuntime().exec("gntp-send Uberdust \"" + body.utf8().toString().replaceAll(" ", "") + "\"");
-//            } catch (IOException e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            }
-//        }
-        LOGGER.info("Topic:" + topic.toString() + " Message:" + body.toString());
-
+        if (!body.toString().contains("reset")) {
+            CoapServer.getInstance().registerGateway(body.utf8().toString());
+        }
     }
 
     @Override
@@ -211,6 +164,3 @@ class MqttTestClient implements Runnable, Listener {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 }
-
-
-

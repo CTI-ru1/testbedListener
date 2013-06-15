@@ -12,13 +12,10 @@ import eu.uberdust.testbedlistener.datacollector.notify.CacheNotify;
 import eu.uberdust.testbedlistener.datacollector.notify.UberdustNotify;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
-import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -151,10 +148,10 @@ public class CoapMessageParser extends AbstractMessageParser {
                     isBlockwise = false;
                     if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
                         LOGGER.info("REQ BLOCKWISE");
-//                    isBlockwise = true;
-//                    String remainder = Converter.extractRemainder(payloadStr);
-//                    LOGGER.info(remainder);
-//                    CoapServer.getInstance().addPending(address, remainder);
+                        isBlockwise = true;
+                        String remainder = Converter.extractRemainder(payloadStr);
+                        LOGGER.info(remainder);
+                        CoapServer.getInstance().addPending(address, remainder);
                     }
 
                     LOGGER.info(capabilities.size());

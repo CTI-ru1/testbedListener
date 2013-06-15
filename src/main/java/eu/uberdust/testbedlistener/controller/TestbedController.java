@@ -93,15 +93,31 @@ public final class TestbedController implements Observer {
         if (o instanceof DeviceCommand) {
             final DeviceCommand command = (DeviceCommand) o;
 
-            try {
-                InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":") + 1));
-                CoapServer.getInstance().sendEthernetRequest(command);
-                LOGGER.debug("EthernetTO:" + command.getDestination() + " BYTES:" + command.getPayload());
-            } catch (UnknownHostException e) {
-                sendCommand(command.getDestination(), command.getPayload());
-                LOGGER.debug("TO:" + command.getDestination() + " BYTES:" + command.getPayload());
 
+            if (command.getDestination().contains("150.140.5")) {
+                try {
+                    InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":") + 1));
+                    CoapServer.getInstance().sendEthernetRequest(command);
+                    LOGGER.debug("EthernetTO:" + command.getDestination() + " BYTES:" + command.getPayload());
+                } catch (UnknownHostException e) {
+                    sendCommand(command.getDestination(), command.getPayload());
+                    LOGGER.debug("TO:" + command.getDestination() + " BYTES:" + command.getPayload());
+
+                }
+            } else {
+//                Request request = new Request(CodeRegistry.METHOD_POST,false);
+//                request.setPayload(command.getPayload());
+//                CoapServer.getInstance().sendRequest();
+//                InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":") + 1));
+                final byte[] payload = Converter.getInstance().commaPayloadtoBytes(command.getPayload());
+                final byte[] headlessPayload =new byte[payload.length-1];
+                System.arraycopy(payload,1,headlessPayload,0,headlessPayload.length);
+
+                CoapServer.getInstance().sendRequest(headlessPayload, command.getDestination().substring(command.getDestination().lastIndexOf(":0x") + 3));
+
+                LOGGER.debug("MQttTO:" + command.getDestination() + " BYTES:" + command.getPayload());
             }
+
         }
     }
 

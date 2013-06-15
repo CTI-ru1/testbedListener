@@ -2,13 +2,12 @@ package eu.uberdust.testbedlistener.datacollector.collector;
 
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.datacollector.parsers.MqttMessageHandler;
+import eu.uberdust.testbedlistener.util.Converter;
 import org.fusesource.mqtt.client.*;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -127,30 +126,6 @@ public class MqttCollector implements Runnable {
 
 
         connection.resume();
-//        new Thread() {
-//            @Override
-//            public void run() {
-//                while (true) {
-//                    try {
-//                        Thread.sleep(5000);
-//                    } catch (InterruptedException e) {
-//                        LOGGER.error(e.getMessage(), e);
-//                    }
-//                    connection.publish("inTopic", "test".getBytes(), QoS.AT_MOST_ONCE, false, new Callback() {
-//                        @Override
-//                        public void onSuccess(Object o) {
-//                            LOGGER.info("onSuccess");
-//                        }
-//
-//                        @Override
-//                        public void onFailure(Throwable throwable) {
-//                            LOGGER.info("onFailure");
-//                        }
-//                    });
-//                }
-//            }
-//        };
-        //.start();
 
         connection.connect(new Callback<Void>() {
             public void onFailure(Throwable value) {
@@ -199,7 +174,14 @@ public class MqttCollector implements Runnable {
     }
 
     public void sendPayload(final String destination, final byte[] payloadIn) {
-        connection.publish("arduinoGateway", payloadIn, QoS.AT_MOST_ONCE, false, new Callback() {
+        byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
+        byte[] payloadWithDestination = new byte[payloadIn.length + 2];
+
+        payloadWithDestination[0] = destinationBytes[1];
+        payloadWithDestination[1] = destinationBytes[0];
+        System.arraycopy(payloadIn, 0, payloadWithDestination, 2, payloadIn.length);
+
+        connection.publish("arduinoGateway", payloadWithDestination, QoS.AT_MOST_ONCE, false, new Callback() {
             @Override
             public void onSuccess(Object o) {
                 LOGGER.info("onSuccess");
@@ -213,4 +195,18 @@ public class MqttCollector implements Runnable {
     }
 
 
+    public void publish(final String topic, final String message) {
+        connection.publish(topic, message.getBytes(), QoS.AT_LEAST_ONCE, false, new Callback() {
+
+            @Override
+            public void onSuccess(Object value) {
+                LOGGER.info("onSuccess");
+            }
+
+            @Override
+            public void onFailure(Throwable value) {
+                LOGGER.error("onFailure", value);
+            }
+        });
+    }
 }

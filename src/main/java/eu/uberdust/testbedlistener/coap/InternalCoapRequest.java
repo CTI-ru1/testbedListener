@@ -1,16 +1,11 @@
 package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.*;
-import eu.mksense.XBeeRadio;
-import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
+import eu.uberdust.testbedlistener.coap.internal.handler.*;
 
-import java.io.IOException;
 import java.net.SocketAddress;
-import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,11 +17,23 @@ import java.util.concurrent.TimeUnit;
 public class InternalCoapRequest {
 
     private static InternalCoapRequest instance = null;
+    private HashMap<String, InternalRequestHandler> internalRequestHandlers;
 
     /**
      * Empty Constructor.
      */
     public InternalCoapRequest() {
+        internalRequestHandlers = new HashMap<String, InternalRequestHandler>();
+        internalRequestHandlers.put("/status", new StatusRequestHandler());
+        internalRequestHandlers.put("/endpoints", new EndpointsRequestHandler());
+        internalRequestHandlers.put("/activeRequests", new ActiveRequestsRequestHandler());
+        internalRequestHandlers.put("/pendingRequests", new PendingRequestsRequestHandler());
+        internalRequestHandlers.put("/cache", new CacheRequestHandler());
+        internalRequestHandlers.put("/wakeup", new WakeupRequestHandler());
+        internalRequestHandlers.put("/routes", new RoutesRequestHandler());
+        internalRequestHandlers.put("/ethernet", new EthernetRequestHandler());
+        internalRequestHandlers.put("/gateway/xbee", new XbeeGatewayRequestHandler());
+        internalRequestHandlers.put("/gateway/arduino", new ArduinoGatewayRequestHandler());
     }
 
     public static InternalCoapRequest getInstance() {
@@ -41,7 +48,7 @@ public class InternalCoapRequest {
     public Message handleRequest(final String uriHost, final Message udpRequest, final SocketAddress socketAddress) {
         //To change body of created methods use File | Settings | File Templates.
         final Message response = new Message();
-        final StringBuilder payload = new StringBuilder();
+
         if (udpRequest.isConfirmable()) {
             response.setType(Message.messageType.ACK);
         } else if (udpRequest.isNonConfirmable()) {
@@ -56,6 +63,7 @@ public class InternalCoapRequest {
         }
         if (path.contains("/device/")) {
             //forward to device or respond from cache
+            StringBuilder payload = new StringBuilder("");
 
             String[] temp = path.split("/device/");
             temp = temp[1].split("/");
@@ -85,9 +93,13 @@ public class InternalCoapRequest {
             } else {
                 return udpRequest;
             }
+            response.setPayload(payload.toString());
         } else if ("/.well-known/core".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                payload.append("<status>,<endpoints>,<activeRequests>,<pendingRequests>,<cache>,<wakeup>,<routes>,<ethernet>,<xbee>");
+                StringBuilder payload = new StringBuilder("");
+                for (String handlerName : internalRequestHandlers.keySet()) {
+                    payload.append(",").append("<").append(handlerName.substring(1)).append(">");
+                }
                 Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
                 for (String endpoint : endpoints.keySet()) {
                     for (String resource : endpoints.get(endpoint).keySet()) {
@@ -100,193 +112,18 @@ public class InternalCoapRequest {
                 }
                 payload.append("\n");
                 response.setContentType(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+                response.setPayload(payload.toString().substring(1));
             } else {
                 response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
             }
-        } else if ("/status".equals(path)) {
-            if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                payload.append("Online").append("\n");
-                final Properties prop = new Properties();
-                try {
-                    final long elapsed = System.currentTimeMillis() - CoapServer.getInstance().getStartTime();
-                    final String elapsedString = String.format("%d days, %d hours, %d min, %d sec",
-                            TimeUnit.MILLISECONDS.toDays(elapsed),
-                            TimeUnit.MILLISECONDS.toHours(elapsed) - TimeUnit.DAYS.toHours(TimeUnit.MILLISECONDS.toDays(elapsed)),
-                            TimeUnit.MILLISECONDS.toMinutes(elapsed) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(elapsed)),
-                            TimeUnit.MILLISECONDS.toSeconds(elapsed) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(elapsed))
-                    );
-                    payload.append("Uptime:").append(elapsedString).append("\n");
-                    payload.append("Running Threads:").append(Thread.activeCount()).append("\n");
-                    payload.append("Cache Size:").append(CacheHandler.getInstance().getCache().keySet().size()).append(" nodes").append("\n");
-                    payload.append("Pending Connections:").append(PendingRequestHandler.getInstance().getPendingRequestList().size()).append("\n");
-                    final int mb = 1024 * 1024;
-                    //Getting the runtime reference from system
-                    final Runtime runtime = Runtime.getRuntime();
-                    //Print used memory
-                    payload.append("Used Memory:").append((runtime.totalMemory() - runtime.freeMemory()) / mb).append(" MB").append("\n");
-                    //Print free memory
-                    payload.append("Free Memory:").append(runtime.freeMemory() / mb).append(" MB").append("\n");
-                    //Print total available memory
-                    payload.append("Total Memory:").append(runtime.totalMemory() / mb).append(" MB").append("\n");
-                    //Print Maximum available memory
-                    payload.append("Max Memory:").append(runtime.maxMemory() / mb).append(" MB").append("\n");
-                    prop.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("version.properties"));
-                    payload.append("Version:").append(prop.get("version")).append("\n");
-                    payload.append("Build:").append(prop.get("build")).append("\n");
-
-                    payload.append("\n").append("****").append("\n");
-                    payload.append(".well-known/core requests: ").append(CoapServer.getInstance().getRequestWellKnownCounter()).append("\n");
-                    payload.append("Observe Requests:").append(CoapServer.getInstance().getRequestObserveCounter()).append("\n");
-                    payload.append("Observe Responses:").append(CoapServer.getInstance().getResponseObserveCounter()).append("\n");
-                    payload.append("Observe Lost:").append(CoapServer.getInstance().getObserveLostCounter()).append("\n");
-
-                } catch (IOException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }
-                response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-            } else {
-                response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
-            }
-        } else if ("/endpoints".equals(path)) {
-            if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                final Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
-                for (String endpoint : endpoints.keySet()) {
-                    for (String uripath : endpoints.get(endpoint).keySet()) {
-                        payload.append(new Date(endpoints.get(endpoint).get(uripath)));
-                        payload.append(" - ");
-                        if (endpoint.length() == 3) {
-                            payload.append(" ");
-                        }
-                        payload.append(endpoint);
-                        payload.append("/").append(uripath);
-                        payload.append("\n");
-                    }
-                }
-                response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-            } else {
-                response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
-            }
-        } else if ("/activeRequests".equals(path)) {
-            if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                final Map<Integer, ActiveRequest> activeRequests = CoapServer.getInstance().getActiveRequestsMID();
-                for (int key : activeRequests.keySet()) {
-                    final ActiveRequest activeRequest = activeRequests.get(key);
-                    payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getCount()).append("\n");
-
-                }
-                payload.append("\n");
-                final Map<String, ActiveRequest> activeRequests2 = CoapServer.getInstance().getActiveRequestsTOKEN();
-                for (String key : activeRequests2.keySet()) {
-                    final ActiveRequest activeRequest = activeRequests2.get(key);
-                    payload.append(activeRequest.getHost()).append("\t").append(activeRequest.getToken()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getUriPath()).append("\t").append(activeRequest.getTimestamp()).append("\t").append(activeRequest.getMid()).append("\t").append(activeRequest.getCount()).append("\n");
-
-                }
-                response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-            } else {
-                response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
-            }
-        } else if ("/pendingRequests".equals(path)) {
-            if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                final List<PendingRequest> pendingRequests = PendingRequestHandler.getInstance().getPendingRequestList();
-                for (PendingRequest pendingRequest : pendingRequests) {
-                    payload.append(pendingRequest.getUriHost());
-                    if (pendingRequest.getUriHost().length() == 3) {
-                        payload.append(" ");
-                    }
-                    payload.append(" - ");
-                    payload.append(pendingRequest.getSocketAddress()).append(" - ");
-                    payload.append(pendingRequest.getMid()).append(" - ");
-                    payload.append(pendingRequest.getToken()).append("\n");
-                }
-                response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-            } else {
-                response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
-            }
-        } else if ("/cache".equals(path)) {
-            if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                final Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
-                payload.append("Host\tPath\tValue\tTimestamp\t\t\tAge\tObserves lost\n");
-                for (String device : cache.keySet()) {
-                    if (!"".equals(uriHost) && !device.equals(uriHost)) {
-                        continue;
-                    }
-                    for (String uriPath : cache.get(device).keySet()) {
-                        final Cache pair = cache.get(device).get(uriPath);
-                        final long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
-                        payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\t").append(pair.getLostCounter()).append("\n");
-                    }
-                }
-                response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-            } else if (udpRequest.getCode() == CodeRegistry.METHOD_POST) {
-                CacheHandler.getInstance().clearCache();
-                payload.append("Cache cleared");
-                response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-                response.setCode(CodeRegistry.RESP_CHANGED);
-            } else {
-                response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
-            }
-        } else if ("/wakeup".equals(path) && udpRequest.getCode() == 2) {
-            if (udpRequest.getCode() == CodeRegistry.METHOD_POST) {
-                String device = udpRequest.getPayloadString();
-                if (device.length() == 3) {
-                    device = "0" + device;
-                }
-                byte[] data = new byte[11];
-                int pos = 0;
-                data[pos++] = 0x69;
-                data[pos++] = 102; // w/e
-                for (int i = 0; i < 4; i += 2) {
-                    data[pos++] = (byte) ((Character.digit(device.charAt(i), 16) << 4) + Character.digit(device.charAt(i + 1), 16));
-                }
-                data[pos++] = 0x68;
-                data[pos++] = 0x65;
-                data[pos++] = 0x72;
-                data[pos++] = 0x65;
-                data[pos++] = 0x69;
-                data[pos++] = 0x61;
-                data[pos] = 0x6D;
-
-                final Thread parser = new Thread(new CoapMessageParser("0x" + udpRequest.getPayloadString(), data,null,null));
-                parser.start();
-
-                payload.append("Here I am simulation on ").append(udpRequest.getPayloadString());
-                response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-            } else {
-                response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
-            }
-        } else if ("/routes".equals(path)) {
-            if (udpRequest.getCode() == 2) {
-                String myPayload = udpRequest.getPayloadString();
-                if (myPayload.contains("->")) {
-                    final String dest = myPayload.split("->")[0];
-                    final String source = myPayload.split("->")[1];
-                    GatewayManager.getInstance().setGateway(dest, source);
-                }
-            }
-            for (String key : GatewayManager.getInstance().getGateways().keySet()) {
-                payload.append(key).append("->").append(GatewayManager.getInstance().getGateway(key)).append("\n");
-            }
-        } else if ("/ethernet".equals(path)) {
-            if (udpRequest.getCode() == 2) {
-                (new EthernetSupport(CoapServer.getInstance().getEthernetUDPHandler(), udpRequest.getPayloadString())).start();
-            } else {
-                for (CoapServer.TokenItem item : CoapServer.getInstance().getObservers()) {
-                    payload.append(item.getBytes()).append(" > ").append(item.getPath()).append("\n");
-                }
-            }
-        }else if ("/xbee".equals(path)){
-            try {
-                XBeeRadio.getInstance().setChannel(12);
-                payload.append(XBeeRadio.getInstance().getMyXbeeAddress().toString()).append("\n");
-                payload.append(XBeeRadio.getInstance().getMyAddress()).append("\n");
-            } catch (Exception e) {
-                payload.append(e.getMessage()).append("\n");
-            }
-
         } else {
-            response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found
+            if (internalRequestHandlers.containsKey(path)) {
+                InternalRequestHandler handler = internalRequestHandlers.get(path);
+                handler.handle(udpRequest, response);
+            } else {
+                response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found
+            }
         }
-        response.setPayload(payload.toString());
         CoapServer.getInstance().sendReply(response.toByteArray(), socketAddress);
         return null;
     }

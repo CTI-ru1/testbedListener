@@ -4,19 +4,23 @@ import ch.ethz.inf.vs.californium.coap.*;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.DeviceCommand;
+import eu.uberdust.testbedlistener.HeartBeatJob;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
-import eu.uberdust.testbedlistener.controller.TestbedController;
-import eu.uberdust.testbedlistener.controller.XbeeController;
 import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
 import org.apache.log4j.Logger;
+import org.quartz.*;
+import org.quartz.impl.StdSchedulerFactory;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -69,6 +73,9 @@ public class CoapServer {
     private int observeLostCounter;
     private EthernetUDPhandler ethernetUDPHandler;
     private MqttCollector mqtt;
+    private final StdSchedulerFactory schFactory;
+    private Scheduler sch;
+    private Map<String, Long> arduinoGateways;
 
     public long getStartTime() {
         return startTime;
@@ -85,6 +92,7 @@ public class CoapServer {
         ethernetBlockWisePending = new HashMap<Integer, String>();
         this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
         this.activeRequestsTOKEN = new HashMap<String, ActiveRequest>();
+        this.arduinoGateways  = new HashMap<String, Long>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
@@ -93,8 +101,27 @@ public class CoapServer {
         this.requestObserveCounter = 0;
         this.responseObserveCounter = 0;
         this.observeLostCounter = 0;
+
+
+        schFactory = new StdSchedulerFactory();
+
+        try {
+            sch = schFactory.getScheduler();
+            sch.start();
+        } catch (SchedulerException e) {
+            LOGGER.error(e, e);
+        }
+        JobDetail heartbeatToGatewaysJob = JobBuilder.newJob(HeartBeatJob.class).withIdentity("heartbeatToGatewaysJob").build();
+        try {
+            this.addJob(heartbeatToGatewaysJob, 10);
+        } catch (SchedulerException e) {
+            LOGGER.error(e, e);
+        }
+
+
 //        Timer discoveryTimer = new Timer();
 //        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
+
 
         //Start the udp socket
         try {
@@ -129,8 +156,17 @@ public class CoapServer {
         LOGGER.info("started CoapServer");
     }
 
+
+    public void addJob(JobDetail jobDetail, int interval) throws SchedulerException {
+        //Trigger the job to run on the next round minute
+        Trigger trigger = TriggerBuilder.newTrigger().withSchedule(
+                SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(interval).repeatForever())
+                .build();
+        sch.scheduleJob(jobDetail, trigger);
+    }
+
     public void cleanActiveRequests() {
-        LOGGER.info("Cleaning acrive Requests");
+        LOGGER.info("Cleaning active Requests");
         for (int key : activeRequestsMID.keySet()) {
             if (System.currentTimeMillis() - activeRequestsMID.get(key).getTimestamp() > 2 * MILLIS_IN_MINUTE + 20 * MILLIS_IN_SECOND) {
 
@@ -485,13 +521,13 @@ public class CoapServer {
 //        timer.schedule(new TimerTask() {
 //            @Override
 //            public void run() {
-//                TestbedController.getInstance().sendMessage(payload, nodeUrn);
+//                mqtt.sendPayload(nodeUrn, payload);
 //            }
 //        }, 100);
 //        timer.schedule(new TimerTask() {
 //            @Override
 //            public void run() {
-//                TestbedController.getInstance().sendMessage(payload, nodeUrn);
+//                mqtt.sendPayload(nodeUrn, payload);
 //            }
 //        }, 250);
     }
@@ -837,8 +873,19 @@ public class CoapServer {
         this.mqtt = mqtt;
     }
 
+    public void publish(final String topic, final String message) {
+        mqtt.publish(topic, message);
+    }
 
-    class TokenItem {
+    public void registerGateway(String arduinoGateway) {
+        arduinoGateways.put(arduinoGateway,System.currentTimeMillis());
+    }
+
+    public Map<String, Long> getArduinoGateways() {
+        return arduinoGateways;
+    }
+
+    public class TokenItem {
         String bytes;
         String path;
 
