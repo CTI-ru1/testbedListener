@@ -35,14 +35,19 @@ public class CacheRequestHandler implements InternalRequestHandler {
             }
             response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
             response.setPayload(payload.toString());
-        } else if (udpRequest.getCode() == CodeRegistry.METHOD_POST) {
-            StringBuilder payload = new StringBuilder("");
-            CacheHandler.getInstance().clearCache();
-            payload.append("Cache cleared");
-            response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-            response.setCode(CodeRegistry.RESP_CHANGED);
-            response.setPayload(payload.toString());
+        } else if (udpRequest.getCode() == CodeRegistry.METHOD_DELETE) {
+            if ("reset".equals(udpRequest.getPayloadString())) {
+                StringBuilder payload = new StringBuilder("");
+                CacheHandler.getInstance().clearCache();
+                payload.append("Cache cleared");
+                response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+                response.setCode(CodeRegistry.RESP_CHANGED);
+                response.setPayload(payload.toString());
+            } else {
+                response.setCode(CodeRegistry.RESP_BAD_REQUEST);
+            }
         } else {
+
             response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
         }
 
