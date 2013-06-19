@@ -4,8 +4,11 @@ import ch.ethz.inf.vs.californium.coap.*;
 import eu.uberdust.testbedlistener.coap.internal.handler.*;
 
 import java.net.SocketAddress;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Created by IntelliJ IDEA.
@@ -83,8 +86,34 @@ public class InternalCoapRequest {
                     return udpRequest;
                 } else {
                     response.setContentType(pair.getContentType());
-//                    payload.append("CACHE - ").append(new Date(pair.getTimestamp())).append(" - ").append(pair.getValue());
-                    payload.append(pair.getValue());
+
+                    if (udpRequest.getContentType() == MediaTypeRegistry.APPLICATION_RDF_XML) {
+                        response.setContentType(MediaTypeRegistry.APPLICATION_RDF_XML);
+                        payload.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n" +
+                                "  xmlns:ns0=\"http://www.w3.org/2000/01/rdf-schema#\"\n" +
+                                "  xmlns:ns1=\"http://purl.oclc.org/NET/ssnx/ssn#\"\n" +
+                                "  xmlns:ns2=\"http://spitfire-project.eu/cc/spitfireCC_n3.owl#\"\n" +
+                                "  xmlns:ns3=\"http://www.loa-cnr.it/ontologies/DUL.owl#\"\n" +
+                                "  xmlns:ns4=\"http://purl.org/dc/terms/\">\n" + "\n" +
+                                "  <rdf:Description rdf:about=\"http://spitfire-project.eu/sensor/" + device + "\">\n");
+                        payload.append("    <ns0:type rdf:resource=\"http://purl.oclc.org/NET/ssnx/ssn#Sensor\"/>\n" +
+                                "    <ns1:observedProperty rdf:resource=\"http://spitfire-project.eu/property/" + uriPath.toString().substring(1) + "\"/>\n");
+
+                        payload.append("    <ns3:hasValue>" + pair.getValue() + "</ns3:hasValue>\n");
+
+                        SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yy-MM-dd'T'HH:mm'Z'");
+                        dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+
+                        payload.append("    <ns4:date>" + dateFormatGmt.format(new Date(pair.getTimestamp())) + "</ns4:date>\n");
+                        payload.append("  </rdf:Description>\n" +
+                                "\n" +
+                                "</rdf:RDF>");
+                    } else {
+                        response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+                        payload.append(pair.getValue());
+                    }
                     final Option etag = new Option(OptionNumberRegistry.ETAG);
                     etag.setIntValue((int) (System.currentTimeMillis() - pair.getTimestamp()));
                     response.setOption(etag);
@@ -94,7 +123,13 @@ public class InternalCoapRequest {
                 return udpRequest;
             }
             response.setPayload(payload.toString());
-        } else if ("/.well-known/core".equals(path)) {
+        } else if ("/.well-known/core".
+
+                equals(path)
+
+                )
+
+        {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
                 StringBuilder payload = new StringBuilder("");
                 for (String handlerName : internalRequestHandlers.keySet()) {
@@ -116,7 +151,9 @@ public class InternalCoapRequest {
             } else {
                 response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
             }
-        } else {
+        } else
+
+        {
             if (internalRequestHandlers.containsKey(path)) {
                 InternalRequestHandler handler = internalRequestHandlers.get(path);
                 handler.handle(udpRequest, response);
@@ -124,7 +161,12 @@ public class InternalCoapRequest {
                 response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found
             }
         }
-        CoapServer.getInstance().sendReply(response.toByteArray(), socketAddress);
+
+        CoapServer.getInstance().
+
+                sendReply(response.toByteArray(), socketAddress
+
+                );
         return null;
     }
 }
