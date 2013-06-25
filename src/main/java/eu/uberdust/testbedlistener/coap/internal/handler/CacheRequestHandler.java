@@ -1,12 +1,11 @@
 package eu.uberdust.testbedlistener.coap.internal.handler;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.*;
 import eu.uberdust.testbedlistener.coap.Cache;
 import eu.uberdust.testbedlistener.coap.CacheHandler;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,10 +22,15 @@ public class CacheRequestHandler implements InternalRequestHandler {
             StringBuilder payload = new StringBuilder("");
             final Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
             payload.append("Host\tPath\tValue\tTimestamp\t\t\tAge\tObserves lost\n");
+            List<Option> uriHostsOptions = udpRequest.getOptions(OptionNumberRegistry.URI_HOST);
+            String uriHost = "";
+            if (uriHostsOptions.size() > 0) {
+                uriHost = uriHostsOptions.get(0).getStringValue();
+            }
             for (String device : cache.keySet()) {
-//                if (!"".equals(uriHost) && !device.equals(uriHost)) {
-//                    continue;
-//                }
+                if (!"".equals(uriHost) && !device.equals(uriHost)) {
+                    continue;
+                }
                 for (String uriPath : cache.get(device).keySet()) {
                     final Cache pair = cache.get(device).get(uriPath);
                     final long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
