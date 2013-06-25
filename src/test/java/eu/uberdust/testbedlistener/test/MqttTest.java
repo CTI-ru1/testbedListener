@@ -77,6 +77,15 @@ class MqttTestClient implements Runnable, Listener {
         } catch (URISyntaxException e) {
             LOGGER.error("setHost failed", e);
         }
+
+        String mqttUser = PropertyReader.getInstance().getProperties().getProperty("mqtt.username");
+        String mqttPass = PropertyReader.getInstance().getProperties().getProperty("mqtt.password");
+
+        if (mqttUser != null) {
+            mqtt.setUserName(mqttUser);
+            mqtt.setPassword(mqttPass);
+        }
+
         QoS qos = QoS.AT_MOST_ONCE;
         topics = new ArrayList<Topic>();
         topics.add(new Topic(listenerTopic, qos));

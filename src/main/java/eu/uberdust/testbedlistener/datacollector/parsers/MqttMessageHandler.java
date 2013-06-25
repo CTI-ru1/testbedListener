@@ -50,40 +50,49 @@ public class MqttMessageHandler implements org.fusesource.mqtt.client.Listener {
         LOGGER.trace("Listener onDisconnected");
     }
 
-    public void onPublish(UTF8Buffer topic, Buffer body, Runnable ack) {
+    public void onPublish(final UTF8Buffer topic, final Buffer body, Runnable ack) {
+        new Thread() {
 
-        LOGGER.debug("onPublish: " + topic + " --> " + Arrays.toString(body.toByteArray()));
+            @Override
+            public void run() {
 
-        String macAddress = "0x"
-                + Integer.toHexString(body.toByteArray()[1]);
-        if (Integer.toHexString(body.toByteArray()[0]).length() == 1) {
-            macAddress += "0";
-        }
-        macAddress += Integer.toHexString(body.toByteArray()[0]);
+                try {
+                    LOGGER.debug("onPublish: " + topic + " --> " + Arrays.toString(body.toByteArray()));
 
-        byte byteData[] = body.toByteArray();
+                    String macAddress = "0x"
+                            + Integer.toHexString(body.toByteArray()[1]);
+                    if (Integer.toHexString(body.toByteArray()[0]).length() == 1) {
+                        macAddress += "0";
+                    }
+                    macAddress += Integer.toHexString(body.toByteArray()[0]);
 
-        //fix arduino endiannes
-        byte tmp = byteData[0];
-        byteData[0] = byteData[1];
-        byteData[1] = tmp;
+                    byte byteData[] = body.toByteArray();
+
+                    //fix arduino endiannes
+                    byte tmp = byteData[0];
+                    byteData[0] = byteData[1];
+                    byteData[1] = tmp;
 
 
-        HereIamMessage mess = new HereIamMessage(byteData);
-        if (mess.isValid()) {
-            byte finalData[] = new byte[byteData.length + 2];
-            finalData[0] = 0x69;
-            finalData[1] = 0x69;
-            System.arraycopy(byteData, 0, finalData, 2, byteData.length);
-            executorService.submit(new CoapMessageParser(macAddress, finalData,urnPrefix,urnCapabilityPrefix));
-        } else {
-            byte finalData[] = new byte[body.toByteArray().length - 2 + 1];
-            finalData[0] = 0x69;
-            finalData[1] = 0x69;
-            System.arraycopy(byteData, 3, finalData, 2, body.toByteArray().length - 2 - 1);
-            executorService.submit(new CoapMessageParser(macAddress, finalData,urnPrefix,urnCapabilityPrefix));
-        }
-
+                    HereIamMessage mess = new HereIamMessage(byteData);
+                    if (mess.isValid()) {
+                        byte finalData[] = new byte[byteData.length + 2];
+                        finalData[0] = 0x69;
+                        finalData[1] = 0x69;
+                        System.arraycopy(byteData, 0, finalData, 2, byteData.length);
+                        executorService.submit(new CoapMessageParser(macAddress, finalData, urnPrefix, urnCapabilityPrefix));
+                    } else {
+                        byte finalData[] = new byte[body.toByteArray().length - 2 + 1];
+                        finalData[0] = 0x69;
+                        finalData[1] = 0x69;
+                        System.arraycopy(byteData, 3, finalData, 2, body.toByteArray().length - 2 - 1);
+                        executorService.submit(new CoapMessageParser(macAddress, finalData, urnPrefix, urnCapabilityPrefix));
+                    }
+                } catch (Exception e) {
+                    LOGGER.error(e, e);
+                }
+            }
+        }.start();
 
         ack.run();
     }

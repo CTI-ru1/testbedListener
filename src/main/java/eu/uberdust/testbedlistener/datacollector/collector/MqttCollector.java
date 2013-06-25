@@ -59,8 +59,9 @@ public class MqttCollector implements Runnable {
     }
 
     private void initMQTT() {
-        CoapServer.getInstance().setMqtt(this);
+
         mqtt = new MQTT();
+
         listenerLastSuccessfulSubscription = System.currentTimeMillis();
 
         try {
@@ -92,6 +93,7 @@ public class MqttCollector implements Runnable {
 
     private void listen() {
         connection = mqtt.callbackConnection();
+        CoapServer.getInstance().setMqtt(connection);
         final CountDownLatch done = new CountDownLatch(1);
 
 
@@ -173,40 +175,5 @@ public class MqttCollector implements Runnable {
         listenerReAttemptsOver();
     }
 
-    public void sendPayload(final String destination, final byte[] payloadIn) {
-        byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
-        byte[] payloadWithDestination = new byte[payloadIn.length + 2];
 
-        payloadWithDestination[0] = destinationBytes[1];
-        payloadWithDestination[1] = destinationBytes[0];
-        System.arraycopy(payloadIn, 0, payloadWithDestination, 2, payloadIn.length);
-
-        connection.publish("arduinoGateway", payloadWithDestination, QoS.AT_MOST_ONCE, false, new Callback() {
-            @Override
-            public void onSuccess(Object o) {
-                LOGGER.info("onSuccess");
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-                LOGGER.info("onFailure");
-            }
-        });
-    }
-
-
-    public void publish(final String topic, final String message) {
-        connection.publish(topic, message.getBytes(), QoS.AT_LEAST_ONCE, false, new Callback() {
-
-            @Override
-            public void onSuccess(Object value) {
-                LOGGER.info("onSuccess");
-            }
-
-            @Override
-            public void onFailure(Throwable value) {
-                LOGGER.error("onFailure", value);
-            }
-        });
-    }
 }

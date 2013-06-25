@@ -12,6 +12,9 @@ import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
 import org.apache.log4j.Logger;
+import org.fusesource.mqtt.client.Callback;
+import org.fusesource.mqtt.client.CallbackConnection;
+import org.fusesource.mqtt.client.QoS;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -72,7 +75,7 @@ public class CoapServer {
     public int responseObserveCounter;
     private int observeLostCounter;
     private EthernetUDPhandler ethernetUDPHandler;
-    private MqttCollector mqtt;
+    private CallbackConnection mqtt;
     private final StdSchedulerFactory schFactory;
     private Scheduler sch;
     private Map<String, Long> arduinoGateways;
@@ -92,7 +95,7 @@ public class CoapServer {
         ethernetBlockWisePending = new HashMap<Integer, String>();
         this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
         this.activeRequestsTOKEN = new HashMap<String, ActiveRequest>();
-        this.arduinoGateways  = new HashMap<String, Long>();
+        this.arduinoGateways = new HashMap<String, Long>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
@@ -516,7 +519,7 @@ public class CoapServer {
         LOGGER.info("sending request");
 //        TestbedController.getInstance().sendMessage(payload, nodeUrn);
 //        XbeeController.getInstance().sendPayload(nodeUrn,payload);
-        mqtt.sendPayload(nodeUrn, payload);
+        mqttSendPayload(nodeUrn, payload);
 //        Timer timer = new Timer();
 //        timer.schedule(new TimerTask() {
 //            @Override
@@ -869,16 +872,16 @@ public class CoapServer {
         return ethernetUDPHandler;
     }
 
-    public void setMqtt(MqttCollector mqtt) {
+    public void setMqtt(CallbackConnection mqtt) {
         this.mqtt = mqtt;
     }
 
     public void publish(final String topic, final String message) {
-        mqtt.publish(topic, message);
+        mqttPublish(topic, message);
     }
 
     public void registerGateway(String arduinoGateway) {
-        arduinoGateways.put(arduinoGateway,System.currentTimeMillis());
+        arduinoGateways.put(arduinoGateway, System.currentTimeMillis());
     }
 
     public Map<String, Long> getArduinoGateways() {
@@ -901,6 +904,44 @@ public class CoapServer {
         public String getPath() {
             return path;
         }
+    }
+
+
+    public void mqttSendPayload(final String destination, final byte[] payloadIn) {
+        byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
+        byte[] payloadWithDestination = new byte[payloadIn.length + 2];
+
+        payloadWithDestination[0] = destinationBytes[1];
+        payloadWithDestination[1] = destinationBytes[0];
+        System.arraycopy(payloadIn, 0, payloadWithDestination, 2, payloadIn.length);
+
+        mqtt.publish("arduinoGateway", payloadWithDestination, QoS.AT_MOST_ONCE, false, new Callback() {
+            @Override
+            public void onSuccess(Object o) {
+                LOGGER.info("onSuccess");
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                LOGGER.info("onFailure");
+            }
+        });
+    }
+
+
+    public void mqttPublish(final String topic, final String message) {
+        mqtt.publish(topic, message.getBytes(), QoS.AT_LEAST_ONCE, false, new Callback() {
+
+            @Override
+            public void onSuccess(Object value) {
+                LOGGER.info("onSuccess");
+            }
+
+            @Override
+            public void onFailure(Throwable value) {
+                LOGGER.error("onFailure", value);
+            }
+        });
     }
 
 }
