@@ -100,20 +100,21 @@ public class CoapMessageParser extends AbstractMessageParser {
 
         if (hereIamMessage.isValid())   // check for broadcasting message
         {
-            if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
-                LOGGER.info("Rejecting here I am");
-                return;
-            }
+//            if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
+//                LOGGER.info("Rejecting here I am");
+//                return;
+//            }
             handleHereIAm();
         } else {
 
             final Message response = Message.fromByteArray(payload);
 //            System.out.println(Arrays.toString(payload)+"MID:"+response.getMID());
 
-            if (!response.hasOption(OptionNumberRegistry.OBSERVE) && CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
-                LOGGER.info("Rejecting normal response");
-                return;
-            }
+//            if (!response.hasOption(OptionNumberRegistry.OBSERVE) && CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
+//            if (!response.hasOption(OptionNumberRegistry.OBSERVE)) {
+//                LOGGER.info("Rejecting normal response");
+//                return;
+//            }
 //            response.prettyPrint();
             SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
             LOGGER.info(originSocketAddress);
@@ -168,15 +169,13 @@ public class CoapMessageParser extends AbstractMessageParser {
                         if (!capability.equals(".well-known/core")) {
                             if (CoapServer.getInstance().isAlive(capability, mac)) {
                                 continue;
-                            } else {
-                                try {
-                                    Thread.sleep(250);
-                                } catch (Exception e) {
-                                    LOGGER.error(e, e);
-                                }
+                            }
+                            try {
+                                Thread.sleep(250);
+                            } catch (Exception e) {
+                                LOGGER.error(e, e);
                             }
                             CoapServer.getInstance().requestForResource(capability, mac, true);
-
                         }
                     }
 
@@ -192,7 +191,6 @@ public class CoapMessageParser extends AbstractMessageParser {
                         m = (byte) (m >> 4);
                         m = (byte) (m & 0x01);
                         if (m == 0x00) {
-
                             try {
                                 Thread.sleep(2000);
                             } catch (InterruptedException e) {
