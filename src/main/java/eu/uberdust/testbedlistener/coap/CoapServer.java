@@ -7,7 +7,6 @@ import eu.uberdust.DeviceCommand;
 import eu.uberdust.testbedlistener.HeartBeatJob;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
-import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
@@ -116,7 +115,7 @@ public class CoapServer {
         }
         JobDetail heartbeatToGatewaysJob = JobBuilder.newJob(HeartBeatJob.class).withIdentity("heartbeatToGatewaysJob").build();
         try {
-            this.addJob(heartbeatToGatewaysJob, 10);
+            this.addJob(heartbeatToGatewaysJob, 3);
         } catch (SchedulerException e) {
             LOGGER.error(e, e);
         }
@@ -296,21 +295,18 @@ public class CoapServer {
 //        }
 //    }
 
-    /**
-     * Sends a reply to a packet using the socket.
-     *
-     * @param replyPacket the packet to use to reply.
-     */
 
-    public void sendReply(final DatagramPacket replyPacket) {
-        synchronized (CoapServer.class) {
-            try {
-                socket.send(replyPacket);
-            } catch (IOException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
+    void socketSend(DatagramPacket replyPacket) {
+//        synchronized (CoapServer.class) {
+        try {
+            socket.send(replyPacket);
+            LOGGER.info("socketSend(" + replyPacket.getAddress().getHostAddress() + ":" + replyPacket.getPort());
+        } catch (IOException e) {
+            LOGGER.error("socketSend(", e);
         }
+//        }
     }
+
 
     /**
      * Sends a reply to a packet using the socket.
@@ -319,20 +315,13 @@ public class CoapServer {
      * @param socketAddress the address of the udp client
      */
     public void sendReply(final byte[] buf, final SocketAddress socketAddress) {
-        byte[] buf1 = new byte[10124];
+        byte[] localBuf = buf.clone();
+
         LOGGER.info("sending reply to " + socketAddress + " len: " + buf.length);
         final DatagramPacket replyPacket;
         try {
-            replyPacket = new DatagramPacket(buf, 0, buf.length, socketAddress);
-
-            synchronized (CoapServer.class) {
-                try {
-                    CoapServer.getInstance().getSocket().send(replyPacket);
-                    LOGGER.info("reply Sent");
-                } catch (IOException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            }
+            replyPacket = new DatagramPacket(localBuf, 0, buf.length, socketAddress);
+            socketSend(replyPacket);
         } catch (SocketException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -498,7 +487,7 @@ public class CoapServer {
                 response.setURI("/" + testbedPrefix + address + activeRequest.getUriPath());
                 LOGGER.info("/" + testbedPrefix + address + activeRequest.getUriPath());
                 LOGGER.info("Sending Response to: " + activeRequest.getSocketAddress());
-                socket.send(new DatagramPacket(response.toByteArray(), response.toByteArray().length, activeRequest.getSocketAddress()));
+                socketSend(new DatagramPacket(response.toByteArray(), response.toByteArray().length, activeRequest.getSocketAddress()));
             } catch (IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -854,7 +843,7 @@ public class CoapServer {
             //payload[payload.length-2]-=32;
 //            System.out.println("sending dgram with" + Arrays.toString(payload));
             DatagramPacket packet = new DatagramPacket(payload, payload.length, inetAddr, 5683);
-            socket.send(packet);
+            socketSend(packet);
         } catch (UnknownHostException e) {
             LOGGER.error(e, e);
             return;
@@ -910,7 +899,7 @@ public class CoapServer {
     public void mqttSendPayload(final String destination, final byte[] payloadIn) {
         byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
         byte[] payloadWithDestination = new byte[payloadIn.length + 2];
-
+        LOGGER.debug("mqttSendPayload");
         payloadWithDestination[0] = destinationBytes[1];
         payloadWithDestination[1] = destinationBytes[0];
         System.arraycopy(payloadIn, 0, payloadWithDestination, 2, payloadIn.length);
@@ -930,7 +919,8 @@ public class CoapServer {
 
 
     public void mqttPublish(final String topic, final String message) {
-        mqtt.publish(topic, message.getBytes(), QoS.AT_LEAST_ONCE, false, new Callback() {
+        LOGGER.debug("mqttPublish");
+        mqtt.publish(topic, message.getBytes(), QoS.AT_MOST_ONCE, false, new Callback() {
 
             @Override
             public void onSuccess(Object value) {
