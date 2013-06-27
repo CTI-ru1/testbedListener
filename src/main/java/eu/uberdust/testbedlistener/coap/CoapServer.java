@@ -297,14 +297,16 @@ public class CoapServer {
 
 
     void socketSend(DatagramPacket replyPacket) {
-//        synchronized (CoapServer.class) {
         try {
-            socket.send(replyPacket);
-            LOGGER.info("socketSend(" + replyPacket.getAddress().getHostAddress() + ":" + replyPacket.getPort());
+            //garbage-check "Coap Version should be 01 nothing more nothing less"
+            byte fbyte = (byte) (replyPacket.getData()[0] & 0xc0);
+            if (fbyte == 0x40) {
+                socket.send(replyPacket);
+                LOGGER.info("socketSend(" + replyPacket.getAddress().getHostAddress() + ":" + replyPacket.getPort());
+            }
         } catch (IOException e) {
             LOGGER.error("socketSend(", e);
         }
-//        }
     }
 
 
