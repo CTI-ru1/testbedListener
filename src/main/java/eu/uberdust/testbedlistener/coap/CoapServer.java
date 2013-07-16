@@ -4,16 +4,19 @@ import ch.ethz.inf.vs.californium.coap.*;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.DeviceCommand;
+import eu.uberdust.communication.UberdustClient;
 import eu.uberdust.testbedlistener.HeartBeatJob;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
+import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.QoS;
+import org.json.JSONException;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -36,6 +39,7 @@ public class CoapServer {
      * LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(CoapServer.class);
+    private static final String CONNECTED_ARDUINO_GATEWAY_STRING = "reconnectarduinoGateway";
     /**
      * Singleton instance.
      */
@@ -872,7 +876,30 @@ public class CoapServer {
     }
 
     public void registerGateway(String arduinoGateway) {
-        arduinoGateways.put(arduinoGateway, System.currentTimeMillis());
+        if (arduinoGateway.startsWith(CONNECTED_ARDUINO_GATEWAY_STRING)) {
+
+            String urnPrefix = null;
+            try {
+                String mac = (arduinoGateway.substring(arduinoGateway.indexOf(CONNECTED_ARDUINO_GATEWAY_STRING) + CONNECTED_ARDUINO_GATEWAY_STRING.length())).split(":")[0];
+                String testbedID = (arduinoGateway.substring(arduinoGateway.indexOf(CONNECTED_ARDUINO_GATEWAY_STRING) + CONNECTED_ARDUINO_GATEWAY_STRING.length())).split(":")[1];
+
+                urnPrefix = UberdustClient.getInstance().getUrnPrefix(Integer.parseInt(testbedID));
+                final String nodeUrn = urnPrefix + "0x" + mac;
+                final String capabilityName = "connect";
+                final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
+                        .setNode(nodeUrn)
+                        .setCapability(capabilityName)
+                        .setTimestamp(System.currentTimeMillis())
+                        .setDoubleReading(Double.parseDouble(testbedID))
+                        .build();
+                new WsCommiter(reading);
+            } catch (JSONException e) {
+                LOGGER.error(e, e);
+            }
+
+        } else {
+            arduinoGateways.put(arduinoGateway, System.currentTimeMillis());
+        }
     }
 
     public Map<String, Long> getArduinoGateways() {

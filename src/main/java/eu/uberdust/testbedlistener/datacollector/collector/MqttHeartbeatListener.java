@@ -153,9 +153,18 @@ public class MqttHeartbeatListener implements Runnable, Listener {
     }
 
     @Override
-    public void onPublish(UTF8Buffer topic, Buffer body, Runnable ack) {
-        if (!body.toString().contains("reset")) {
-            CoapServer.getInstance().registerGateway(body.utf8().toString());
+    public void onPublish(UTF8Buffer topic, final Buffer body, Runnable ack) {
+        try {
+            (new Thread() {
+                @Override
+                public void run() {
+                    if (!body.toString().contains("reset")) {
+                        CoapServer.getInstance().registerGateway(body.utf8().toString());
+                    }
+                }
+            }).start();
+        } catch (Exception e) {
+            LOGGER.error(e, e);
         }
     }
 

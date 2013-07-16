@@ -105,10 +105,7 @@ public final class TestbedController implements Observer {
 
                 }
             } else {
-//                Request request = new Request(CodeRegistry.METHOD_POST,false);
-//                request.setPayload(command.getPayload());
-//                CoapServer.getInstance().sendRequest();
-//                InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":") + 1));
+
                 final byte[] payload = Converter.getInstance().commaPayloadtoBytes(command.getPayload());
                 final byte[] headlessPayload =new byte[payload.length-1];
                 System.arraycopy(payload,1,headlessPayload,0,headlessPayload.length);
