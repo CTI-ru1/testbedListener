@@ -42,6 +42,7 @@ public class WakeupRequestHandler implements InternalRequestHandler {
             payload.append("Here I am simulation on ").append(udpRequest.getPayloadString());
             response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
             response.setPayload(payload.toString());
+            response.setCode(CodeRegistry.RESP_VALID);
         } else {
             response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
         }
