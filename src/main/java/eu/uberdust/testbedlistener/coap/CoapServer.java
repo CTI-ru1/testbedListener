@@ -82,6 +82,7 @@ public class CoapServer {
     private final StdSchedulerFactory schFactory;
     private Scheduler sch;
     private Map<String, Long> arduinoGateways;
+    private Map<String, String> xCount, yCount;
 
     public long getStartTime() {
         return startTime;
@@ -99,6 +100,8 @@ public class CoapServer {
         this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
         this.activeRequestsTOKEN = new HashMap<String, ActiveRequest>();
         this.arduinoGateways = new HashMap<String, Long>();
+        this.xCount = new HashMap<String, String>();
+        this.yCount = new HashMap<String, String>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
         this.duplicates = new HashMap<String, Long>();
         currentMID = (int) (Math.random() * 0x10000);
@@ -896,7 +899,12 @@ public class CoapServer {
             } catch (JSONException e) {
                 LOGGER.error(e, e);
             }
-
+        } else if (arduinoGateway.startsWith("xmess")) {
+            arduinoGateway = arduinoGateway.replaceAll("xmess:", "");
+            xCount.put(arduinoGateway.split(":")[0], arduinoGateway.split(":")[1]);
+        } else if (arduinoGateway.startsWith("ymess")) {
+            arduinoGateway = arduinoGateway.replaceAll("ymess:", "");
+            xCount.put(arduinoGateway.split(":")[0], arduinoGateway.split(":")[1]);
         } else {
             arduinoGateways.put(arduinoGateway, System.currentTimeMillis());
         }
@@ -904,6 +912,13 @@ public class CoapServer {
 
     public Map<String, Long> getArduinoGateways() {
         return arduinoGateways;
+    }
+
+    public Map<String, String> getXCount() {
+        return xCount;
+    }
+    public Map<String, String> getYCount() {
+        return yCount;
     }
 
     public class TokenItem {

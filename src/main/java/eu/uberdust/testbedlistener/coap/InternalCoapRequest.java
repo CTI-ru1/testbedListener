@@ -37,6 +37,8 @@ public class InternalCoapRequest {
         internalRequestHandlers.put("/ethernet", new EthernetRequestHandler());
         internalRequestHandlers.put("/gateway/xbee", new XbeeGatewayRequestHandler());
         internalRequestHandlers.put("/gateway/arduino", new ArduinoGatewayRequestHandler());
+        internalRequestHandlers.put("/gateway/arduino/xcount", new XCountRequestHandler());
+        internalRequestHandlers.put("/gateway/arduino/ycount", new YCountRequestHandler());
     }
 
     public static InternalCoapRequest getInstance() {
@@ -123,13 +125,7 @@ public class InternalCoapRequest {
                 return udpRequest;
             }
             response.setPayload(payload.toString());
-        } else if ("/.well-known/core".
-
-                equals(path)
-
-                )
-
-        {
+        } else if ("/.well-known/core".equals(path)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
                 StringBuilder payload = new StringBuilder("");
                 for (String handlerName : internalRequestHandlers.keySet()) {
