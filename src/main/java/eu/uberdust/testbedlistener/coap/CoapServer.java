@@ -904,7 +904,7 @@ public class CoapServer {
             xCount.put(arduinoGateway.split(":")[0], arduinoGateway.split(":")[1]);
         } else if (arduinoGateway.startsWith("ymess")) {
             arduinoGateway = arduinoGateway.replaceAll("ymess:", "");
-            xCount.put(arduinoGateway.split(":")[0], arduinoGateway.split(":")[1]);
+            yCount.put(arduinoGateway.split(":")[0], arduinoGateway.split(":")[1]);
         } else {
             arduinoGateways.put(arduinoGateway, System.currentTimeMillis());
         }
