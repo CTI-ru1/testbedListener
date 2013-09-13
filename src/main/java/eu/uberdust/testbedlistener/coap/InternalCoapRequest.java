@@ -2,13 +2,11 @@ package eu.uberdust.testbedlistener.coap;
 
 import ch.ethz.inf.vs.californium.coap.*;
 import eu.uberdust.testbedlistener.coap.internal.handler.*;
+import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +16,7 @@ import java.util.TimeZone;
  * To change this template use File | Settings | File Templates.
  */
 public class InternalCoapRequest {
+    private static final Logger LOGGER = Logger.getLogger(InternalRequestHandler.class);
 
     private static InternalCoapRequest instance = null;
     private HashMap<String, InternalRequestHandler> internalRequestHandlers;
@@ -41,6 +40,7 @@ public class InternalCoapRequest {
         internalRequestHandlers.put("/gateway/arduino/ycount", new YCountRequestHandler());
     }
 
+
     public static InternalCoapRequest getInstance() {
         synchronized (InternalCoapRequest.class) {
             if (instance == null) {
@@ -51,6 +51,7 @@ public class InternalCoapRequest {
     }
 
     public Message handleRequest(final String uriHost, final Message udpRequest, final SocketAddress socketAddress) {
+
         //To change body of created methods use File | Settings | File Templates.
         final Message response = new Message();
 
@@ -66,6 +67,8 @@ public class InternalCoapRequest {
         if (!"".equals(uriHost) && !"/cache".equals(path)) {
             return udpRequest;
         }
+        LOGGER.info("here");
+
         if (path.contains("/device/")) {
             //forward to device or respond from cache
             StringBuilder payload = new StringBuilder("");
@@ -150,8 +153,10 @@ public class InternalCoapRequest {
         } else
 
         {
+            LOGGER.info("checking " + path + ":" + Arrays.toString(internalRequestHandlers.keySet().toArray()));
             if (internalRequestHandlers.containsKey(path)) {
                 InternalRequestHandler handler = internalRequestHandlers.get(path);
+                LOGGER.info("checking : handling");
                 handler.handle(udpRequest, response);
             } else {
                 response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found

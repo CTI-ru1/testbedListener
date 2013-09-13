@@ -148,7 +148,7 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
                 CoapServer.getInstance().setEthernetUDPHandler(udphandler);
 
                 for (String device : devices.split(",")) {
-                    (new EthernetSupport(udphandler, device)).start();
+//                    (new EthernetSupport(udphandler, device)).start();
                 }
             }
 

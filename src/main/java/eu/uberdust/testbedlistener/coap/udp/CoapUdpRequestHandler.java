@@ -1,5 +1,6 @@
 package eu.uberdust.testbedlistener.coap.udp;
 
+import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
@@ -41,7 +42,6 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         inData = cleanupData(packet.getData());
         LOGGER.info("Inco" + inData.length);
         udpRequest = Message.fromByteArray(inData);
-
     }
 
     @Override
@@ -100,6 +100,7 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
 
         String uriHost = getURIHost(udpRequest);
         LOGGER.info("UDP path:" + udpRequest.getUriPath());
+        udpRequest.setPeerAddress(new EndpointAddress(packet.getAddress()));
         udpRequest = InternalCoapRequest.getInstance().handleRequest(uriHost, udpRequest, packet.getSocketAddress());
         if ("".equals(uriHost)) {
             uriHost = getURIHost(udpRequest);

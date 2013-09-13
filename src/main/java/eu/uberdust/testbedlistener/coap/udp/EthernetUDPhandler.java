@@ -80,6 +80,11 @@ public class EthernetUDPhandler extends Thread {//NOPMD
         socket.send(packet);
     }
 
+    public void send(Message request, InetAddress device) throws IOException {
+        DatagramPacket packet = new DatagramPacket(request.toByteArray(), request.toByteArray().length, device,5683);
+        socket.send(packet);
+    }
+
 
     /**
      * Clear tailing zeros from the udpPacket.
