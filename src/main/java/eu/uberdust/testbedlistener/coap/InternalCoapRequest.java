@@ -36,8 +36,7 @@ public class InternalCoapRequest {
         internalRequestHandlers.put("/ethernet", new EthernetRequestHandler());
         internalRequestHandlers.put("/gateway/xbee", new XbeeGatewayRequestHandler());
         internalRequestHandlers.put("/gateway/arduino", new ArduinoGatewayRequestHandler());
-        internalRequestHandlers.put("/gateway/arduino/xcount", new XCountRequestHandler());
-        internalRequestHandlers.put("/gateway/arduino/ycount", new YCountRequestHandler());
+        internalRequestHandlers.put("/gateway/stats", new ArduinoGatewayStatsRequestHandler());
     }
 
 

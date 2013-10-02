@@ -4,19 +4,16 @@ import ch.ethz.inf.vs.californium.coap.*;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.DeviceCommand;
-import eu.uberdust.communication.UberdustClient;
 import eu.uberdust.testbedlistener.HeartBeatJob;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
+import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttBaseListener;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
-import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 import org.fusesource.mqtt.client.Callback;
-import org.fusesource.mqtt.client.CallbackConnection;
 import org.fusesource.mqtt.client.QoS;
-import org.json.JSONException;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -75,10 +72,11 @@ public class CoapServer {
     public int responseObserveCounter;
     private int observeLostCounter;
     private EthernetUDPhandler ethernetUDPHandler;
-    private CallbackConnection mqtt;
+    private MqttBaseListener mqtt;
     private final StdSchedulerFactory schFactory;
     private Scheduler sch;
-    private Map<String, Long> arduinoGateways;
+    private Map<String, Map<Integer, Long>> arduinoGateways;
+    private Map<String, Map<Integer, Map<String, String>>> arduinoGatewayStats;
     private Map<String, String> xCount, yCount;
 
     public long getStartTime() {
@@ -96,7 +94,8 @@ public class CoapServer {
         ethernetBlockWisePending = new HashMap<Integer, String>();
         this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
         this.activeRequestsTOKEN = new HashMap<String, ActiveRequest>();
-        this.arduinoGateways = new HashMap<String, Long>();
+        this.arduinoGateways = new HashMap<String, Map<Integer, Long>>();
+        this.arduinoGatewayStats = new HashMap<String, Map<Integer, Map<String, String>>>();
         this.xCount = new HashMap<String, String>();
         this.yCount = new HashMap<String, String>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
@@ -119,7 +118,7 @@ public class CoapServer {
         }
         JobDetail heartbeatToGatewaysJob = JobBuilder.newJob(HeartBeatJob.class).withIdentity("heartbeatToGatewaysJob").build();
         try {
-            this.addJob(heartbeatToGatewaysJob, 3);
+            this.addJob(heartbeatToGatewaysJob, 1);
         } catch (SchedulerException e) {
             LOGGER.error(e, e);
         }
@@ -867,7 +866,7 @@ public class CoapServer {
         return ethernetUDPHandler;
     }
 
-    public void setMqtt(CallbackConnection mqtt) {
+    public void setMqtt(MqttBaseListener mqtt) {
         this.mqtt = mqtt;
     }
 
@@ -875,43 +874,31 @@ public class CoapServer {
         mqttPublish(topic, message);
     }
 
-    public void registerGateway(String arduinoGateway) {
-        if (arduinoGateway.startsWith(CONNECTED_ARDUINO_GATEWAY_STRING)) {
-
-            String urnPrefix = null;
-            try {
-                String mac = (arduinoGateway.substring(arduinoGateway.indexOf(CONNECTED_ARDUINO_GATEWAY_STRING) + CONNECTED_ARDUINO_GATEWAY_STRING.length())).split(":")[0];
-                String testbedID = (arduinoGateway.substring(arduinoGateway.indexOf(CONNECTED_ARDUINO_GATEWAY_STRING) + CONNECTED_ARDUINO_GATEWAY_STRING.length())).split(":")[1];
-
-                try {
-                    urnPrefix = UberdustClient.getInstance().getUrnPrefix(Integer.parseInt(testbedID));
-                } catch (IOException e) {
-                    LOGGER.error(e, e);
-                }
-                final String nodeUrn = urnPrefix + "0x" + mac;
-                final String capabilityName = "connect";
-                final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
-                        .setNode(nodeUrn)
-                        .setCapability(capabilityName)
-                        .setTimestamp(System.currentTimeMillis())
-                        .setDoubleReading(Double.parseDouble(testbedID))
-                        .build();
-                new WsCommiter(reading);
-            } catch (JSONException e) {
-                LOGGER.error(e, e);
-            }
-        } else if (arduinoGateway.startsWith("xmess")) {
-            arduinoGateway = arduinoGateway.replaceAll("xmess:", "");
-            xCount.put(arduinoGateway.split(":")[0], arduinoGateway.split(":")[1]);
-        } else if (arduinoGateway.startsWith("ymess")) {
-            arduinoGateway = arduinoGateway.replaceAll("ymess:", "");
-            yCount.put(arduinoGateway.split(":")[0], arduinoGateway.split(":")[1]);
-        } else {
-            arduinoGateways.put(arduinoGateway, System.currentTimeMillis());
+    public void registerGateway(boolean b, Integer deviceId, byte[] testbedKey) {
+        LOGGER.info("put " + Arrays.toString(testbedKey));
+        if (!arduinoGateways.containsKey(Arrays.toString(testbedKey))) {
+            arduinoGateways.put(Arrays.toString(testbedKey), new HashMap<Integer, Long>());
         }
+        arduinoGateways.get(Arrays.toString(testbedKey)).put(deviceId, System.currentTimeMillis());
     }
 
-    public Map<String, Long> getArduinoGateways() {
+    public Map<String, Map<Integer, Map<String, String>>> getArduinoGatewayStats() {
+        return arduinoGatewayStats;
+    }
+
+    public void appendGatewayStat(boolean b, Integer deviceId, byte[] testbedKey, String key, String value) {
+        LOGGER.info("put " + Arrays.toString(testbedKey));
+        if (!arduinoGatewayStats.containsKey(Arrays.toString(testbedKey))) {
+            arduinoGatewayStats.put(Arrays.toString(testbedKey), new HashMap<Integer, Map<String, String>>());
+        }
+        if (!arduinoGatewayStats.get(Arrays.toString(testbedKey)).containsKey(deviceId)) {
+            arduinoGatewayStats.get(Arrays.toString(testbedKey)).put(deviceId, new HashMap<String, String>());
+        }
+        arduinoGatewayStats.get(Arrays.toString(testbedKey)).get(deviceId).put(key, value);
+
+    }
+
+    public Map<String, Map<Integer, Long>> getArduinoGateways() {
         return arduinoGateways;
     }
 
@@ -949,7 +936,10 @@ public class CoapServer {
         payloadWithDestination[0] = destinationBytes[1];
         payloadWithDestination[1] = destinationBytes[0];
         System.arraycopy(payloadIn, 0, payloadWithDestination, 2, payloadIn.length);
-
+        if (mqtt == null) {
+            LOGGER.error("MQTT not connected!");
+            return;
+        }
         mqtt.publish("arduinoGateway", payloadWithDestination, QoS.AT_MOST_ONCE, false, new Callback() {
             @Override
             public void onSuccess(Object o) {
@@ -966,11 +956,15 @@ public class CoapServer {
 
     public void mqttPublish(final String topic, final String message) {
         LOGGER.debug("mqttPublish");
+        if (mqtt == null) {
+            LOGGER.error("MQTT not connected!");
+            return;
+        }
         mqtt.publish(topic, message.getBytes(), QoS.AT_MOST_ONCE, false, new Callback() {
 
             @Override
             public void onSuccess(Object value) {
-                LOGGER.info("onSuccess");
+                LOGGER.info("beat");
             }
 
             @Override

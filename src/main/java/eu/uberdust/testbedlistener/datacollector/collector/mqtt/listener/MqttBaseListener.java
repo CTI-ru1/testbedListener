@@ -1,6 +1,5 @@
-package eu.uberdust.testbedlistener.datacollector.collector;
+package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
 
-import eu.uberdust.testbedlistener.coap.CoapServer;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.mqtt.client.*;
@@ -16,11 +15,11 @@ import java.util.concurrent.CountDownLatch;
  * Time: 12:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class MqttHeartbeatListener implements Runnable, Listener {
+public class MqttBaseListener implements Runnable, Listener {
     /**
      * LOGGER.
      */
-    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttHeartbeatListener.class);
+    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttBaseListener.class);
     private static final long DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS = 5000;
     private static final long DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS = 3600 * 3;
 
@@ -33,17 +32,21 @@ public class MqttHeartbeatListener implements Runnable, Listener {
     private String listenerTopic;
     private long listenerLastSuccessfulSubscription;
 
-    private CallbackConnection connection;
+    protected CallbackConnection connection;
 
-    public MqttHeartbeatListener(String mqttBroker) {
-        this(mqttBroker, "heartbeat/#", DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, true);
+    public MqttBaseListener(String mqttBroker, String topic) {
+        this(mqttBroker, topic, DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, true);
     }
 
-    public MqttHeartbeatListener(String listenerHostURI, String listenerTopic, boolean debug) {
-        this(listenerHostURI, listenerTopic, DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, debug);
-    }
+//    public MqttBaseListener(String mqttBroker) {
+//        this(mqttBroker, "connect/#", DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, true);
+//    }
+//
+//    public MqttBaseListener(String listenerHostURI, String listenerTopic, boolean debug) {
+//        this(listenerHostURI, listenerTopic, DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS, DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS, debug);
+//    }
 
-    public MqttHeartbeatListener(String listenerHostURI, String listenerTopic, long listenerSleepBeforeReAttemptInSeconds, long listenerMaxReAttemptDurationInSeconds, boolean debug) {
+    public MqttBaseListener(String listenerHostURI, String listenerTopic, long listenerSleepBeforeReAttemptInSeconds, long listenerMaxReAttemptDurationInSeconds, boolean debug) {
         init(listenerHostURI, listenerTopic, listenerSleepBeforeReAttemptInSeconds, listenerMaxReAttemptDurationInSeconds, debug);
     }
 
@@ -158,9 +161,8 @@ public class MqttHeartbeatListener implements Runnable, Listener {
             (new Thread() {
                 @Override
                 public void run() {
-                    if (!body.toString().contains("reset")) {
-                        CoapServer.getInstance().registerGateway(body.utf8().toString());
-                    }
+                    //TODO: make this listen for stats messages
+//                        CoapServer.getInstance().registerGateway(body.utf8().toString());
                 }
             }).start();
         } catch (Exception e) {
@@ -171,5 +173,9 @@ public class MqttHeartbeatListener implements Runnable, Listener {
     @Override
     public void onFailure(Throwable value) {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void publish(String arduinoGateway, byte[] payloadWithDestination, QoS atMostOnce, boolean b, Callback callback) {
+        connection.publish(arduinoGateway, payloadWithDestination, atMostOnce, b, callback);
     }
 }

@@ -1,8 +1,6 @@
 package eu.uberdust.testbedlistener;
 
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import org.fusesource.mqtt.client.Callback;
-import org.fusesource.mqtt.client.QoS;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -17,7 +15,11 @@ import org.quartz.JobExecutionException;
 public class HeartBeatJob implements Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        CoapServer.getInstance().publish("heartbeat", "reset");
+        try {
+            CoapServer.getInstance().publish("heartbeat", "reset");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

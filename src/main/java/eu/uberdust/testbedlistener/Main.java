@@ -5,6 +5,8 @@ import eu.uberdust.testbedlistener.factory.CommandLineListenerFactory;
 import eu.uberdust.testbedlistener.factory.TestbedRuntimeListenerFactory;
 import eu.uberdust.testbedlistener.factory.XbeeListenerFactory;
 import eu.uberdust.testbedlistener.util.PropertyReader;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 
 /**
  * Main class for the Testbedlistener application.
@@ -27,6 +29,8 @@ public class Main {
      */
     public static void main(final String[] args) {
         PropertyReader.getInstance().setFile(PROPERTY_FILE);
+//        BasicConfigurator.configure();
+        PropertyConfigurator.configure("log4j.properties");
 
         final String type = PropertyReader.getInstance().getProperties().getProperty("type");
 

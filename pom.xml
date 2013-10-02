@@ -11,7 +11,7 @@
     <name>ÜberDust - Listeners</name>
     <description>Application for collecting data from a sensor Testbed</description>
     <url>http://uberdust.cti.gr</url>
-    <version>1.0</version>
+    <version>1.MQTTN-SNAPSHOT</version>
     <properties>
         <jetty-version>8.0.4.v20111024</jetty-version>
     </properties>

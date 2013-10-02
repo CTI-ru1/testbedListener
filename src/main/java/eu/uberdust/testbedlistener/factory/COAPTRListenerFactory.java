@@ -5,13 +5,13 @@ import eu.uberdust.communication.UberdustClient;
 import eu.uberdust.communication.rest.UberdustRestClient;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.coap.EthernetSupport;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
 import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
-import eu.uberdust.testbedlistener.datacollector.collector.MqttHeartbeatListener;
 import eu.uberdust.testbedlistener.datacollector.collector.TestbedRuntimeCollector;
 import eu.uberdust.testbedlistener.datacollector.collector.XbeeCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttConnectionListener;
+import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttStatsListener;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.BasicConfigurator;
 import org.json.JSONArray;
@@ -49,7 +49,6 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
         CoapServer.getInstance();
         UberdustClient.setUberdustURL("http://" + server + ":" + port + testbedBasePath);
 
-        BasicConfigurator.configure();
 
         if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
                 PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
@@ -99,11 +98,13 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
                     try {
                         testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
                         for (int i = 0; i < testbeds.length(); i++) {
-                            MqttCollector mqList = new MqttCollector(mqttBroker, i + 1);
-                            new Thread(mqList).start();
+//                            MqttCollector mqList = new MqttCollector(mqttBroker, i + 1);
+//                            new Thread(mqList).start();
                         }
-                        MqttHeartbeatListener mhl = new MqttHeartbeatListener(mqttBroker);
-                        new Thread(mhl).start();
+                        MqttStatsListener statsListener = new MqttStatsListener(mqttBroker);
+                        new Thread(statsListener).start();
+                        MqttConnectionListener connectListener = new MqttConnectionListener(mqttBroker);
+                        new Thread(connectListener).start();
 
                     } catch (JSONException e) {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
