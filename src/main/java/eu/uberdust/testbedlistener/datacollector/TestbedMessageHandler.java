@@ -6,6 +6,7 @@ import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -46,10 +47,16 @@ public class TestbedMessageHandler {
         testbedPrefix = null;
         capabilityPrefix = null;
         try {
-            testbedPrefix = UberdustClient.getInstance().getUrnPrefix(testbedId);
+            try {
+                testbedPrefix = UberdustClient.getInstance().getUrnPrefix(testbedId);
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
             capabilityPrefix = UberdustClient.getInstance().getUrnCapabilityPrefix(testbedId);
         } catch (JSONException e) {
             LOGGER.error(e, e);
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
     }

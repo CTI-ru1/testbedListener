@@ -15,6 +15,7 @@ import org.apache.log4j.PropertyConfigurator;
 import org.json.JSONException;
 import org.simpleframework.xml.convert.Convert;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -65,8 +66,16 @@ public class XbeeCollector extends AbstractCollector implements MessageListener,
         testbedPrefix = null;
         capabilityPrefix = null;
         try {
-            testbedPrefix = UberdustClient.getInstance().getUrnPrefix(testbedId);
-            capabilityPrefix = UberdustClient.getInstance().getUrnCapabilityPrefix(testbedId);
+            try {
+                testbedPrefix = UberdustClient.getInstance().getUrnPrefix(testbedId);
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            try {
+                capabilityPrefix = UberdustClient.getInstance().getUrnCapabilityPrefix(testbedId);
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
         } catch (JSONException e) {
             LOGGER.error(e, e);
         }

@@ -24,8 +24,11 @@ public class MqttTest {
     public static void main(String[] args) throws SocketException {
 
         PropertyReader.getInstance().setFile("listener.properties");
-        MqttTestClient mqList = new MqttTestClient("tcp://uberdust.cti.gr:1883", "heartbeat/#", true);
+        MqttTestClient mqList = new MqttTestClient("tcp://150.140.5.11:61616", "heartbeat/#", true);
         new Thread(mqList).start();
+
+
+
     }
 
 }
@@ -78,13 +81,13 @@ class MqttTestClient implements Runnable, Listener {
             LOGGER.error("setHost failed", e);
         }
 
-        String mqttUser = PropertyReader.getInstance().getProperties().getProperty("mqtt.username");
-        String mqttPass = PropertyReader.getInstance().getProperties().getProperty("mqtt.password");
-
-        if (mqttUser != null) {
-            mqtt.setUserName(mqttUser);
-            mqtt.setPassword(mqttPass);
-        }
+//        String mqttUser = PropertyReader.getInstance().getProperties().getProperty("mqtt.username");
+//        String mqttPass = PropertyReader.getInstance().getProperties().getProperty("mqtt.password");
+//
+//        if (mqttUser != null) {
+//            mqtt.setUserName(mqttUser);
+//            mqtt.setPassword(mqttPass);
+//        }
 
         QoS qos = QoS.AT_MOST_ONCE;
         topics = new ArrayList<Topic>();

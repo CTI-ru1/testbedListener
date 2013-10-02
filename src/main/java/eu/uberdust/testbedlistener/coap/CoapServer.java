@@ -22,10 +22,7 @@ import org.quartz.impl.StdSchedulerFactory;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -518,19 +515,19 @@ public class CoapServer {
 //        TestbedController.getInstance().sendMessage(payload, nodeUrn);
 //        XbeeController.getInstance().sendPayload(nodeUrn,payload);
         mqttSendPayload(nodeUrn, payload);
-//        Timer timer = new Timer();
-//        timer.schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//                mqtt.sendPayload(nodeUrn, payload);
-//            }
-//        }, 100);
-//        timer.schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//                mqtt.sendPayload(nodeUrn, payload);
-//            }
-//        }, 250);
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mqttSendPayload(nodeUrn, payload);
+            }
+        }, 100);
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mqttSendPayload(nodeUrn, payload);
+            }
+        }, 250);
     }
 
     private void sendXbee(XBeeAddress16 address16, int i, int[] bytes, int counter) {
@@ -886,7 +883,11 @@ public class CoapServer {
                 String mac = (arduinoGateway.substring(arduinoGateway.indexOf(CONNECTED_ARDUINO_GATEWAY_STRING) + CONNECTED_ARDUINO_GATEWAY_STRING.length())).split(":")[0];
                 String testbedID = (arduinoGateway.substring(arduinoGateway.indexOf(CONNECTED_ARDUINO_GATEWAY_STRING) + CONNECTED_ARDUINO_GATEWAY_STRING.length())).split(":")[1];
 
-                urnPrefix = UberdustClient.getInstance().getUrnPrefix(Integer.parseInt(testbedID));
+                try {
+                    urnPrefix = UberdustClient.getInstance().getUrnPrefix(Integer.parseInt(testbedID));
+                } catch (IOException e) {
+                    LOGGER.error(e, e);
+                }
                 final String nodeUrn = urnPrefix + "0x" + mac;
                 final String capabilityName = "connect";
                 final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
@@ -917,6 +918,7 @@ public class CoapServer {
     public Map<String, String> getXCount() {
         return xCount;
     }
+
     public Map<String, String> getYCount() {
         return yCount;
     }

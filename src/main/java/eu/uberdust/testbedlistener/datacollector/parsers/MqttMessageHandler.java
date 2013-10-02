@@ -8,6 +8,7 @@ import org.fusesource.hawtbuf.UTF8Buffer;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,8 +35,16 @@ public class MqttMessageHandler implements org.fusesource.mqtt.client.Listener {
         urnPrefix = null;
         urnCapabilityPrefix = null;
         try {
-            urnPrefix = UberdustClient.getInstance().getUrnPrefix(testbedID);
-            urnCapabilityPrefix = UberdustClient.getInstance().getUrnCapabilityPrefix(testbedID);
+            try {
+                urnPrefix = UberdustClient.getInstance().getUrnPrefix(testbedID);
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            try {
+                urnCapabilityPrefix = UberdustClient.getInstance().getUrnCapabilityPrefix(testbedID);
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
         } catch (JSONException e) {
             LOGGER.error(e, e);
         }

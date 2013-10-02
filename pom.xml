@@ -78,7 +78,7 @@
         <dependency>
             <groupId>uberdust</groupId>
             <artifactId>UberdustInterface</artifactId>
-            <version>1.0</version>
+            <version>1.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -158,14 +158,14 @@
             <artifactId>XbeeLib</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/XbeeLib-1.jar</systemPath>
+            <systemPath>${project.build.directory}/../lib/XbeeLib-1.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>californium</groupId>
             <artifactId>californium</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/ExampleClient.jar</systemPath>
+            <systemPath>${project.build.directory}/../lib/ExampleClient.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.fusesource.mqtt-client</groupId>
