@@ -99,7 +99,7 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
                     try {
                         testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
                         for (int i = 0; i < testbeds.length(); i++) {
-                            MqttCollector mqList = new MqttCollector(mqttBroker, i + 1);
+			    MqttCollector mqList = new MqttCollector(mqttBroker, testbeds.getJSONObject(i).getInt("testbedId"));
                             new Thread(mqList).start();
                         }
                         MqttHeartbeatListener mhl = new MqttHeartbeatListener(mqttBroker);
