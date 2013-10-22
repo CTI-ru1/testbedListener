@@ -5,7 +5,6 @@ import eu.uberdust.communication.UberdustClient;
 import eu.uberdust.communication.rest.UberdustRestClient;
 import eu.uberdust.network.NetworkManager;
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.coap.EthernetSupport;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.controller.TestbedController;
 import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
@@ -99,7 +98,7 @@ public class COAPTRListenerFactory extends AbstractListenerFactory {
                     try {
                         testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
                         for (int i = 0; i < testbeds.length(); i++) {
-			    MqttCollector mqList = new MqttCollector(mqttBroker, testbeds.getJSONObject(i).getInt("testbedId"));
+                            MqttCollector mqList = new MqttCollector(mqttBroker, testbeds.getJSONObject(i).getInt("testbedId"));
                             new Thread(mqList).start();
                         }
                         MqttHeartbeatListener mhl = new MqttHeartbeatListener(mqttBroker);

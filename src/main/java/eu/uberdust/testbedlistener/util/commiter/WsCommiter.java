@@ -25,10 +25,12 @@ public class WsCommiter {
     public WsCommiter(final Message.NodeReadings.Reading nodeReading) {
         try {
 
-            final Message.NodeReadings readings = Message.NodeReadings.newBuilder().addReading(nodeReading).build();
-
-            NetworkManager.getInstance().sendNodeReading(readings);
-            LOGGER.info(readings);
+            if (nodeReading.getCapability().contains("core") || nodeReading.getCapability().contains("know") || nodeReading.getCapability().contains("well")) {
+            } else {
+                final Message.NodeReadings readings = Message.NodeReadings.newBuilder().addReading(nodeReading).build();
+                NetworkManager.getInstance().sendNodeReading(readings);
+                LOGGER.info(readings);
+            }
         } catch (Exception e) {
             LOGGER.error("InsertReadingWebSocketClient -node-" + e);
         }
