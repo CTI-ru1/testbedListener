@@ -10,7 +10,6 @@ import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
 import eu.uberdust.testbedlistener.datacollector.collector.AMqttCollector;
 import eu.uberdust.testbedlistener.datacollector.notify.CacheNotify;
 import eu.uberdust.testbedlistener.datacollector.notify.RabbitMQNotify;
-import eu.uberdust.testbedlistener.datacollector.notify.UberdustNotify;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
 import org.apache.log4j.Logger;

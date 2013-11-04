@@ -4,7 +4,6 @@ import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
-import eu.uberdust.testbedlistener.controller.TestbedController;
 import org.apache.log4j.Logger;
 
 import java.util.TimerTask;
@@ -48,7 +47,7 @@ public class BlockWiseCoapRequest extends TimerTask {
 //            System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
 //            LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
 
-            TestbedController.getInstance().sendMessage(payload, remoteAddress);
+            //TestbedController.getInstance().sendMessage(payload, remoteAddress);
         } catch (Exception e) {     //NOPMD
             LOGGER.error(e.getMessage(), e);
         }

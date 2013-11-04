@@ -3,9 +3,7 @@ package eu.uberdust.testbedlistener.coap.internal.handler;
 import ch.ethz.inf.vs.californium.coap.Message;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,6 +13,22 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class ArduinoGatewayRequestHandler implements InternalRequestHandler {
+    public ArduinoGatewayRequestHandler(final HashMap<String, InternalRequestHandler> internalRequestHandlers) {
+        final InternalRequestHandler thisObject = this;
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Map<String, HashMap<String, Long>> gateways = CoapServer.getInstance().getArduinoGateways();
+                for (final String testbedUrn : gateways.keySet()) {
+                    for (final String gatewayDevice : gateways.get(testbedUrn).keySet()) {
+                        internalRequestHandlers.put("/gateways/" + testbedUrn + "/" + gatewayDevice, thisObject);
+                    }
+                }
+            }
+        }, 1000, 10000);
+    }
+
     @Override
     public void handle(Message udpRequest, Message response) {
         StringBuilder payload = new StringBuilder("");

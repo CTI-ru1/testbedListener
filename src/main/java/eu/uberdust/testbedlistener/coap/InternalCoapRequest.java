@@ -31,7 +31,7 @@ public class InternalCoapRequest {
         internalRequestHandlers.put("/wakeup", new WakeupRequestHandler());
         //needed for hereiam registration
         internalRequestHandlers.put("/ethernet", new EthernetRequestHandler());
-        internalRequestHandlers.put("/gateways", new ArduinoGatewayRequestHandler());
+        internalRequestHandlers.put("/gateways", new ArduinoGatewayRequestHandler(internalRequestHandlers));
 //        internalRequestHandlers.put("/endpoints", new EndpointsRequestHandler());
 //        internalRequestHandlers.put("/activeRequests", new ActiveRequestsRequestHandler());
 //        internalRequestHandlers.put("/pendingRequests", new PendingRequestsRequestHandler());

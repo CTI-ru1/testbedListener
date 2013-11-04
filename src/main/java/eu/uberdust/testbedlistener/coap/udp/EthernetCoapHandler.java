@@ -7,7 +7,6 @@ import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
-import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -249,7 +248,7 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
                 .setDoubleReading(value)
                 .build();
 
-        new WsCommiter(reading);
+//        new WsCommiter(reading);
     }
 
 
@@ -274,6 +273,6 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
                     .build();
             readings.addReading(reading);
         }
-        new WsCommiter(readings.build());
+//        new WsCommiter(readings.build());
     }
 }
