@@ -1,7 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
 
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.datacollector.collector.AMqttCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 
@@ -50,7 +50,7 @@ public class MqttDeviceConnectionListener extends MqttBaseListener {
                     //TODO: make this report connect messages
                     CoapServer.getInstance().registerGateway(reConnect, deviceId, testbedHash);
                     //Connect a new Listener for this Gateway
-                    MqttConnectionManager.getInstance().listen(testbedHash + MQTT_SEPARATOR + deviceId + "/#", new AMqttCollector(deviceId, testbedHash));
+                    MqttConnectionManager.getInstance().listen(testbedHash + MQTT_SEPARATOR + deviceId + "/#", new MqttCollector(deviceId, testbedHash));
                 }
             }).start();
         } catch (Exception e) {

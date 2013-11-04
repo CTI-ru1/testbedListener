@@ -17,18 +17,18 @@ import java.util.concurrent.Executors;
  * Time: 12:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AMqttCollector extends MqttBaseListener {
+public class MqttCollector extends MqttBaseListener {
     /**
      * LOGGER.
      */
-    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(AMqttCollector.class);
+    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttCollector.class);
     private String testbedUrn;
 
     private final ExecutorService executorService;
     private String urnPrefix;
     private String urnCapabilityPrefix;
 
-    public AMqttCollector(final String deviceID, final String testbedUrn) {
+    public MqttCollector(final String deviceID, final String testbedUrn) {
         super(testbedUrn + MQTT_SEPARATOR + deviceID);
         this.testbedUrn = testbedUrn;
 

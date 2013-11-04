@@ -1,7 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector.notify;
 
 import ch.ethz.inf.vs.californium.coap.Message;
-import eu.uberdust.testbedlistener.datacollector.collector.AMqttCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
 import org.apache.log4j.Logger;
 
 /**
@@ -19,9 +19,9 @@ public class RabbitMQNotify implements Runnable {
     private transient final Message response;
     private transient final String uriPath;
     private transient final String mac;
-    private final AMqttCollector collector;
+    private final MqttCollector collector;
 
-    public RabbitMQNotify(final String mac, final String uriPath, final Message response, final AMqttCollector aCollector) {
+    public RabbitMQNotify(final String mac, final String uriPath, final Message response, final MqttCollector aCollector) {
         this.response = response;
         this.uriPath = uriPath;
         this.mac = mac;
