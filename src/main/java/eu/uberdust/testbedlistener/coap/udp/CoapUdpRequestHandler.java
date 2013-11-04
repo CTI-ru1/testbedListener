@@ -6,6 +6,7 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.coap.*;
+import eu.uberdust.testbedlistener.coap.internal.InternalCoapRequest;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;

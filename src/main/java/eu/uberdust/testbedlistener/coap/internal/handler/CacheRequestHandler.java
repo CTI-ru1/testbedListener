@@ -9,13 +9,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
- * User: amaxilatis
- * Date: 6/13/13
- * Time: 3:58 PM
- * To change this template use File | Settings | File Templates.
+ * Internal Request Handler used to show the contents of the Cache for all the registered IoT devices.
+ *
+ * @author Dimitrios Amaxilatis
+ * @date 13/6/13
  */
-public class CacheRequestHandler implements InternalRequestHandler {
+public class CacheRequestHandler implements InternalRequestHandlerInterface {
     @Override
     public void handle(Message udpRequest, Message response) {
         if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {

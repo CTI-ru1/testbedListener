@@ -12,7 +12,7 @@ import java.util.Map;
  * Time: 4:00 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ArduinoGatewayStatsRequestHandler implements InternalRequestHandler {
+public class ArduinoGatewayStatsRequestHandler implements InternalRequestHandlerInterface {
     @Override
     public void handle(final Message udpRequest,final Message response) {
         final StringBuilder payload = new StringBuilder("");

@@ -12,9 +12,9 @@ import java.util.*;
  * Time: 4:00 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ArduinoGatewayRequestHandler implements InternalRequestHandler {
-    public ArduinoGatewayRequestHandler(final HashMap<String, InternalRequestHandler> internalRequestHandlers) {
-        final InternalRequestHandler thisObject = this;
+public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInterface {
+    public ArduinoGatewayRequestHandler(final HashMap<String, InternalRequestHandlerInterface> internalRequestHandlers) {
+        final InternalRequestHandlerInterface thisObject = this;
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override

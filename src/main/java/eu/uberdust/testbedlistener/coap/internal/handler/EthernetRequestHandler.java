@@ -12,7 +12,7 @@ import org.apache.log4j.Logger;
  * Time: 3:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class EthernetRequestHandler implements InternalRequestHandler {
+public class EthernetRequestHandler implements InternalRequestHandlerInterface {
     private static final Logger LOGGER = Logger.getLogger(EthernetRequestHandler.class);
 
     @Override

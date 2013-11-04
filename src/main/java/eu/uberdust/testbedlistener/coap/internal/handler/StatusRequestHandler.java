@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  * Time: 3:57 PM
  * To change this template use File | Settings | File Templates.
  */
-public class StatusRequestHandler implements InternalRequestHandler {
+public class StatusRequestHandler implements InternalRequestHandlerInterface {
     @Override
     public void handle(Message udpRequest, Message response) {
         if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {

@@ -3,7 +3,6 @@ package eu.uberdust.testbedlistener.coap.internal.handler;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
-import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,7 +11,7 @@ import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
  * Time: 3:58 PM
  * To change this template use File | Settings | File Templates.
  */
-public class WakeupRequestHandler implements InternalRequestHandler {
+public class WakeupRequestHandler implements InternalRequestHandlerInterface {
     @Override
     public void handle(Message udpRequest, Message response) {
         StringBuilder payload = new StringBuilder("");

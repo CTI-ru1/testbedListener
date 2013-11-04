@@ -1,6 +1,9 @@
-package eu.uberdust.testbedlistener.coap;
+package eu.uberdust.testbedlistener.coap.internal;
 
 import ch.ethz.inf.vs.californium.coap.*;
+import eu.uberdust.testbedlistener.coap.Cache;
+import eu.uberdust.testbedlistener.coap.CacheHandler;
+import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.internal.handler.*;
 import org.apache.log4j.Logger;
 
@@ -16,16 +19,16 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class InternalCoapRequest {
-    private static final Logger LOGGER = Logger.getLogger(InternalRequestHandler.class);
+    private static final Logger LOGGER = Logger.getLogger(InternalRequestHandlerInterface.class);
 
     private static InternalCoapRequest instance = null;
-    private HashMap<String, InternalRequestHandler> internalRequestHandlers;
+    private HashMap<String, InternalRequestHandlerInterface> internalRequestHandlers;
 
     /**
      * Empty Constructor.
      */
     public InternalCoapRequest() {
-        internalRequestHandlers = new HashMap<String, InternalRequestHandler>();
+        internalRequestHandlers = new HashMap<String, InternalRequestHandlerInterface>();
         internalRequestHandlers.put("/status", new StatusRequestHandler());
         internalRequestHandlers.put("/cache", new CacheRequestHandler());
         internalRequestHandlers.put("/wakeup", new WakeupRequestHandler());
@@ -154,14 +157,14 @@ public class InternalCoapRequest {
         } else {
             LOGGER.info("checking " + path + ":" + Arrays.toString(internalRequestHandlers.keySet().toArray()));
             if (internalRequestHandlers.containsKey(path)) {
-                InternalRequestHandler handler = internalRequestHandlers.get(path);
+                InternalRequestHandlerInterface handler = internalRequestHandlers.get(path);
                 LOGGER.info("checking : handling");
                 handler.handle(udpRequest, response);
             } else {
                 boolean matched = false;
                 for (String handlerKey : internalRequestHandlers.keySet()) {
                     if (path.startsWith(handlerKey)) {
-                        InternalRequestHandler handler = internalRequestHandlers.get(path);
+                        InternalRequestHandlerInterface handler = internalRequestHandlers.get(path);
                         LOGGER.info("checking : handling");
                         handler.handle(udpRequest, response);
                         matched = true;
