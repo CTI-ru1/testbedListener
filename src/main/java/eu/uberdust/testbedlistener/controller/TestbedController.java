@@ -110,7 +110,7 @@ public final class TestbedController implements Observer {
                 final byte[] headlessPayload =new byte[payload.length-1];
                 System.arraycopy(payload,1,headlessPayload,0,headlessPayload.length);
 
-                CoapServer.getInstance().sendRequest(headlessPayload, command.getDestination().substring(command.getDestination().lastIndexOf(":0x") + 3));
+//                CoapServer.getInstance().sendRequest(headlessPayload, command.getDestination().substring(command.getDestination().lastIndexOf(":0x") + 3));
 
                 LOGGER.debug("MQttTO:" + command.getDestination() + " BYTES:" + command.getPayload());
             }

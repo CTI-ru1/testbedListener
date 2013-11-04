@@ -1,16 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
 
-import eu.uberdust.testbedlistener.coap.CoapServer;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
-import org.fusesource.mqtt.client.Callback;
-import org.fusesource.mqtt.client.MQTT;
-import org.fusesource.mqtt.client.QoS;
-import org.fusesource.mqtt.client.Topic;
-
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,9 +16,10 @@ public class MqttHeartbeatListener extends MqttBaseListener {
      */
     private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttHeartbeatListener.class);
 
-    public MqttHeartbeatListener(String mqttBroker) {
-        super(mqttBroker, "heartbeat/#");
+    public MqttHeartbeatListener() {
+        super("heartbeat");
     }
+
 
     @Override
     public void onPublish(UTF8Buffer topic, final Buffer body, Runnable ack) {

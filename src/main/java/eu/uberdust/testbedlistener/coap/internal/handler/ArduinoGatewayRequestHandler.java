@@ -18,12 +18,12 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandler {
     @Override
     public void handle(Message udpRequest, Message response) {
         StringBuilder payload = new StringBuilder("");
-        Map<String, Map<Integer, Long>> gways = CoapServer.getInstance().getArduinoGateways();
+        Map<String, HashMap<String, Long>> gways = CoapServer.getInstance().getArduinoGateways();
 
         for (String gateway : gways.keySet()) {
             payload.append(gateway);
             payload.append("\n");
-            for (Integer deviceId : gways.get(gateway).keySet()) {
+            for (String deviceId : gways.get(gateway).keySet()) {
                 payload.append("\t");
                 payload.append(deviceId).append(" @ ").append(new Date(gways.get(gateway).get(deviceId)).toString()).append("\n");
             }

@@ -34,9 +34,8 @@ public class GatewayManager {
      */
     public GatewayManager() {
         gateways = new HashMap<String, String>();
-        loadGatewaysFromUberdust();
-        loadGatewaysFromFile();
-
+//        loadGatewaysFromUberdust();
+//        loadGatewaysFromFile();
     }
 
     /**

@@ -1,10 +1,8 @@
 package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
 
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import org.apache.commons.lang3.ArrayUtils;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
-import org.fusesource.mqtt.client.Listener;
 
 import java.util.Arrays;
 
@@ -15,14 +13,14 @@ import java.util.Arrays;
  * Time: 12:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class MqttStatsListener extends MqttBaseListener implements Runnable, Listener {
+public class MqttStatsListener extends MqttBaseListener {
     /**
      * LOGGER.
      */
     private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttStatsListener.class);
 
-    public MqttStatsListener(String broker) {
-        super(broker, "stats/#");
+    public MqttStatsListener() {
+        super("stats");
     }
 
 
@@ -37,22 +35,16 @@ public class MqttStatsListener extends MqttBaseListener implements Runnable, Lis
                     System.arraycopy(body.getData(), body.getOffset(), data, 0, data.length);
                     LOGGER.debug("Body: " + Arrays.toString(body.getData()));
                     LOGGER.debug("Data: " + Arrays.toString(data));
-                    int deviceId = data[1] + data[2] * 256;
-                    byte[] deviceMessage = new byte[4];
-                    System.arraycopy(data, 3, deviceMessage, 0, 4);
-                    ArrayUtils.reverse(deviceMessage);
-                    final byte[] rest = new byte[data.length - 7];
-                    System.arraycopy(data, 7, rest, 0, rest.length);
-                    final Buffer restBuffer = new Buffer(rest);//.utf8().toString()
-                    final String statMessage = restBuffer.utf8().toString();
-                    LOGGER.info(statMessage);
-                    final String[] statParts = statMessage.split(":");
-                    final String key = statParts[1];
-                    final String value = statParts[2];
-                    LOGGER.info("Stat Message id:" + deviceId + " testbed:" + Arrays.toString(deviceMessage) + " key:" + key + " value:" + value);
+                    final String[] parts = new String(data).split(MQTT_SEPARATOR);
+                    final String testbedHash = parts[0];
+                    final String deviceId = parts[1];
+                    final String statKey = parts[2];
+                    final String statValue = parts[3];
+
+                    LOGGER.info("Stat Message id:" + deviceId + " testbed:" + testbedHash + " key:" + statKey + " value:" + statValue);
 
                     //TODO: make this report stats messages
-                    CoapServer.getInstance().appendGatewayStat(false, deviceId, deviceMessage, key, value);
+                    CoapServer.getInstance().appendGatewayStat(false, deviceId, testbedHash, statKey, statValue);
                 }
             }).start();
         } catch (Exception e) {

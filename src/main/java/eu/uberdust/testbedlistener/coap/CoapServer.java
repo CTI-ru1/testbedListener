@@ -7,13 +7,13 @@ import eu.uberdust.DeviceCommand;
 import eu.uberdust.testbedlistener.HeartBeatJob;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
+import eu.uberdust.testbedlistener.datacollector.collector.AMqttCollector;
 import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttBaseListener;
+import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttConnectionManager;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
 import org.apache.log4j.Logger;
-import org.fusesource.mqtt.client.Callback;
-import org.fusesource.mqtt.client.QoS;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -75,8 +75,8 @@ public class CoapServer {
     private MqttBaseListener mqtt;
     private final StdSchedulerFactory schFactory;
     private Scheduler sch;
-    private Map<String, Map<Integer, Long>> arduinoGateways;
-    private Map<String, Map<Integer, Map<String, String>>> arduinoGatewayStats;
+    private Map<String, HashMap<String, Long>> arduinoGateways;
+    private Map<String, Map<String, Map<String, String>>> arduinoGatewayStats;
     private Map<String, String> xCount, yCount;
 
     public long getStartTime() {
@@ -94,8 +94,8 @@ public class CoapServer {
         ethernetBlockWisePending = new HashMap<Integer, String>();
         this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
         this.activeRequestsTOKEN = new HashMap<String, ActiveRequest>();
-        this.arduinoGateways = new HashMap<String, Map<Integer, Long>>();
-        this.arduinoGatewayStats = new HashMap<String, Map<Integer, Map<String, String>>>();
+        this.arduinoGateways = new HashMap<String, HashMap<String, Long>>();
+        this.arduinoGatewayStats = new HashMap<String, Map<String, Map<String, String>>>();
         this.xCount = new HashMap<String, String>();
         this.yCount = new HashMap<String, String>();
         this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
@@ -116,6 +116,7 @@ public class CoapServer {
         } catch (SchedulerException e) {
             LOGGER.error(e, e);
         }
+
         JobDetail heartbeatToGatewaysJob = JobBuilder.newJob(HeartBeatJob.class).withIdentity("heartbeatToGatewaysJob").build();
         try {
             this.addJob(heartbeatToGatewaysJob, 1);
@@ -506,25 +507,25 @@ public class CoapServer {
      * @param data    the data to send.
      * @param nodeUrn the destination device.
      */
-    public void sendRequest(final byte[] data, final String nodeUrn) {
+    public void sendRequest(final byte[] data, final String nodeUrn, final AMqttCollector aCollector) {
         final byte[] payload = new byte[data.length + 1];
         payload[0] = 51;
         System.arraycopy(data, 0, payload, 1, data.length);
         LOGGER.info("sending request");
 //        TestbedController.getInstance().sendMessage(payload, nodeUrn);
 //        XbeeController.getInstance().sendPayload(nodeUrn,payload);
-        mqttSendPayload(nodeUrn, payload);
+        mqttSendPayload(nodeUrn, payload, aCollector);
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                mqttSendPayload(nodeUrn, payload);
+                mqttSendPayload(nodeUrn, payload, aCollector);
             }
         }, 100);
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                mqttSendPayload(nodeUrn, payload);
+                mqttSendPayload(nodeUrn, payload, aCollector);
             }
         }, 250);
     }
@@ -555,10 +556,10 @@ public class CoapServer {
      * @param mid     the mid to ack.
      * @param nodeUrn the destination device.
      */
-    public void sendAck(final int mid, final String nodeUrn) {
+    public void sendAck(final int mid, final String nodeUrn,final AMqttCollector aCollector) {
         final Message ack = new Message(Message.messageType.ACK, 0);
         ack.setMID(mid);
-        sendRequest(ack.toByteArray(), nodeUrn);
+        sendRequest(ack.toByteArray(), nodeUrn,aCollector);
 //        final byte[] data = ack.toByteArray();
 //        final int[] bytes = new int[data.length + 1];
 //        bytes[0] = 51;
@@ -576,27 +577,27 @@ public class CoapServer {
 //        }
     }
 
-    public void registerForResource(final String capability, final String address) {
-        {
-            URI uri = null;
-            try {
-                uri = new URI(new StringBuilder().append("/").append(capability).toString());
-            } catch (URISyntaxException e) {
-                LOGGER.error(e.getLocalizedMessage(), e);
-            }
-            final Request request = new Request(CodeRegistry.METHOD_GET, false);
-            request.setMID(nextMID());
-            request.setURI(uri);
-//            List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
-//            request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
-//            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-//            request.setToken(TokenManager.getInstance().acquireToken());
-
-            addRequest(address, request, false);
-            sendRequest(request.toByteArray(), address);
-        }
-
-    }
+//    public void registerForResource(final String capability, final String address) {
+//        {
+//            URI uri = null;
+//            try {
+//                uri = new URI(new StringBuilder().append("/").append(capability).toString());
+//            } catch (URISyntaxException e) {
+//                LOGGER.error(e.getLocalizedMessage(), e);
+//            }
+//            final Request request = new Request(CodeRegistry.METHOD_GET, false);
+//            request.setMID(nextMID());
+//            request.setURI(uri);
+////            List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
+////            request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
+////            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+////            request.setToken(TokenManager.getInstance().acquireToken());
+//
+//            addRequest(address, request, false);
+//            sendRequest(request.toByteArray(), address);
+//        }
+//
+//    }
 
     public int nextMID() {
         do {
@@ -612,7 +613,7 @@ public class CoapServer {
 
 //    }
 
-    public void requestForResource(String capability, String address, boolean observe) {
+    public void requestForResource(String capability, String address, boolean observe, final AMqttCollector aCollector) {
         synchronized (CoapServer.class) {
             LOGGER.info("requestForResource:" + address);
 //        if (!capability.equals("pir")) return;
@@ -640,7 +641,7 @@ public class CoapServer {
 //            ownRequests.put(request.getMID(), uri.toString());
             addRequest(address, request, false);
             LOGGER.info(request.getMID());
-            sendRequest(request.toByteArray(), address);
+            sendRequest(request.toByteArray(), address, aCollector);
 
 
         }
@@ -874,31 +875,31 @@ public class CoapServer {
         mqttPublish(topic, message);
     }
 
-    public void registerGateway(boolean b, Integer deviceId, byte[] testbedKey) {
-        LOGGER.info("put " + Arrays.toString(testbedKey));
-        if (!arduinoGateways.containsKey(Arrays.toString(testbedKey))) {
-            arduinoGateways.put(Arrays.toString(testbedKey), new HashMap<Integer, Long>());
+    public void registerGateway(boolean isNew, String deviceId, String testbedHash) {
+        LOGGER.info("put " + testbedHash);
+        if (!arduinoGateways.containsKey(testbedHash)) {
+            arduinoGateways.put(testbedHash, new HashMap<String, Long>());
         }
-        arduinoGateways.get(Arrays.toString(testbedKey)).put(deviceId, System.currentTimeMillis());
+        arduinoGateways.get(testbedHash).put(deviceId, System.currentTimeMillis());
     }
 
-    public Map<String, Map<Integer, Map<String, String>>> getArduinoGatewayStats() {
+    public Map<String, Map<String, Map<String, String>>> getArduinoGatewayStats() {
         return arduinoGatewayStats;
     }
 
-    public void appendGatewayStat(boolean b, Integer deviceId, byte[] testbedKey, String key, String value) {
-        LOGGER.info("put " + Arrays.toString(testbedKey));
-        if (!arduinoGatewayStats.containsKey(Arrays.toString(testbedKey))) {
-            arduinoGatewayStats.put(Arrays.toString(testbedKey), new HashMap<Integer, Map<String, String>>());
+    public void appendGatewayStat(final boolean b, final String deviceId, final String testbedHash, final String key, final String value) {
+        LOGGER.info("put " + testbedHash);
+        if (!arduinoGatewayStats.containsKey(testbedHash)) {
+            arduinoGatewayStats.put(testbedHash, new HashMap<String, Map<String, String>>());
         }
-        if (!arduinoGatewayStats.get(Arrays.toString(testbedKey)).containsKey(deviceId)) {
-            arduinoGatewayStats.get(Arrays.toString(testbedKey)).put(deviceId, new HashMap<String, String>());
+        if (!arduinoGatewayStats.get(testbedHash).containsKey(deviceId)) {
+            arduinoGatewayStats.get(testbedHash).put(deviceId, new HashMap<String, String>());
         }
-        arduinoGatewayStats.get(Arrays.toString(testbedKey)).get(deviceId).put(key, value);
+        arduinoGatewayStats.get(testbedHash).get(deviceId).put(key, value);
 
     }
 
-    public Map<String, Map<Integer, Long>> getArduinoGateways() {
+    public Map<String, HashMap<String, Long>> getArduinoGateways() {
         return arduinoGateways;
     }
 
@@ -929,49 +930,20 @@ public class CoapServer {
     }
 
 
-    public void mqttSendPayload(final String destination, final byte[] payloadIn) {
+    public void mqttSendPayload(final String destination, final byte[] payloadIn, final AMqttCollector aCollector) {
         byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
         byte[] payloadWithDestination = new byte[payloadIn.length + 2];
         LOGGER.debug("mqttSendPayload");
         payloadWithDestination[0] = destinationBytes[1];
         payloadWithDestination[1] = destinationBytes[0];
         System.arraycopy(payloadIn, 0, payloadWithDestination, 2, payloadIn.length);
-        if (mqtt == null) {
-            LOGGER.error("MQTT not connected!");
-            return;
-        }
-        mqtt.publish("arduinoGateway", payloadWithDestination, QoS.AT_MOST_ONCE, false, new Callback() {
-            @Override
-            public void onSuccess(Object o) {
-                LOGGER.info("onSuccess");
-            }
 
-            @Override
-            public void onFailure(Throwable throwable) {
-                LOGGER.info("onFailure");
-            }
-        });
+        aCollector.publish(payloadWithDestination);
     }
 
 
     public void mqttPublish(final String topic, final String message) {
         LOGGER.debug("mqttPublish");
-        if (mqtt == null) {
-            LOGGER.error("MQTT not connected!");
-            return;
-        }
-        mqtt.publish(topic, message.getBytes(), QoS.AT_MOST_ONCE, false, new Callback() {
-
-            @Override
-            public void onSuccess(Object value) {
-                LOGGER.info("beat");
-            }
-
-            @Override
-            public void onFailure(Throwable value) {
-                LOGGER.error("onFailure", value);
-            }
-        });
+        MqttConnectionManager.getInstance().publish(topic, message);
     }
-
 }

@@ -36,8 +36,8 @@ public class WakeupRequestHandler implements InternalRequestHandler {
             data[pos++] = 0x61;
             data[pos] = 0x6D;
 
-            final Thread parser = new Thread(new CoapMessageParser("0x" + udpRequest.getPayloadString(), data, null, null));
-            parser.start();
+//            final Thread parser = new Thread(new CoapMessageParser("0x" + udpRequest.getPayloadString(), data, null, null, this));
+//            parser.start();
 
             payload.append("Here I am simulation on ").append(udpRequest.getPayloadString());
             response.setContentType(MediaTypeRegistry.TEXT_PLAIN);

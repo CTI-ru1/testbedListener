@@ -1,9 +1,6 @@
 package eu.uberdust.testbedlistener;
 
-import eu.uberdust.testbedlistener.factory.COAPTRListenerFactory;
-import eu.uberdust.testbedlistener.factory.CommandLineListenerFactory;
-import eu.uberdust.testbedlistener.factory.TestbedRuntimeListenerFactory;
-import eu.uberdust.testbedlistener.factory.XbeeListenerFactory;
+import eu.uberdust.testbedlistener.factory.*;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.PropertyConfigurator;
@@ -41,7 +38,7 @@ public class Main {
             XbeeListenerFactory xbee = new XbeeListenerFactory();
             xbee.run();
         } else if ("coap".equals(type)) {
-            COAPTRListenerFactory coap = new COAPTRListenerFactory();
+            COAPTRListener2Factory coap = new COAPTRListener2Factory();
             coap.run();
         } else if ("cmd".equals(type)) {
             CommandLineListenerFactory cmd = new CommandLineListenerFactory();

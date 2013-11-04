@@ -68,7 +68,7 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
     private void handleCoAPAcknowledgement() {
         String uriHost = PendingRequestHandler.getInstance().matchMID4Host(udpRequest);
         printOptions(udpRequest);
-        CoapServer.getInstance().sendRequest(udpRequest.toByteArray(), uriHost);
+//        CoapServer.getInstance().sendRequest(udpRequest.toByteArray(), uriHost);
     }
 
     /**
@@ -79,7 +79,7 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
     private void handleCoAPReset() {
         String uriHost = PendingRequestHandler.getInstance().matchMID4Host(udpRequest);
         printOptions(udpRequest);
-        CoapServer.getInstance().sendRequest(udpRequest.toByteArray(), uriHost);
+//        CoapServer.getInstance().sendRequest(udpRequest.toByteArray(), uriHost);
         PendingRequestHandler.getInstance().removeRequest(udpRequest);
     }
 
@@ -124,7 +124,7 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         final byte[] data = udpRequest.toByteArray();
 
         PendingRequestHandler.getInstance().addRequest(uriHost, udpRequest, packet.getSocketAddress());
-        CoapServer.getInstance().sendRequest(data, uriHost);
+//        CoapServer.getInstance().sendRequest(data, uriHost);
     }
 
     /**

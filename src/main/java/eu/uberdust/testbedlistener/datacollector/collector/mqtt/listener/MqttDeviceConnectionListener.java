@@ -1,7 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
 
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import org.apache.commons.lang3.ArrayUtils;
+import eu.uberdust.testbedlistener.datacollector.collector.AMqttCollector;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 
@@ -14,16 +14,15 @@ import java.util.Arrays;
  * Time: 12:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class MqttConnectionListener extends MqttBaseListener {
+public class MqttDeviceConnectionListener extends MqttBaseListener {
     /**
      * LOGGER.
      */
-    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttConnectionListener.class);
+    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttDeviceConnectionListener.class);
 
 
-    public MqttConnectionListener(String mqttBroker) {
-        super(mqttBroker, "connect/#");
-        CoapServer.getInstance().setMqtt(this);
+    public MqttDeviceConnectionListener() {
+        super("connect");
     }
 
 
@@ -38,24 +37,25 @@ public class MqttConnectionListener extends MqttBaseListener {
                     System.arraycopy(body.getData(), body.getOffset(), data, 0, data.length);
                     LOGGER.debug("Body: " + Arrays.toString(body.getData()));
                     LOGGER.debug("Data: " + Arrays.toString(data));
-                    byte connectionStatus = data[0];
-                    int deviceId = data[1] + data[2] * 256;
-                    byte[] deviceMessage = new byte[4];
-                    System.arraycopy(data, 3, deviceMessage, 0, 4);
-                    ArrayUtils.reverse(deviceMessage);
-                    if (connectionStatus == 0) {
-                        LOGGER.info("Alive id:" + deviceId + " testbed:" + Arrays.toString(deviceMessage));
+                    final String[] parts = new String(data).split(MQTT_SEPARATOR);
+                    boolean reConnect = "1".equals(parts[0]);
+                    String testbedHash = parts[1];
+                    String deviceId = parts[2];
+
+                    if (reConnect) {
+                        LOGGER.info("Reconnect id:" + deviceId + " testbed:" + testbedHash);
                     } else {
-                        LOGGER.info("Reconnect id:" + deviceId + " testbed:" + Arrays.toString(deviceMessage));
+                        LOGGER.info("Alive id:" + deviceId + " testbed:" + testbedHash);
                     }
                     //TODO: make this report connect messages
-                    CoapServer.getInstance().registerGateway(connectionStatus == 1, deviceId, deviceMessage);
+                    CoapServer.getInstance().registerGateway(reConnect, deviceId, testbedHash);
+                    //Connect a new Listener for this Gateway
+                    MqttConnectionManager.getInstance().listen(testbedHash + MQTT_SEPARATOR + deviceId + "/#", new AMqttCollector(deviceId, testbedHash));
                 }
             }).start();
         } catch (Exception e) {
             LOGGER.error(e, e);
         }
     }
-
 
 }

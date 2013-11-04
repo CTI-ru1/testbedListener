@@ -5,19 +5,21 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.CoapHelper;
-import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
+import eu.uberdust.testbedlistener.datacollector.collector.AMqttCollector;
 import eu.uberdust.testbedlistener.datacollector.notify.CacheNotify;
+import eu.uberdust.testbedlistener.datacollector.notify.RabbitMQNotify;
 import eu.uberdust.testbedlistener.datacollector.notify.UberdustNotify;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
-import eu.uberdust.testbedlistener.util.commiter.WsCommiter;
 import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Random;
+
+//import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
 
 /**
  * Parses an XBee message received and adds data to a wisedb database.
@@ -28,16 +30,6 @@ public class CoapMessageParser extends AbstractMessageParser {
      * LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(CoapMessageParser.class);
-
-    /**
-     * Testbed Capability prefix.
-     */
-    private transient final String capabilityPrefix;
-
-    /**
-     * The testbed prefix.
-     */
-    private transient final String testbedPrefix;
 
     /**
      * The Mac Address of the remote node.
@@ -53,15 +45,18 @@ public class CoapMessageParser extends AbstractMessageParser {
     private transient final Random mid;
     private boolean isBlockwise;
     private byte type;
+    private final AMqttCollector mqttCollector;
 
     /**
      * Default Constructor.
      *
-     * @param address   the address of the node
-     * @param payloadin the payload message to be parsed.
+     * @param address       the address of the node
+     * @param payloadin     the payload message to be parsed.
+     * @param mqttCollector
      */
-    public CoapMessageParser(String address, byte[] payloadin, final String testbedPrefix, final String capabilityPrefix) {
+    public CoapMessageParser(String address, byte[] payloadin, final String testbedPrefix, final String capabilityPrefix, AMqttCollector mqttCollector) {
         this.timeStart = System.currentTimeMillis();
+        this.mqttCollector = mqttCollector;
 //        this.apayload = new byte[payloadin.length - 2];
 //        System.arraycopy(payloadin, 2, this.apayload, 0, payloadin.length - 2);
         this.payload = new byte[payloadin.length - 2];
@@ -69,8 +64,6 @@ public class CoapMessageParser extends AbstractMessageParser {
         this.address = address;
         this.type = payloadin[0];
         this.mac = address.split("0x")[1];
-        this.testbedPrefix = testbedPrefix;
-        this.capabilityPrefix = capabilityPrefix;
         mid = new Random();
     }
 
@@ -90,7 +83,6 @@ public class CoapMessageParser extends AbstractMessageParser {
         if (!(type == 0x69)) {
             return;
         }
-
 //        LOGGER.info("from " + address + " {" + mac + "} with payload length " + payload.length + " fistByte " + payload[0]);
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
         LOGGER.info(Converter.getInstance().payloadToString(payload));
@@ -140,6 +132,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                 if (requestType.equals("/.well-known/core")) {
                     LOGGER.info("WELL-KNOWN " + mac);
 
+
                     CoapServer.getInstance().updateEndpoint(mac, requestType.substring(1));
 
                     final String payloadStr = response.getPayloadString();
@@ -156,7 +149,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                     }
 
                     LOGGER.info(capabilities.size());
-                    reportToUberdustCapability(capabilities, mac);
+//                    reportToUberdustCapability(capabilities, mac);
 
                     for (String capability : capabilities) {
                         if (!capability.equals(".well-known/core")) {
@@ -175,7 +168,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                             } catch (Exception e) {
                                 LOGGER.error(e, e);
                             }
-                            CoapServer.getInstance().requestForResource(capability, mac, true);
+                            CoapServer.getInstance().requestForResource(capability, mac, true, mqttCollector);
                         }
                     }
 
@@ -184,25 +177,26 @@ public class CoapMessageParser extends AbstractMessageParser {
 //                        return;
 //                    }
 
-                    if (isBlockwise) {
-                        /**TODO : change**/
-                        byte[] blockIdx = response.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
-                        byte m = blockIdx[0];
-                        m = (byte) (m >> 4);
-                        m = (byte) (m & 0x01);
-                        if (m == 0x00) {
-                            try {
-                                Thread.sleep(2000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                            }
-                            LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
-                            BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(mac, blockIdx);
-                            nextBlock.run();
-                        }
-                    }
+//                    if (isBlockwise) {
+//                        /**TODO : change**/
+//                        byte[] blockIdx = response.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
+//                        byte m = blockIdx[0];
+//                        m = (byte) (m >> 4);
+//                        m = (byte) (m & 0x01);
+//                        if (m == 0x00) {
+//                            try {
+//                                Thread.sleep(2000);
+//                            } catch (InterruptedException e) {
+//                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//                            }
+//                            LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
+//                            BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(mac, blockIdx);
+//                            nextBlock.run();
+//                        }
+//                    }
 
                 } else {
+
 
                     requestType = requestType.substring(1);
                     new Evaluator("TokenMatch ", requestType);
@@ -210,7 +204,7 @@ public class CoapMessageParser extends AbstractMessageParser {
 
                     if (response.isConfirmable()) {
                         LOGGER.info("Sending ack message...");
-                        CoapServer.getInstance().sendAck(response.getMID(), mac);
+                        CoapServer.getInstance().sendAck(response.getMID(), mac, mqttCollector);
                     }
                     CoapServer.getInstance().registerEndpoint(requestType, mac);
 
@@ -222,7 +216,8 @@ public class CoapMessageParser extends AbstractMessageParser {
 //                    });
 //                    d.start();
 
-                    new Thread(new UberdustNotify(mac, requestType, response, testbedPrefix, capabilityPrefix)).start();
+//                    new Thread(new UberdustNotify(mac, requestType, response, testbedPrefix, capabilityPrefix)).start();
+                    new Thread(new RabbitMQNotify(mac, requestType, response, mqttCollector)).start();
                     new Thread(new CacheNotify(mac, requestType, response)).start();
                     CoapServer.getInstance().incResponseObserveCounter();
 
@@ -283,66 +278,7 @@ public class CoapMessageParser extends AbstractMessageParser {
         Request request = CoapHelper.getWellKnown(macStr);
         CoapServer.getInstance().addRequest(macStr, request, false);
 //        System.out.println("request"+request.toByteArray().length);
-        CoapServer.getInstance().sendRequest(request.toByteArray(), macStr);
+        CoapServer.getInstance().sendRequest(request.toByteArray(), macStr, mqttCollector);
         CoapServer.getInstance().incRequestWellKnownCounter();
-    }
-
-    private void reportToUberdustCapability(List<String> capabilities, String address) {
-        eu.uberdust.communication.protobuf.Message.NodeReadings.Builder readings = eu.uberdust.communication.protobuf.Message.NodeReadings.newBuilder();
-        for (String capability : capabilities) {
-            if (capability.equals("temp")) {
-                capability = "temperature";
-            }
-            final String nodeUrn = testbedPrefix + "0x" + address;
-            final String capabilityName = (capability).toLowerCase();
-
-            final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
-                    .setNode(nodeUrn)
-                    .setCapability("report")
-                    .setTimestamp(System.currentTimeMillis())
-                    .setStringReading(capabilityName)
-                    .build();
-            readings.addReading(reading);
-        }
-        new WsCommiter(readings.build());
-    }
-
-//    private void sendToUberdust(final String uriPath, String address, final Message response) {
-//
-//    }
-
-    private void commitNodeReading(final String nodeId, String capability, final Double value) {
-        if (capability.equals("temp")) {
-            capability = "temperature";
-        }
-        final String nodeUrn = testbedPrefix + nodeId;
-        final String capabilityName = (capabilityPrefix + capability).toLowerCase();
-
-        final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
-                .setNode(nodeUrn)
-                .setCapability(capabilityName)
-                .setTimestamp(System.currentTimeMillis())
-                .setDoubleReading(value)
-                .build();
-
-        new WsCommiter(reading);
-    }
-
-    private void commitNodeReading(final String nodeId, String capability, final String value) {
-
-        if (capability.equals("temp")) {
-            capability = "temperature";
-        }
-        final String nodeUrn = testbedPrefix + nodeId;
-        final String capabilityName = (capabilityPrefix + capability).toLowerCase();
-        LOGGER.info(value);
-        final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
-                .setNode(nodeUrn)
-                .setCapability(capabilityName)
-                .setTimestamp(System.currentTimeMillis())
-                .setStringReading(value)
-                .build();
-
-        new WsCommiter(reading);
     }
 }

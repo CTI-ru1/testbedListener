@@ -1,6 +1,6 @@
 package eu.uberdust.testbedlistener.test;
 
-import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
+
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
@@ -38,7 +38,7 @@ class MqttTestClient implements Runnable, Listener {
     /**
      * LOGGER.
      */
-    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttCollector.class);
+    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttTest.class);
     private static final long DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS = 5000;
     private static final long DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS = 3600 * 3;
     private int testbedID;

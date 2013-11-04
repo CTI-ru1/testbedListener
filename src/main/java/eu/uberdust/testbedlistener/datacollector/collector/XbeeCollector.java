@@ -4,16 +4,12 @@ import com.rapplogic.xbee.api.wpan.RxResponse16;
 import eu.mksense.MessageListener;
 import eu.mksense.XBeeRadio;
 import eu.uberdust.communication.UberdustClient;
-import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
-import eu.uberdust.testbedlistener.datacollector.parsers.XbeeMessageParser;
-import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.json.JSONException;
-import org.simpleframework.xml.convert.Convert;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -110,13 +106,13 @@ public class XbeeCollector extends AbstractCollector implements MessageListener,
             finalData[0] = 0x69;
             finalData[1] = 0x69;
             System.arraycopy(byteData, 0, finalData, 2, byteData.length);
-            executorService.submit(new CoapMessageParser(macAddress, finalData,testbedPrefix,capabilityPrefix));
+//            executorService.submit(new CoapMessageParser(macAddress, finalData,testbedPrefix,capabilityPrefix, this));
         } else {
             byte finalData[] = new byte[data.length + 1];
             finalData[0] = 0x69;
             finalData[1] = 0x69;
             System.arraycopy(byteData, 3, finalData, 2, data.length - 1);
-            executorService.submit(new CoapMessageParser(macAddress, finalData,testbedPrefix,capabilityPrefix));
+//            executorService.submit(new CoapMessageParser(macAddress, finalData,testbedPrefix,capabilityPrefix, this));
         }
     }
 

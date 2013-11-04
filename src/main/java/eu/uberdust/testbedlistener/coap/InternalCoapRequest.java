@@ -27,16 +27,18 @@ public class InternalCoapRequest {
     public InternalCoapRequest() {
         internalRequestHandlers = new HashMap<String, InternalRequestHandler>();
         internalRequestHandlers.put("/status", new StatusRequestHandler());
-        internalRequestHandlers.put("/endpoints", new EndpointsRequestHandler());
-        internalRequestHandlers.put("/activeRequests", new ActiveRequestsRequestHandler());
-        internalRequestHandlers.put("/pendingRequests", new PendingRequestsRequestHandler());
         internalRequestHandlers.put("/cache", new CacheRequestHandler());
         internalRequestHandlers.put("/wakeup", new WakeupRequestHandler());
-        internalRequestHandlers.put("/routes", new RoutesRequestHandler());
+        //needed for hereiam registration
         internalRequestHandlers.put("/ethernet", new EthernetRequestHandler());
-        internalRequestHandlers.put("/gateway/xbee", new XbeeGatewayRequestHandler());
-        internalRequestHandlers.put("/gateway/arduino", new ArduinoGatewayRequestHandler());
-        internalRequestHandlers.put("/gateway/stats", new ArduinoGatewayStatsRequestHandler());
+        internalRequestHandlers.put("/gateways", new ArduinoGatewayRequestHandler());
+//        internalRequestHandlers.put("/endpoints", new EndpointsRequestHandler());
+//        internalRequestHandlers.put("/activeRequests", new ActiveRequestsRequestHandler());
+//        internalRequestHandlers.put("/pendingRequests", new PendingRequestsRequestHandler());
+//        internalRequestHandlers.put("/routes", new RoutesRequestHandler());
+//        internalRequestHandlers.put("/gateway/xbee", new XbeeGatewayRequestHandler());
+//        internalRequestHandlers.put("/gateway/arduino", new ArduinoGatewayRequestHandler());
+//        internalRequestHandlers.put("/gateway/stats", new ArduinoGatewayStatsRequestHandler());
     }
 
 
@@ -149,24 +151,30 @@ public class InternalCoapRequest {
             } else {
                 response.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
             }
-        } else
-
-        {
+        } else {
             LOGGER.info("checking " + path + ":" + Arrays.toString(internalRequestHandlers.keySet().toArray()));
             if (internalRequestHandlers.containsKey(path)) {
                 InternalRequestHandler handler = internalRequestHandlers.get(path);
                 LOGGER.info("checking : handling");
                 handler.handle(udpRequest, response);
             } else {
-                response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found
+                boolean matched = false;
+                for (String handlerKey : internalRequestHandlers.keySet()) {
+                    if (path.startsWith(handlerKey)) {
+                        InternalRequestHandler handler = internalRequestHandlers.get(path);
+                        LOGGER.info("checking : handling");
+                        handler.handle(udpRequest, response);
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    response.setCode(CodeRegistry.RESP_NOT_FOUND); //not found
+                }
             }
         }
 
-        CoapServer.getInstance().
-
-                sendReply(response.toByteArray(), socketAddress
-
-                );
+        CoapServer.getInstance().sendReply(response.toByteArray(), socketAddress);
         return null;
     }
 }

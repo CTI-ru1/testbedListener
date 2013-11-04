@@ -79,7 +79,7 @@ public class TestbedMessageHandler {
     }
 
     public synchronized void handle(final WSNAppMessages.Message message) {
-        executorService.submit(new CoapMessageParser(message.getSourceNodeId(), message.getBinaryData().toByteArray(), testbedPrefix, capabilityPrefix));
+//        executorService.submit(new CoapMessageParser(message.getSourceNodeId(), message.getBinaryData().toByteArray(), testbedPrefix, capabilityPrefix, this));
 //        Thread d = new Thread(new CoapMessageParser(message.getSourceNodeId(), message.getBinaryData().toByteArray()));
 //        d.start();
     }

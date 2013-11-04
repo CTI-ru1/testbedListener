@@ -3,7 +3,6 @@ package eu.uberdust.testbedlistener.datacollector.notify;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import eu.uberdust.testbedlistener.coap.CacheHandler;
-import org.apache.log4j.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +17,7 @@ public class CacheNotify implements Runnable {
     private transient final String mac;
 
     public CacheNotify(final String mac, final String requestType, final Message response) {
+        System.out.println("saving to cache " + mac);
         this.response = response;
         this.requestType = requestType;
         this.mac = mac;

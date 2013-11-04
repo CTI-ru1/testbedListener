@@ -1,6 +1,6 @@
 package eu.uberdust.testbedlistener;
 
-import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttConnectionManager;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -16,7 +16,7 @@ public class HeartBeatJob implements Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         try {
-            CoapServer.getInstance().publish("heartbeat", "reset");
+            MqttConnectionManager.getInstance().publish("heartbeat", "reset");
         } catch (Exception e) {
             e.printStackTrace();
         }

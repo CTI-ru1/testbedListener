@@ -14,14 +14,14 @@ import java.util.Map;
  */
 public class ArduinoGatewayStatsRequestHandler implements InternalRequestHandler {
     @Override
-    public void handle(Message udpRequest, Message response) {
-        StringBuilder payload = new StringBuilder("");
+    public void handle(final Message udpRequest,final Message response) {
+        final StringBuilder payload = new StringBuilder("");
 
-        Map<String, Map<Integer, Map<String, String>>> gways = CoapServer.getInstance().getArduinoGatewayStats();
-        for (String gateway : gways.keySet()) {
+        final Map<String, Map<String, Map<String, String>>> gways = CoapServer.getInstance().getArduinoGatewayStats();
+        for (final String gateway : gways.keySet()) {
             payload.append(gateway);
             payload.append("\n");
-            for (Integer deviceId : gways.get(gateway).keySet()) {
+            for (final String deviceId : gways.get(gateway).keySet()) {
                 for (String key : gways.get(gateway).get(deviceId).keySet()) {
                     payload.append("\t");
                     payload.append(deviceId).append(" @ ").append(key).append("->").append(gways.get(gateway).get(deviceId).get(key)).append("\n");
