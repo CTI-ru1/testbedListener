@@ -1,27 +1,28 @@
-package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
+package eu.uberdust.testbedlistener.mqtt.listener;
 
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
+import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 
 import java.util.Arrays;
 
 /**
- * Created with IntelliJ IDEA.
- * User: amaxilatis
- * Date: 6/7/13
- * Time: 12:59 PM
- * To change this template use File | Settings | File Templates.
+ * Receives and Processes incoming Connection messages from Gateway Devices.
+ * All Gateway Devices periodically send a message to the connect/# MQTT Channel to inform the server of their existence.
+ *
+ * @author Dimitrios Amaxilatis
+ * @date 04/10/2013
  */
-public class MqttDeviceConnectionListener extends MqttBaseListener {
+public class DeviceConnectionMqttListener extends BaseMqttListener {
     /**
      * LOGGER.
      */
-    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttDeviceConnectionListener.class);
+    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(DeviceConnectionMqttListener.class);
 
 
-    public MqttDeviceConnectionListener() {
+    public DeviceConnectionMqttListener() {
         super("connect");
     }
 
@@ -50,7 +51,7 @@ public class MqttDeviceConnectionListener extends MqttBaseListener {
                     //TODO: make this report connect messages
                     CoapServer.getInstance().registerGateway(reConnect, deviceId, testbedHash);
                     //Connect a new Listener for this Gateway
-                    MqttConnectionManager.getInstance().listen(testbedHash + MQTT_SEPARATOR + deviceId + "/#", new MqttCollector(deviceId, testbedHash));
+                    MqttConnectionManager.getInstance().listen(testbedHash + MQTT_SEPARATOR + deviceId + "/#", new CollectorMqtt(deviceId, testbedHash));
                 }
             }).start();
         } catch (Exception e) {

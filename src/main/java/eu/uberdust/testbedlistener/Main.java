@@ -2,9 +2,9 @@ package eu.uberdust.testbedlistener;
 
 import eu.uberdust.communication.UberdustClient;
 import eu.uberdust.testbedlistener.coap.CoapServer;
-import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttConnectionManager;
-import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttDeviceConnectionListener;
-import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttStatsListener;
+import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
+import eu.uberdust.testbedlistener.mqtt.listener.DeviceConnectionMqttListener;
+import eu.uberdust.testbedlistener.mqtt.listener.StatsMqttListener;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.PropertyConfigurator;
 import org.json.JSONArray;
@@ -91,11 +91,11 @@ public class Main {
 //                    try {
 //                        testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
 //                        for (int i = 0; i < testbeds.length(); i++) {
-////                            MqttCollector mqList = new MqttCollector(mqttBroker, i + 1);
+////                            CollectorMqtt mqList = new CollectorMqtt(mqttBroker, i + 1);
 ////                            new Thread(mqList).start();
 //                        }
-                    MqttConnectionManager.getInstance().listen("stats/#", new MqttStatsListener());
-                    MqttConnectionManager.getInstance().listen("connect/#", new MqttDeviceConnectionListener());
+                    MqttConnectionManager.getInstance().listen("stats/#", new StatsMqttListener());
+                    MqttConnectionManager.getInstance().listen("connect/#", new DeviceConnectionMqttListener());
 
 //                    } catch (JSONException e) {
 //                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.

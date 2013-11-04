@@ -1,6 +1,6 @@
 package eu.uberdust.testbedlistener;
 
-import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttConnectionManager;
+import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;

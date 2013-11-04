@@ -1,34 +1,35 @@
 package eu.uberdust.testbedlistener.datacollector.collector;
 
-import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttBaseListener;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
+import eu.uberdust.testbedlistener.mqtt.listener.BaseMqttListener;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.mqtt.client.Callback;
+import org.fusesource.mqtt.client.QoS;
 
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Created with IntelliJ IDEA.
- * User: amaxilatis
- * Date: 6/7/13
- * Time: 12:59 PM
- * To change this template use File | Settings | File Templates.
+ * Class used to handle messages from a specific Gateway Device.
+ * Passes all incoming CoAP and HEREIAM messages to a {@see CoapMessageParser} for processing.
+ *
+ * @author Dimitrios Amaxilatis
  */
-public class MqttCollector extends MqttBaseListener {
+public class CollectorMqtt extends BaseMqttListener {
     /**
      * LOGGER.
      */
-    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttCollector.class);
+    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(CollectorMqtt.class);
     private String testbedUrn;
 
     private final ExecutorService executorService;
     private String urnPrefix;
     private String urnCapabilityPrefix;
 
-    public MqttCollector(final String deviceID, final String testbedUrn) {
+    public CollectorMqtt(final String deviceID, final String testbedUrn) {
         super(testbedUrn + MQTT_SEPARATOR + deviceID);
         this.testbedUrn = testbedUrn;
 
@@ -81,5 +82,20 @@ public class MqttCollector extends MqttBaseListener {
 
     public String getTestbedUrn() {
         return testbedUrn;
+    }
+
+    @Override
+    public void publish(final byte[] messageBytes) {
+        connection.publish("s" + topic, messageBytes, QoS.AT_MOST_ONCE, false, new Callback<Void>() {
+
+            @Override
+            public void onSuccess(Void value) {
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                LOGGER.error(e, e);
+            }
+        });
     }
 }

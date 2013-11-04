@@ -7,7 +7,7 @@ import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.CoapHelper;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
-import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
+import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 import eu.uberdust.testbedlistener.datacollector.notify.CacheNotify;
 import eu.uberdust.testbedlistener.datacollector.notify.RabbitMQNotify;
 import eu.uberdust.testbedlistener.util.Converter;
@@ -18,7 +18,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Random;
 
-//import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
+//import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 
 /**
  * Parses an XBee message received and adds data to a wisedb database.
@@ -44,7 +44,7 @@ public class CoapMessageParser extends AbstractMessageParser {
     private transient final Random mid;
     private boolean isBlockwise;
     private byte type;
-    private final MqttCollector mqttCollector;
+    private final CollectorMqtt mqttCollector;
 
     /**
      * Default Constructor.
@@ -53,7 +53,7 @@ public class CoapMessageParser extends AbstractMessageParser {
      * @param payloadin     the payload message to be parsed.
      * @param mqttCollector
      */
-    public CoapMessageParser(String address, byte[] payloadin, final String testbedPrefix, final String capabilityPrefix, MqttCollector mqttCollector) {
+    public CoapMessageParser(String address, byte[] payloadin, final String testbedPrefix, final String capabilityPrefix, CollectorMqtt mqttCollector) {
         this.timeStart = System.currentTimeMillis();
         this.mqttCollector = mqttCollector;
 //        this.apayload = new byte[payloadin.length - 2];

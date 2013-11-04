@@ -1,5 +1,6 @@
-package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
+package eu.uberdust.testbedlistener.mqtt;
 
+import eu.uberdust.testbedlistener.mqtt.listener.BaseMqttListener;
 import org.fusesource.mqtt.client.*;
 
 import java.net.URISyntaxException;
@@ -75,11 +76,11 @@ public class MqttConnectionManager {
         LOGGER.info("Listener stopped since reattempts have failed for " + listenerMaxReAttemptDurationInSeconds + " seconds.");
     }
 
-    public CallbackConnection listen(final String topic, final MqttBaseListener listener) {
+    public CallbackConnection listen(final String topic, final BaseMqttListener listener) {
         return listen(new String[]{topic}, listener);
     }
 
-    public CallbackConnection listen(final String[] topics, final MqttBaseListener listener) {
+    public CallbackConnection listen(final String[] topics, final BaseMqttListener listener) {
         if (listeners.containsKey(topics[0])) {
             return listeners.get(topics[0]);
         }

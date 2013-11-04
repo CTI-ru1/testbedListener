@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
+package eu.uberdust.testbedlistener.mqtt.listener;
 
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
@@ -8,19 +8,18 @@ import org.fusesource.mqtt.client.Listener;
 import org.fusesource.mqtt.client.QoS;
 
 /**
- * Created with IntelliJ IDEA.
- * User: amaxilatis
- * Date: 6/7/13
- * Time: 12:59 PM
- * To change this template use File | Settings | File Templates.
+ * Base Listener Class for MQTT channels.
+ *
+ * @author Dimitrios Amaxilatis
+ * @date 04/10/2013
  */
-public class MqttBaseListener implements Listener {
+public class BaseMqttListener implements Listener {
     protected final static String MQTT_SEPARATOR = ",";
-    private final String topic;
+    protected final String topic;
 
-    private CallbackConnection connection;
+    protected CallbackConnection connection;
 
-    public MqttBaseListener(final String topic) {
+    public BaseMqttListener(final String topic) {
         this.topic = topic;
     }
 
@@ -57,7 +56,7 @@ public class MqttBaseListener implements Listener {
     }
 
     public void publish(final byte[] messageBytes) {
-        connection.publish("s" + topic, messageBytes, QoS.AT_MOST_ONCE, false, new Callback<Void>() {
+        connection.publish(topic, messageBytes, QoS.AT_MOST_ONCE, false, new Callback<Void>() {
 
             @Override
             public void onSuccess(Void value) {

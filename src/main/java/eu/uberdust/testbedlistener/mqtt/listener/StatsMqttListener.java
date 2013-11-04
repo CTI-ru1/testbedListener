@@ -1,4 +1,4 @@
-package eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener;
+package eu.uberdust.testbedlistener.mqtt.listener;
 
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import org.fusesource.hawtbuf.Buffer;
@@ -7,19 +7,18 @@ import org.fusesource.hawtbuf.UTF8Buffer;
 import java.util.Arrays;
 
 /**
- * Created with IntelliJ IDEA.
- * User: amaxilatis
- * Date: 6/7/13
- * Time: 12:59 PM
- * To change this template use File | Settings | File Templates.
+ * Receives and Processes incoming statistics messages from connected Gateway Devices.
+ *
+ * @author Dimitrios Amaxilatis
+ * @date 04/10/2013
  */
-public class MqttStatsListener extends MqttBaseListener {
+public class StatsMqttListener extends BaseMqttListener {
     /**
      * LOGGER.
      */
-    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(MqttStatsListener.class);
+    private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(StatsMqttListener.class);
 
-    public MqttStatsListener() {
+    public StatsMqttListener() {
         super("stats");
     }
 

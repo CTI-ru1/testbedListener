@@ -7,9 +7,9 @@ import eu.uberdust.DeviceCommand;
 import eu.uberdust.testbedlistener.HeartBeatJob;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
-import eu.uberdust.testbedlistener.datacollector.collector.MqttCollector;
-import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttBaseListener;
-import eu.uberdust.testbedlistener.datacollector.collector.mqtt.listener.MqttConnectionManager;
+import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
+import eu.uberdust.testbedlistener.mqtt.listener.BaseMqttListener;
+import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import eu.uberdust.testbedlistener.util.TokenManager;
@@ -72,7 +72,7 @@ public class CoapServer {
     public int responseObserveCounter;
     private int observeLostCounter;
     private EthernetUDPhandler ethernetUDPHandler;
-    private MqttBaseListener mqtt;
+    private BaseMqttListener mqtt;
     private final StdSchedulerFactory schFactory;
     private Scheduler sch;
     private Map<String, HashMap<String, Long>> arduinoGateways;
@@ -507,7 +507,7 @@ public class CoapServer {
      * @param data    the data to send.
      * @param nodeUrn the destination device.
      */
-    public void sendRequest(final byte[] data, final String nodeUrn, final MqttCollector aCollector) {
+    public void sendRequest(final byte[] data, final String nodeUrn, final CollectorMqtt aCollector) {
         final byte[] payload = new byte[data.length + 1];
         payload[0] = 51;
         System.arraycopy(data, 0, payload, 1, data.length);
@@ -556,7 +556,7 @@ public class CoapServer {
      * @param mid     the mid to ack.
      * @param nodeUrn the destination device.
      */
-    public void sendAck(final int mid, final String nodeUrn,final MqttCollector aCollector) {
+    public void sendAck(final int mid, final String nodeUrn,final CollectorMqtt aCollector) {
         final Message ack = new Message(Message.messageType.ACK, 0);
         ack.setMID(mid);
         sendRequest(ack.toByteArray(), nodeUrn,aCollector);
@@ -613,7 +613,7 @@ public class CoapServer {
 
 //    }
 
-    public void requestForResource(String capability, String address, boolean observe, final MqttCollector aCollector) {
+    public void requestForResource(String capability, String address, boolean observe, final CollectorMqtt aCollector) {
         synchronized (CoapServer.class) {
             LOGGER.info("requestForResource:" + address);
 //        if (!capability.equals("pir")) return;
@@ -867,7 +867,7 @@ public class CoapServer {
         return ethernetUDPHandler;
     }
 
-    public void setMqtt(MqttBaseListener mqtt) {
+    public void setMqtt(BaseMqttListener mqtt) {
         this.mqtt = mqtt;
     }
 
@@ -930,7 +930,7 @@ public class CoapServer {
     }
 
 
-    public void mqttSendPayload(final String destination, final byte[] payloadIn, final MqttCollector aCollector) {
+    public void mqttSendPayload(final String destination, final byte[] payloadIn, final CollectorMqtt aCollector) {
         byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
         byte[] payloadWithDestination = new byte[payloadIn.length + 2];
         LOGGER.debug("mqttSendPayload");
