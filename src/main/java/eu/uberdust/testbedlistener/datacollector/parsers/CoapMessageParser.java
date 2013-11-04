@@ -5,6 +5,7 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.CoapHelper;
+import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
 import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
@@ -16,7 +17,6 @@ import org.apache.log4j.Logger;
 
 import java.net.SocketAddress;
 import java.util.List;
-import java.util.Random;
 
 //import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 
@@ -41,7 +41,6 @@ public class CoapMessageParser extends AbstractMessageParser {
     private transient final byte[] payload;
     private transient String mac;
 
-    private transient final Random mid;
     private boolean isBlockwise;
     private byte type;
     private final CollectorMqtt mqttCollector;
@@ -53,7 +52,7 @@ public class CoapMessageParser extends AbstractMessageParser {
      * @param payloadin     the payload message to be parsed.
      * @param mqttCollector
      */
-    public CoapMessageParser(String address, byte[] payloadin, final String testbedPrefix, final String capabilityPrefix, CollectorMqtt mqttCollector) {
+    public CoapMessageParser(String address, byte[] payloadin, CollectorMqtt mqttCollector) {
         this.timeStart = System.currentTimeMillis();
         this.mqttCollector = mqttCollector;
 //        this.apayload = new byte[payloadin.length - 2];
@@ -63,7 +62,6 @@ public class CoapMessageParser extends AbstractMessageParser {
         this.address = address;
         this.type = payloadin[0];
         this.mac = address.split("0x")[1];
-        mid = new Random();
     }
 
     /**
@@ -116,7 +114,9 @@ public class CoapMessageParser extends AbstractMessageParser {
             } else {  //getting .well-known/core autoconfig phase
                 LOGGER.info("Coap Observe Response from: " + mac);
 
+
                 String parts = CoapServer.getInstance().matchResponse(response);
+                String parts = mqttCollector.matchResponse(response);
                 if ((parts == null) || ("".equals(parts))) {
                     return;
                 }
@@ -176,23 +176,23 @@ public class CoapMessageParser extends AbstractMessageParser {
 //                        return;
 //                    }
 
-//                    if (isBlockwise) {
-//                        /**TODO : change**/
-//                        byte[] blockIdx = response.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
-//                        byte m = blockIdx[0];
-//                        m = (byte) (m >> 4);
-//                        m = (byte) (m & 0x01);
-//                        if (m == 0x00) {
-//                            try {
-//                                Thread.sleep(2000);
-//                            } catch (InterruptedException e) {
-//                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//                            }
-//                            LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
-//                            BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(mac, blockIdx);
-//                            nextBlock.run();
-//                        }
-//                    }
+                    if (isBlockwise) {
+                        /**TODO : change**/
+                        byte[] blockIdx = response.getOptions(OptionNumberRegistry.BLOCK2).get(0).getRawValue();
+                        byte m = blockIdx[0];
+                        m = (byte) (m >> 4);
+                        m = (byte) (m & 0x01);
+                        if (m == 0x00) {
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            }
+                            LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
+                            BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(mac, blockIdx);
+                            nextBlock.run();
+                        }
+                    }
 
                 } else {
 

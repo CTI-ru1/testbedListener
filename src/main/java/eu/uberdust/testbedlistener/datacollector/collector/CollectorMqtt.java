@@ -1,5 +1,8 @@
 package eu.uberdust.testbedlistener.datacollector.collector;
 
+import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import eu.uberdust.testbedlistener.coap.ActiveRequest;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import eu.uberdust.testbedlistener.mqtt.listener.BaseMqttListener;
 import eu.uberdust.testbedlistener.util.HereIamMessage;
@@ -9,6 +12,7 @@ import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.QoS;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,6 +28,9 @@ public class CollectorMqtt extends BaseMqttListener {
      */
     private static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(CollectorMqtt.class);
     private String testbedUrn;
+
+    private transient final Map<String, ActiveRequest> activeRequestsTOKEN;
+
 
     private final ExecutorService executorService;
     private String urnPrefix;
@@ -65,13 +72,13 @@ public class CollectorMqtt extends BaseMqttListener {
                 finalData[0] = 0x69;
                 finalData[1] = 0x69;
                 System.arraycopy(byteData, 0, finalData, 2, byteData.length);
-                executorService.submit(new CoapMessageParser(macAddress, finalData, urnPrefix, urnCapabilityPrefix, this));
+                executorService.submit(new CoapMessageParser(macAddress, finalData, this));
             } else {
                 byte finalData[] = new byte[body.toByteArray().length - 2 + 1];
                 finalData[0] = 0x69;
                 finalData[1] = 0x69;
                 System.arraycopy(byteData, 3, finalData, 2, body.toByteArray().length - 2 - 1);
-                executorService.submit(new CoapMessageParser(macAddress, finalData, urnPrefix, urnCapabilityPrefix, this));
+                executorService.submit(new CoapMessageParser(macAddress, finalData, this));
             }
         } catch (Exception e) {
             LOGGER.error(e, e);
@@ -97,5 +104,84 @@ public class CollectorMqtt extends BaseMqttListener {
                 LOGGER.error(e, e);
             }
         });
+    }
+
+    public String matchResponse(final Message response) {
+        synchronized (this) {
+            if (response.hasOption(OptionNumberRegistry.TOKEN)) {
+                if (activeRequestsTOKEN.isEmpty()) {
+                    return null;
+                } else if (activeRequestsTOKEN.containsKey(response.getTokenString())) {
+                    ActiveRequest activeRequest = activeRequestsTOKEN.get(response.getTokenString());
+                    activeRequest.setTimestamp(System.currentTimeMillis());
+                    activeRequest.incCount();
+                    activeRequest.setMid(response.getMID());
+                    activeRequestsTOKEN.put(response.getTokenString(), activeRequest);
+                    return activeRequest.getHost() + "," + activeRequest.getUriPath();
+                } else {
+                    return null;
+                }
+            } else {
+                if (activeRequestsMID.isEmpty()) {
+                    return null;
+                } else if (activeRequestsMID.containsKey(response.getMID())) {
+                    ActiveRequest activeRequest = activeRequestsMID.get(response.getMID());
+                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
+                    activeRequestsMID.remove(response.getMID());
+                    return retVal;
+                } else {
+                    return null;
+                }
+            }
+//            if (activeRequests.isEmpty()) {
+//                LOGGER.info("no active request");
+//                return null;
+//            }
+//            final byte[] payload = response.getPayload();
+//            int mid = response.getMID();
+
+//            LOGGER.info(response.getPayloadString());
+//            LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
+//            LOGGER.info(response.getOptionCount());
+//            LOGGER.info(address);
+
+//            for (int key : activeRequests.keySet()) {
+//                ActiveRequest activeRequest = activeRequests.get(key);
+//                if ((response.hasOption(OptionNumberRegistry.TOKEN))
+//                        && (response.getTokenString().equals(activeRequest.getToken()))) {
+//                    LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
+////                    response.setPayload(payload);
+////                    LOGGER.info(response.getPayloadString());
+//                    activeRequest.setTimestamp(System.currentTimeMillis());
+//                    activeRequest.incCount();
+//
+//                    if (activeRequest.getMid() == response.getMID()) {
+//                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
+//                    }
+//
+//                    activeRequest.setMid(response.getMID());
+//                    if (activeRequest.hasQuery()) {
+//                        return null;
+//                    } else {
+//                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
+//                    }
+//                }
+////                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
+//                if (response.getMID() == activeRequest.getMid()) {
+//                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
+////                    if (activeRequest.hasQuery()) {
+////                        retVal = null;
+////                    }
+//                    LOGGER.info("Found By MID" + retVal);
+//                    try {
+//                        activeRequests.remove(key);
+//                    } catch (Exception e) {
+//                        LOGGER.error(e, e);
+//                    }
+//                    return retVal;
+//                }
+//            }
+//            return null;
+        }
     }
 }
