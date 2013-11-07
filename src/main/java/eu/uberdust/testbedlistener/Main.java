@@ -1,13 +1,12 @@
 package eu.uberdust.testbedlistener;
 
-import eu.uberdust.communication.UberdustClient;
+import com.sensorflare.mq.RabbitMQInterface;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import eu.uberdust.testbedlistener.mqtt.listener.DeviceConnectionMqttListener;
 import eu.uberdust.testbedlistener.mqtt.listener.StatsMqttListener;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.PropertyConfigurator;
-import org.json.JSONArray;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -15,7 +14,6 @@ import java.net.SocketException;
 /**
  * Main class for the Testbedlistener application.
  * Starts a new Listener.
- *
  */
 public class Main {
 
@@ -50,7 +48,8 @@ public class Main {
 
         LOGGER.info("Starting Coap Server");
         CoapServer.getInstance();
-        UberdustClient.setUberdustURL("http://" + server + ":" + port + testbedBasePath);
+        RabbitMQInterface.getInstance().connect("150.140.5.11");
+//        UberdustClient.setUberdustURL("http://" + server + ":" + port + testbedBasePath);
 
 
 //        if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
@@ -87,7 +86,6 @@ public class Main {
                     final String mqttBroker = PropertyReader.getInstance().getProperties().getProperty("mqtt.broker");
                     MqttConnectionManager.getInstance().connect(mqttBroker);
 
-                    JSONArray testbeds = null;
 //                    try {
 //                        testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
 //                        for (int i = 0; i < testbeds.length(); i++) {

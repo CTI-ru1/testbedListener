@@ -6,7 +6,6 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.Evaluator;
 import eu.uberdust.testbedlistener.CoapHelper;
 import eu.uberdust.testbedlistener.coap.BlockWiseCoapRequest;
-import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
 import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 import eu.uberdust.testbedlistener.datacollector.notify.CacheNotify;
@@ -110,12 +109,13 @@ public class CoapMessageParser extends AbstractMessageParser {
             if (originSocketAddress != null) {
                 LOGGER.info("External Coap Message from:" + mac);
 //                System.out.println("Valid External Coap Response Message from " + mac);
-                CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
+//                CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
+                mqttCollector.sendReply(response.toByteArray(), originSocketAddress);
             } else {  //getting .well-known/core autoconfig phase
                 LOGGER.info("Coap Observe Response from: " + mac);
 
 
-                String parts = CoapServer.getInstance().matchResponse(response);
+//                String parts = CoapServer.getInstance().matchResponse(response);
                 String parts = mqttCollector.matchResponse(response);
                 if ((parts == null) || ("".equals(parts))) {
                     return;
@@ -132,7 +132,8 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info("WELL-KNOWN " + mac);
 
 
-                    CoapServer.getInstance().updateEndpoint(mac, requestType.substring(1));
+//                    CoapServer.getInstance().updateEndpoint(mac, requestType.substring(1));
+                    mqttCollector.updateEndpoint(mac, requestType.substring(1));
 
                     final String payloadStr = response.getPayloadString();
 
@@ -144,7 +145,8 @@ public class CoapMessageParser extends AbstractMessageParser {
                         isBlockwise = true;
                         String remainder = Converter.extractRemainder(payloadStr);
                         LOGGER.info(remainder);
-                        CoapServer.getInstance().addPending(address, remainder);
+//                        CoapServer.getInstance().addPending(address, remainder);
+                        mqttCollector.addPending(address, remainder);
                     }
 
                     LOGGER.info(capabilities.size());
@@ -159,7 +161,8 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info(capabilities.size());
                     for (String capability : capabilities) {
                         if (!capability.equals(".well-known/core")) {
-                            if (CoapServer.getInstance().isAlive(capability, mac)) {
+//                            if (CoapServer.getInstance().isAlive(capability, mac)) {
+                            if (mqttCollector.isAlive(capability, mac)) {
                                 continue;
                             }
                             try {
@@ -167,7 +170,8 @@ public class CoapMessageParser extends AbstractMessageParser {
                             } catch (Exception e) {
                                 LOGGER.error(e, e);
                             }
-                            CoapServer.getInstance().requestForResource(capability, mac, true, mqttCollector);
+//                            CoapServer.getInstance().requestForResource(capability, mac, true, mqttCollector);
+                            mqttCollector.requestForResource(capability, mac, true);
                         }
                     }
 
@@ -186,7 +190,7 @@ public class CoapMessageParser extends AbstractMessageParser {
                             try {
                                 Thread.sleep(2000);
                             } catch (InterruptedException e) {
-                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                LOGGER.error(e, e);
                             }
                             LOGGER.info("Requesting next block! " + Byte.toString(blockIdx[0]) + " " + blockIdx.length);
                             BlockWiseCoapRequest nextBlock = new BlockWiseCoapRequest(mac, blockIdx);
@@ -203,9 +207,10 @@ public class CoapMessageParser extends AbstractMessageParser {
 
                     if (response.isConfirmable()) {
                         LOGGER.info("Sending ack message...");
-                        CoapServer.getInstance().sendAck(response.getMID(), mac, mqttCollector);
+                        mqttCollector.sendAck(response.getMID(), mac);
                     }
-                    CoapServer.getInstance().registerEndpoint(requestType, mac);
+//                    CoapServer.getInstance().registerEndpoint(requestType, mac);
+                    mqttCollector.registerEndpoint(requestType, mac);
 
 //                    Thread d = new Thread(new Runnable() {
 //                        @Override
@@ -216,9 +221,11 @@ public class CoapMessageParser extends AbstractMessageParser {
 //                    d.start();
 
 //                    new Thread(new UberdustNotify(mac, requestType, response, testbedPrefix, capabilityPrefix)).start();
+                    LOGGER.info("Notify: " + mac + " " + requestType);
                     new Thread(new RabbitMQNotify(mac, requestType, response, mqttCollector)).start();
                     new Thread(new CacheNotify(mac, requestType, response)).start();
-                    CoapServer.getInstance().incResponseObserveCounter();
+//                    CoapServer.getInstance().incResponseObserveCounter();
+                    mqttCollector.incResponseObserveCounter();
 
 
 //                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
@@ -272,12 +279,17 @@ public class CoapMessageParser extends AbstractMessageParser {
         final String macStr = Converter.byteToString(macMSB) + Converter.byteToString(macLSB);
 //        if (macStr.contains("1ccd")) return;
         //if (!CoapServer.getInstance().registerEndpoint(".well-known/core", macStr)) return;
-        CoapServer.getInstance().registerEndpoint(".well-known/core", macStr);
+//        CoapServer.getInstance().registerEndpoint(".well-known/core", macStr);
+        mqttCollector.registerEndpoint(".well-known/core", macStr);
         LOGGER.info("Requesting .well-known/core uri_host:" + macStr);
-        Request request = CoapHelper.getWellKnown(macStr);
-        CoapServer.getInstance().addRequest(macStr, request, false);
+        Request request = CoapHelper.getWellKnown(macStr, mqttCollector.nextMID());
+//        CoapServer.getInstance().addRequest(macStr, request, false);
+        mqttCollector.addRequest(macStr, request, false);
 //        System.out.println("request"+request.toByteArray().length);
-        CoapServer.getInstance().sendRequest(request.toByteArray(), macStr, mqttCollector);
-        CoapServer.getInstance().incRequestWellKnownCounter();
+        mqttCollector.sendRequest(request.toByteArray(), macStr);
+//        CoapServer.getInstance().incRequestWellKnownCounter();
+        mqttCollector.incRequestWellKnownCounter();
     }
+
+
 }

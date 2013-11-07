@@ -5,6 +5,7 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,8 +23,8 @@ public class CoapHelper {
      * @param i      the block to request.
      * @return the CoAP request.
      */
-    public static Request getWellKnown(String macStr, int i) {
-        Request request = getWellKnown(macStr);
+    public static Request getWellKnown(final String macStr, final int i,final int mID) {
+        Request request = getWellKnown(macStr,mID);
         Option blockwiseOption = new Option(OptionNumberRegistry.BLOCK2);
         byte[] block = new byte[1];
         block[0] = (byte) ((byte) i << 4);
@@ -39,14 +40,14 @@ public class CoapHelper {
      * @param macStr the destination mac.
      * @return the CoAP request.
      */
-    public static Request getWellKnown(String macStr) {
+    public static Request getWellKnown(final String macStr,final int mID) {
         synchronized (CoapHelper.class) {
             Request request = new Request(CodeRegistry.METHOD_GET, false);
             request.setURI("/.well-known/core");
             Option urihostOption = new Option(OptionNumberRegistry.URI_HOST);
             urihostOption.setStringValue(macStr);
             request.addOption(urihostOption);
-            request.setMID(CoapServer.getInstance().nextMID());
+            request.setMID(mID);
             request.prettyPrint();
             return request;
         }

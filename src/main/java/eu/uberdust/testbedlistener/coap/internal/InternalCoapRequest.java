@@ -5,9 +5,12 @@ import eu.uberdust.testbedlistener.coap.Cache;
 import eu.uberdust.testbedlistener.coap.CacheHandler;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.internal.handler.*;
+import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 import org.apache.log4j.Logger;
 
+import java.net.DatagramPacket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -138,13 +141,18 @@ public class InternalCoapRequest {
                 for (String handlerName : internalRequestHandlers.keySet()) {
                     payload.append(",").append("<").append(handlerName.substring(1)).append(">");
                 }
-                Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
-                for (String endpoint : endpoints.keySet()) {
-                    for (String resource : endpoints.get(endpoint).keySet()) {
-                        if (".well-known/core".equals(resource)) {
-                            payload.append(",<device/").append(endpoint).append(">");
-                        } else {
-                            payload.append(",<device/").append(endpoint).append("/").append(resource).append(">");
+                //TODO: Re-Add this
+//                Map<String, Map<String, Long>> endpoints = CoapServer.getInstance().getEndpoints();
+                Map<String, CollectorMqtt> collectors = CoapServer.getInstance().getCollectors();
+                for (CollectorMqtt collector : collectors.values()) {
+                    final Map<String, Map<String, Long>> endpoints = collector.getEndpoints();
+                    for (String device : endpoints.keySet()) {
+                        for (String resource : endpoints.get(device).keySet()) {
+                            if (".well-known/core".equals(resource)) {
+                                payload.append(",<").append(collector.getTestbedUrn()).append("/").append(collector.getDeviceID()).append("/").append(device).append(">");
+                            } else {
+                                payload.append(",<").append(collector.getTestbedUrn()).append("/").append(collector.getDeviceID()).append("/").append(device).append("/").append(resource).append(">");
+                            }
                         }
                     }
                 }
@@ -177,7 +185,15 @@ public class InternalCoapRequest {
             }
         }
 
-        CoapServer.getInstance().sendReply(response.toByteArray(), socketAddress);
+//        CoapServer.getInstance().sendReply(response.toByteArray(), socketAddress);
+        final DatagramPacket replyPacket;
+        try {
+            replyPacket = new DatagramPacket(response.toByteArray(), 0, response.toByteArray().length, socketAddress);
+            CoapServer.getInstance().socketSend(replyPacket);
+        } catch (SocketException e) {
+            LOGGER.error(e, e);
+        }
+
         return null;
     }
 }

@@ -43,8 +43,8 @@ public class CoapRequestTest
      * Test Two requests have differenet MIDs.
      */
     public void testNotEqualMIDs() {
-        Request request1 = CoapHelper.getWellKnown(MAC);
-        Request request2 = CoapHelper.getWellKnown(MAC);
+        Request request1 = CoapHelper.getWellKnown(MAC,1);
+        Request request2 = CoapHelper.getWellKnown(MAC,2);
         assertNotSame(request1.getMID(), request2.getMID());
     }
 
@@ -52,7 +52,7 @@ public class CoapRequestTest
      * Test the Request contains well-known/core.
      */
     public void testContainsWellKnownCore() {
-        Request request1 = CoapHelper.getWellKnown(MAC);
+        Request request1 = CoapHelper.getWellKnown(MAC,1);
         assertEquals("/.well-known/core", request1.getUriPath());
     }
 
@@ -73,7 +73,7 @@ public class CoapRequestTest
      */
     public void testContainsURIhost() {
 
-        Request request1 = CoapHelper.getWellKnown(MAC);
+        Request request1 = CoapHelper.getWellKnown(MAC,1);
         assertTrue(request1.hasOption(OptionNumberRegistry.URI_HOST));
         assertEquals(MAC, request1.getFirstOption(OptionNumberRegistry.URI_HOST).getStringValue());
     }

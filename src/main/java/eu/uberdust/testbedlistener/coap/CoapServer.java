@@ -1,82 +1,103 @@
 package eu.uberdust.testbedlistener.coap;
 
-import ch.ethz.inf.vs.californium.coap.*;
-import com.rapplogic.xbee.api.XBeeAddress16;
-import eu.mksense.XBeeRadio;
+import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Response;
 import eu.uberdust.DeviceCommand;
 import eu.uberdust.testbedlistener.HeartBeatJob;
 import eu.uberdust.testbedlistener.coap.udp.EthernetUDPhandler;
 import eu.uberdust.testbedlistener.coap.udp.UDPhandler;
 import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
-import eu.uberdust.testbedlistener.mqtt.listener.BaseMqttListener;
 import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
-import eu.uberdust.testbedlistener.util.TokenManager;
 import org.apache.log4j.Logger;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: amaxilatis
- * Date: 5/19/12
- * Time: 6:58 PM
- * To change this template use File | Settings | File Templates.
+ * CoAP Server Class.
+ * Used to Manage Connections and control most operations between diffrent {@see CollectorMqtt} threads and external Request.
+ *
+ * @author Dimitrios Amaxilatis,Dimitrios Giannakopoulos
+ * @Date 5/19/12
  */
 public class CoapServer {
+
     /**
      * LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(CoapServer.class);
-    private static final String CONNECTED_ARDUINO_GATEWAY_STRING = "reconnectarduinoGateway";
+    protected final static String MQTT_SEPARATOR = ",";
+
     /**
      * Singleton instance.
      */
     private static CoapServer instance = null;
+
     /**
-     * Registered Endpoints.
+     * Singleton Class.
+     *
+     * @return The unique instance of CoapServer.
      */
-    private transient final Map<String, Map<String, Long>> endpoints;
+    public static CoapServer getInstance() {
+        synchronized (CoapServer.class) {
+            if (instance == null) {
+                instance = new CoapServer();
+            }
+        }
+        return instance;
+    }
+
     /**
-     * Active Requests.
+     * All the connected collectors for every different Gateway Device.
      */
-    private transient final Map<Integer, ActiveRequest> activeRequestsMID;
-    private transient final Map<String, ActiveRequest> activeRequestsTOKEN;
+    Map<String, CollectorMqtt> collectors;
+
     /**
-     * COAP Server socket.
+     * CoAP Server socket.
      */
     private transient DatagramSocket socket;
 
-    /**
-     * Random number generator.
-     */
-    //private transient final Random mid;
     private final String testbedPrefix;
-    private static final int MILLIS_IN_SECOND = 1000;
-    private static final int MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
-    private static final long MILLIS_TO_STALE = 2 * MILLIS_IN_MINUTE;
-    private final Map<Integer, String> ownRequests;
-    private final List<TokenItem> ownObserves;
-    private final Map<String, String> blockWisePending;
-    private final Map<Integer, String> ethernetBlockWisePending;
-    private final Map<String, Long> duplicates;
-    private int currentMID;
-    private final long startTime;
-    private int requestWellKnownCounter;
-    private int requestObserveCounter;
-    public int responseObserveCounter;
-    private int observeLostCounter;
     private EthernetUDPhandler ethernetUDPHandler;
-    private BaseMqttListener mqtt;
+
+    private final Map<Integer, String> ethernetBlockWisePending;
+    private final Map<Integer, String> ownRequests;
+
+    private final List<TokenItem> ownObserves;
+
+    private final Map<String, Long> duplicates;
+
+    /**
+     * Boot tile for status updates.
+     */
+    private final long startTime;
+    /**
+     * Quartz {@see SchedulerFactory} for heartbeats.
+     */
     private final StdSchedulerFactory schFactory;
+
+    /**
+     * Quartz {@see Scheduler} for heartbeats.
+     */
     private Scheduler sch;
+    /**
+     * All the Gateway Devices Connected.
+     */
     private Map<String, HashMap<String, Long>> arduinoGateways;
+
+    /**
+     * Key-Value store for Statistics received from Gateway Devices.
+     */
     private Map<String, Map<String, Map<String, String>>> arduinoGatewayStats;
+
     private Map<String, String> xCount, yCount;
 
     public long getStartTime() {
@@ -87,58 +108,53 @@ public class CoapServer {
      * Constructor.
      */
     public CoapServer() {
-        ownRequests = new HashMap<Integer, String>();
-        ownObserves = new ArrayList<TokenItem>();
-        this.endpoints = new HashMap<String, Map<String, Long>>();
-        blockWisePending = new HashMap<String, String>();
-        ethernetBlockWisePending = new HashMap<Integer, String>();
-        this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
-        this.activeRequestsTOKEN = new HashMap<String, ActiveRequest>();
-        this.arduinoGateways = new HashMap<String, HashMap<String, Long>>();
-        this.arduinoGatewayStats = new HashMap<String, Map<String, Map<String, String>>>();
-        this.xCount = new HashMap<String, String>();
-        this.yCount = new HashMap<String, String>();
-        this.testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
-        this.duplicates = new HashMap<String, Long>();
-        currentMID = (int) (Math.random() * 0x10000);
+
         this.startTime = System.currentTimeMillis();
-        this.requestWellKnownCounter = 0;
-        this.requestObserveCounter = 0;
-        this.responseObserveCounter = 0;
-        this.observeLostCounter = 0;
 
+        ownRequests = new HashMap<>();
+        ownObserves = new ArrayList<>();
 
-        schFactory = new StdSchedulerFactory();
+        this.collectors = new HashMap<>();
+        this.ethernetBlockWisePending = new HashMap<>();
+        this.arduinoGateways = new HashMap<>();
+        this.arduinoGatewayStats = new HashMap<>();
 
+        xCount = new HashMap<>();
+        yCount = new HashMap<>();
+        testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
+        duplicates = new HashMap<String, Long>();
+
+        //Create and Schedule a Job for the HeartBeats
+        this.schFactory = new StdSchedulerFactory();
         try {
             sch = schFactory.getScheduler();
             sch.start();
         } catch (SchedulerException e) {
             LOGGER.error(e, e);
         }
-
         JobDetail heartbeatToGatewaysJob = JobBuilder.newJob(HeartBeatJob.class).withIdentity("heartbeatToGatewaysJob").build();
         try {
-            this.addJob(heartbeatToGatewaysJob, 1);
+            //Trigger the job to run on the next round minute
+            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(
+                    SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(1).repeatForever())
+                    .build();
+            sch.scheduleJob(heartbeatToGatewaysJob, trigger);
+
         } catch (SchedulerException e) {
             LOGGER.error(e, e);
         }
 
-
-//        Timer discoveryTimer = new Timer();
-//        discoveryTimer.scheduleAtFixedRate(new BroadcastCoapRequest(), 20000, 60000);
-
-
-        //Start the udp socket
+        //Start the CoAP udp socket
         try {
             socket = new DatagramSocket(5683);
         } catch (SocketException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
+        //TODO: needed ?
         GatewayManager.getInstance();
 
-//        //Start the handler
+        //Start listening for incoming CoAP requests!
         final UDPhandler thread = new UDPhandler(socket);
         thread.start();
 //
@@ -159,148 +175,10 @@ public class CoapServer {
 //            }
 //        }, 60000, 60000);
 
-        LOGGER.info("started CoapServer");
+        LOGGER.info("CoapServer Booted up!");
     }
 
-
-    public void addJob(JobDetail jobDetail, int interval) throws SchedulerException {
-        //Trigger the job to run on the next round minute
-        Trigger trigger = TriggerBuilder.newTrigger().withSchedule(
-                SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(interval).repeatForever())
-                .build();
-        sch.scheduleJob(jobDetail, trigger);
-    }
-
-    public void cleanActiveRequests() {
-        LOGGER.info("Cleaning active Requests");
-        for (int key : activeRequestsMID.keySet()) {
-            if (System.currentTimeMillis() - activeRequestsMID.get(key).getTimestamp() > 2 * MILLIS_IN_MINUTE + 20 * MILLIS_IN_SECOND) {
-
-//                try {
-//                    TokenManager.getInstance().releaseToken(Hex.decodeHex(activeRequest.getToken().toCharArray()));
-//                } catch (DecoderException e) {
-//
-//                }
-                activeRequestsMID.remove(key);
-            }
-        }
-
-
-    }
-
-
-    /**
-     * Singleton Class.
-     *
-     * @return The unique instance of CoapServer.
-     */
-    public static CoapServer getInstance() {
-        synchronized (CoapServer.class) {
-            if (instance == null) {
-                instance = new CoapServer();
-            }
-        }
-        return instance;
-    }
-
-    /**
-     * Adds an address to the list of endpoints provided by the server.
-     *
-     * @param address an address address.
-     * @param path
-     * @return if the endoint existed in the server.
-     */
-    public boolean registerEndpoint(final String path, final String address) {
-        LOGGER.error("Register resource" + path + " from device " + address);
-
-        synchronized (CoapServer.class) {
-            if (endpoints.containsKey(address)) {
-                if (endpoints.get(address).containsKey(path)) {
-                    Cache pair = CacheHandler.getInstance().getValue(address, path);
-                    long millis;
-                    if (pair == null) {
-                        millis = MILLIS_TO_STALE;
-                    } else {
-                        millis = pair.getMaxAge() * 1000;
-                    }
-                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
-                        endpoints.get(address).put(path, System.currentTimeMillis());
-                        LOGGER.info("Resource was out of date " + address + "/" + path);
-                        return true;
-                    } else {
-                        endpoints.get(address).put(path, System.currentTimeMillis());
-                        return false;
-                    }
-                } else {
-                    endpoints.get(address).put(path, System.currentTimeMillis());
-                    return true;
-                }
-            } else {
-                LOGGER.info("Adding new device: " + address);
-                HashMap<String, Long> map = new HashMap<String, Long>();
-                map.put(path, System.currentTimeMillis());
-                endpoints.put(address, map);
-                return true;
-            }
-        }
-    }
-
-
-    /**
-     * Adds an address to the list of endpoints provided by the server.
-     *
-     * @param address an address address.
-     * @param path
-     * @return if the endoint existed in the server.
-     */
-    public boolean isAlive(final String path, final String address) {
-        LOGGER.error("isAlive-" + address + path);
-        synchronized (CoapServer.class) {
-            if (endpoints.containsKey(address)) {
-                if (endpoints.get(address).containsKey(path)) {
-                    Cache pair = CacheHandler.getInstance().getValue(address, "/" + path);
-                    long millis;
-                    if (pair == null) {
-                        millis = MILLIS_TO_STALE;
-                    } else {
-                        millis = pair.getMaxAge() * 1000;
-                    }
-                    if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
-                        LOGGER.info("address was stale " + address + " " + path);
-                        if (pair != null) {
-                            pair.incLostCounter();
-                        }
-                        observeLostCounter++;
-                        return false;
-                    } else {
-
-                        return true;
-                    }
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        }
-    }
-
-    public void updateEndpoint(final String address, final String path) {
-        endpoints.get(address).put(path, System.currentTimeMillis());
-    }
-
-
-//    public void endpointIsAlive(final String endpoint, final String path) {
-//        LOGGER.info("endpointIsAlive");
-//        synchronized (CoapServer.class) {
-//            if (endpoints.containsKey(endpoint)) {
-//                endpoints.put(endpoint, System.currentTimeMillis());
-//            }
-//        }
-//    }
-
-
-    void socketSend(DatagramPacket replyPacket) {
+    public void socketSend(DatagramPacket replyPacket) {
         try {
             //garbage-check "Coap Version should be 01 nothing more nothing less"
             byte fbyte = (byte) (replyPacket.getData()[0] & 0xc0);
@@ -310,173 +188,6 @@ public class CoapServer {
             }
         } catch (IOException e) {
             LOGGER.error("socketSend(", e);
-        }
-    }
-
-
-    /**
-     * Sends a reply to a packet using the socket.
-     *
-     * @param buf           the bytes to send as a reply
-     * @param socketAddress the address of the udp client
-     */
-    public void sendReply(final byte[] buf, final SocketAddress socketAddress) {
-        byte[] localBuf = buf.clone();
-
-        LOGGER.info("sending reply to " + socketAddress + " len: " + buf.length);
-        final DatagramPacket replyPacket;
-        try {
-            replyPacket = new DatagramPacket(localBuf, 0, buf.length, socketAddress);
-            socketSend(replyPacket);
-        } catch (SocketException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-    }
-
-    /**
-     * Adds the req to the list of active requests.
-     *
-     * @param address the address from which the req originated.
-     * @param req     the req message.
-     */
-    public void addRequest(final String address, final Message req, final boolean hasQuery) {
-
-        synchronized (CoapServer.class) {
-            int count = 0;
-            if (req.hasOption(OptionNumberRegistry.TOKEN)) {
-                if (!activeRequestsTOKEN.containsKey(req.getTokenString())) {
-                    for (String key : activeRequestsTOKEN.keySet()) {
-                        if (activeRequestsTOKEN.get(key).getHost().equals(address) && activeRequestsTOKEN.get(key).getUriPath().equals(req.getUriPath())) {
-                            count = activeRequestsTOKEN.get(key).getCount();
-                            activeRequestsTOKEN.remove(key);
-                            break;
-                        }
-                    }
-                    ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
-                    mRequest.setCount(count);
-                    activeRequestsTOKEN.put(req.getTokenString(), mRequest);
-                    LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
-                }
-            } else {
-                if (!activeRequestsMID.containsKey(req.getMID())) {
-                    for (Integer key : activeRequestsMID.keySet()) {
-                        if (activeRequestsMID.get(key).getHost().equals(address) && activeRequestsMID.get(key).getUriPath().equals(req.getUriPath())) {
-                            count = activeRequestsMID.get(key).getCount();
-                            activeRequestsMID.remove(key);
-                            break;
-                        }
-                    }
-                    ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
-                    mRequest.setCount(count);
-                    activeRequestsMID.put(req.getMID(), mRequest);
-                    LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
-                }
-            }
-//            for (int key : activeRequests.keySet()) {
-//
-//                if ((activeRequests.get(key).getMid() == req.getMID()) || (req.hasOption(OptionNumberRegistry.TOKEN) && (activeRequests.get(key).getToken().equals(req.getTokenString())))) {
-//                    activeRequests.get(key).setUriPath(req.getUriPath());
-//                    activeRequests.get(key).setMid(req.getMID());
-//                    activeRequests.get(key).setQuery(hasQuery);
-//                    activeRequests.get(key).setTimestamp(System.currentTimeMillis());
-//                    return;
-//                }
-//                if (activeRequests.get(key).getUriPath().equals(req.getUriPath()) && activeRequests.get(key).getHost().equals(address)) {
-//                    activeRequests.get(key).setMid(req.getMID());
-//                    activeRequests.get(key).setTimestamp(System.currentTimeMillis());
-//                    activeRequests.get(key).setToken(req.getTokenString());
-//                    return;
-//                }
-//            }
-//            ActiveRequest mRequest = new ActiveRequest(req.getUriPath(), req.getMID(), req.getTokenString(), address, hasQuery, System.currentTimeMillis());
-//            activeRequests.put(req.getMID(), mRequest);
-//            LOGGER.info("Added Active Request For " + mRequest.getHost() + " with mid " + mRequest.getMid() + " path:" + mRequest.getUriPath());
-        }
-    }
-
-    /**
-     * Matches a message to a previously received request.
-     *
-     * @param response The response received.
-     * @return The URI of the request or null.
-     */
-
-    public String matchResponse(final Message response) {
-        synchronized (CoapServer.class) {
-            if (response.hasOption(OptionNumberRegistry.TOKEN)) {
-                if (activeRequestsTOKEN.isEmpty()) {
-                    return null;
-                } else if (activeRequestsTOKEN.containsKey(response.getTokenString())) {
-                    ActiveRequest activeRequest = activeRequestsTOKEN.get(response.getTokenString());
-                    activeRequest.setTimestamp(System.currentTimeMillis());
-                    activeRequest.incCount();
-                    activeRequest.setMid(response.getMID());
-                    activeRequestsTOKEN.put(response.getTokenString(), activeRequest);
-                    return activeRequest.getHost() + "," + activeRequest.getUriPath();
-                } else {
-                    return null;
-                }
-            } else {
-                if (activeRequestsMID.isEmpty()) {
-                    return null;
-                } else if (activeRequestsMID.containsKey(response.getMID())) {
-                    ActiveRequest activeRequest = activeRequestsMID.get(response.getMID());
-                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
-                    activeRequestsMID.remove(response.getMID());
-                    return retVal;
-                } else {
-                    return null;
-                }
-            }
-//            if (activeRequests.isEmpty()) {
-//                LOGGER.info("no active request");
-//                return null;
-//            }
-//            final byte[] payload = response.getPayload();
-//            int mid = response.getMID();
-
-//            LOGGER.info(response.getPayloadString());
-//            LOGGER.info(response.hasOption(OptionNumberRegistry.TOKEN));
-//            LOGGER.info(response.getOptionCount());
-//            LOGGER.info(address);
-
-//            for (int key : activeRequests.keySet()) {
-//                ActiveRequest activeRequest = activeRequests.get(key);
-//                if ((response.hasOption(OptionNumberRegistry.TOKEN))
-//                        && (response.getTokenString().equals(activeRequest.getToken()))) {
-//                    LOGGER.info("Found By Token " + response.getTokenString() + "==" + activeRequest.getToken());
-////                    response.setPayload(payload);
-////                    LOGGER.info(response.getPayloadString());
-//                    activeRequest.setTimestamp(System.currentTimeMillis());
-//                    activeRequest.incCount();
-//
-//                    if (activeRequest.getMid() == response.getMID()) {
-//                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
-//                    }
-//
-//                    activeRequest.setMid(response.getMID());
-//                    if (activeRequest.hasQuery()) {
-//                        return null;
-//                    } else {
-//                        return activeRequest.getHost() + "," + activeRequest.getUriPath();
-//                    }
-//                }
-////                LOGGER.info(activeRequest.getMid() + "--" + response.getMID());
-//                if (response.getMID() == activeRequest.getMid()) {
-//                    String retVal = activeRequest.getHost() + "," + activeRequest.getUriPath();
-////                    if (activeRequest.hasQuery()) {
-////                        retVal = null;
-////                    }
-//                    LOGGER.info("Found By MID" + retVal);
-//                    try {
-//                        activeRequests.remove(key);
-//                    } catch (Exception e) {
-//                        LOGGER.error(e, e);
-//                    }
-//                    return retVal;
-//                }
-//            }
-//            return null;
         }
     }
 
@@ -500,171 +211,11 @@ public class CoapServer {
         }
     }
 
-
-    /**
-     * Sends a payload to a device and add the message id at the beginning of the message.
-     *
-     * @param data    the data to send.
-     * @param nodeUrn the destination device.
-     */
-    public void sendRequest(final byte[] data, final String nodeUrn, final CollectorMqtt aCollector) {
-        final byte[] payload = new byte[data.length + 1];
-        payload[0] = 51;
-        System.arraycopy(data, 0, payload, 1, data.length);
-        LOGGER.info("sending request");
-//        TestbedController.getInstance().sendMessage(payload, nodeUrn);
-//        XbeeController.getInstance().sendPayload(nodeUrn,payload);
-        mqttSendPayload(nodeUrn, payload, aCollector);
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                mqttSendPayload(nodeUrn, payload, aCollector);
-            }
-        }, 100);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                mqttSendPayload(nodeUrn, payload, aCollector);
-            }
-        }, 250);
-    }
-
-    private void sendXbee(XBeeAddress16 address16, int i, int[] bytes, int counter) {
-
-        try {
-            XBeeRadio.getInstance().send(address16, i, bytes);
-        } catch (Exception e1) {
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e2) {
-                return;
-            }
-            if (counter > 4) {
-                return;
-            }
-            sendXbee(address16, i, bytes, ++counter);
-            LOGGER.error(e1.getMessage(), e1);
-        }
-
-    }
-
-
-    /**
-     * Send a COAP ACK to a device containing a single mid.
-     *
-     * @param mid     the mid to ack.
-     * @param nodeUrn the destination device.
-     */
-    public void sendAck(final int mid, final String nodeUrn,final CollectorMqtt aCollector) {
-        final Message ack = new Message(Message.messageType.ACK, 0);
-        ack.setMID(mid);
-        sendRequest(ack.toByteArray(), nodeUrn,aCollector);
-//        final byte[] data = ack.toByteArray();
-//        final int[] bytes = new int[data.length + 1];
-//        bytes[0] = 51;
-//        for (int i = 0; i < data.length; i++) {
-//            final short read = (short) ((short) data[i] & 0xff);
-//            bytes[i + 1] = read;
-//        }
-//        final int[] macAddress = Converter.getInstance().addressToInteger(nodeUrn);
-//        final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
-//        LOGGER.info("Sending Ack to " + nodeUrn);
-//        try {
-//            XBeeRadio.getInstance().send(address16, 112, bytes);
-//        } catch (Exception e) {//NOPMD
-//            LOGGER.error(e.getMessage(), e);
-//        }
-    }
-
-//    public void registerForResource(final String capability, final String address) {
-//        {
-//            URI uri = null;
-//            try {
-//                uri = new URI(new StringBuilder().append("/").append(capability).toString());
-//            } catch (URISyntaxException e) {
-//                LOGGER.error(e.getLocalizedMessage(), e);
-//            }
-//            final Request request = new Request(CodeRegistry.METHOD_GET, false);
-//            request.setMID(nextMID());
-//            request.setURI(uri);
-////            List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, uri.getPath(), "/");
-////            request.setOptions(OptionNumberRegistry.URI_PATH, uriPath);
-////            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-////            request.setToken(TokenManager.getInstance().acquireToken());
-//
-//            addRequest(address, request, false);
-//            sendRequest(request.toByteArray(), address);
-//        }
-//
-//    }
-
-    public int nextMID() {
-        do {
-            currentMID = ++currentMID % 0x10000;
-        } while (isReservedMID(currentMID));
-        return currentMID;
-    }
-
-    private boolean isReservedMID(int currentMID) {
-        if (activeRequestsMID.containsKey(currentMID)) return true;
-        return false;
-    }
-
-//    }
-
-    public void requestForResource(String capability, String address, boolean observe, final CollectorMqtt aCollector) {
-        synchronized (CoapServer.class) {
-            LOGGER.info("requestForResource:" + address);
-//        if (!capability.equals("pir")) return;
-            URI uri = null;
-            try {
-                uri = new URI(new StringBuilder().append("/").append(capability).toString());
-            } catch (URISyntaxException e) {
-                LOGGER.error(e, e);
-            }
-            final Request request = new Request(CodeRegistry.METHOD_GET, false);
-            //int newmid = mid.nextInt() % 65535;
-            request.setURI(uri);
-            request.setMID(nextMID());
-            //request.setMID(newmid > 0 ? newmid : -newmid);
-            Option urihost = new Option(OptionNumberRegistry.URI_HOST);
-            urihost.setStringValue(address);
-            request.addOption(urihost);
-            if (observe) {
-                request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-                request.setToken(TokenManager.getInstance().acquireToken(address));
-                requestObserveCounter++;
-//                request.setToken(TokenManager.getInstance().acquireToken());
-            }
-            request.prettyPrint();
-//            ownRequests.put(request.getMID(), uri.toString());
-            addRequest(address, request, false);
-            LOGGER.info(request.getMID());
-            sendRequest(request.toByteArray(), address, aCollector);
-
-
-        }
-    }
-
     public String matchMID(int mid) {
         if (ownRequests.containsKey(mid)) {
             String uri = ownRequests.get(mid);
             ownRequests.remove(uri);
             return uri;
-        }
-        return "";
-    }
-
-    public void addPending(String remoteAddress, String remainder) {
-        blockWisePending.put(remoteAddress, remainder);
-    }
-
-    public String getPending(String remoteAddress) {
-        if (blockWisePending.containsKey(remoteAddress)) {
-            String value = blockWisePending.get(remoteAddress);
-            blockWisePending.remove(remoteAddress);
-            return value;
         }
         return "";
     }
@@ -688,34 +239,6 @@ public class CoapServer {
         LOGGER.info("Adding by token " + token + " \"" + payload + "\"");
         ownObserves.add(new TokenItem(token, payload));
     }
-
-    //    public boolean isOutside(String address, Message response) {
-////        LOGGER.info("Looking for " + address + " with mid " + response.getMID());
-////        synchronized (CoapServer.class) {
-////            if (activeRequests.isEmpty()) {
-////                return false;
-////            }
-//////            if (!activeRequests.containsKey(address)) return false;
-//////
-//////            for (ActiveRequest activeRequest : activeRequests.get(destination)) {
-//////                if ((response.hasOption(OptionNumberRegistry.TOKEN))
-//////                        && (response.getTokenString().equals(activeRequest.getToken()))) {
-//////                    if (activeRequest.hasQuery()) {
-//////                        return false;
-//////                    } else {
-//////                        return true;
-//////                    }
-//////                }
-//////                if (response.getMID() == activeRequest.getMid()) {
-//////                    String retVal = activeRequest.getUriPath();
-//////                    return true;
-//////                }
-//////            }
-////
-////        }
-////
-////        return false;
-
 
     public String checkEthernet(String token) {
         LOGGER.info("Checking by token " + token);
@@ -752,7 +275,7 @@ public class CoapServer {
         try {
             udPhandler.send(ack, address);
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            LOGGER.error(e, e);
         }
     }
 
@@ -762,33 +285,12 @@ public class CoapServer {
         try {
             udPhandler.send(ack, address);
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            LOGGER.error(e, e);
         }
     }
 
     public DatagramSocket getSocket() {
         return socket;
-    }
-
-    public String findGateway(final String destination) {
-        if (GatewayManager.getInstance().hasGateway(destination)) {
-            return GatewayManager.getInstance().getGateway(destination);
-        } else {
-            return "1ccd";
-        }
-
-    }
-
-    public Map<String, Map<String, Long>> getEndpoints() {
-        return endpoints;
-    }
-
-    public Map<Integer, ActiveRequest> getActiveRequestsMID() {
-        return activeRequestsMID;
-    }
-
-    public Map<String, ActiveRequest> getActiveRequestsTOKEN() {
-        return activeRequestsTOKEN;
     }
 
     public List<TokenItem> getObservers() {
@@ -809,50 +311,18 @@ public class CoapServer {
         }
     }
 
-    public void incRequestWellKnownCounter() {
-        requestWellKnownCounter++;
-    }
-
-    public int getRequestWellKnownCounter() {
-        return requestWellKnownCounter;
-    }
-
-    public int getRequestObserveCounter() {
-        return requestObserveCounter;
-    }
-
-    public void incRequestObserveCounter() {
-        requestObserveCounter++;
-    }
-
-    public void incResponseObserveCounter() {
-        responseObserveCounter++;
-    }
-
-    public int getResponseObserveCounter() {
-        return responseObserveCounter;
-    }
-
-    public int getObserveLostCounter() {
-        return observeLostCounter;
-    }
-
     public void sendEthernetRequest(DeviceCommand command) {
-//        System.out.println("sending dgram to ");
 
         InetAddress inetAddr;
         try {
             inetAddr = InetAddress.getByName(command.getDestination().substring(command.getDestination().lastIndexOf(":") + 1));
 
-            String payloadIn = command.getPayload().substring(3);
+            final String payloadIn = command.getPayload().substring(3);
             final byte[] payload = Converter.getInstance().commaPayloadtoBytes(payloadIn);
             //payload[payload.length-2]-=32;
 //            System.out.println("sending dgram with" + Arrays.toString(payload));
-            DatagramPacket packet = new DatagramPacket(payload, payload.length, inetAddr, 5683);
+            final DatagramPacket packet = new DatagramPacket(payload, payload.length, inetAddr, 5683);
             socketSend(packet);
-        } catch (UnknownHostException e) {
-            LOGGER.error(e, e);
-            return;
         } catch (IOException e) {
             LOGGER.error(e, e);
             return;
@@ -867,20 +337,22 @@ public class CoapServer {
         return ethernetUDPHandler;
     }
 
-    public void setMqtt(BaseMqttListener mqtt) {
-        this.mqtt = mqtt;
-    }
-
-    public void publish(final String topic, final String message) {
-        mqttPublish(topic, message);
-    }
-
     public void registerGateway(boolean isNew, String deviceId, String testbedHash) {
         LOGGER.info("put " + testbedHash);
         if (!arduinoGateways.containsKey(testbedHash)) {
             arduinoGateways.put(testbedHash, new HashMap<String, Long>());
         }
         arduinoGateways.get(testbedHash).put(deviceId, System.currentTimeMillis());
+
+        final String key = testbedHash + MQTT_SEPARATOR + deviceId;
+
+        final CollectorMqtt aCollector = new CollectorMqtt(deviceId, testbedHash);
+
+        if (!collectors.containsKey(key)) {
+            collectors.put(key, aCollector);
+        }
+
+        MqttConnectionManager.getInstance().listen(key + "/#", aCollector);
     }
 
     public Map<String, Map<String, Map<String, String>>> getArduinoGatewayStats() {
@@ -903,12 +375,8 @@ public class CoapServer {
         return arduinoGateways;
     }
 
-    public Map<String, String> getXCount() {
-        return xCount;
-    }
-
-    public Map<String, String> getYCount() {
-        return yCount;
+    public Map<String, CollectorMqtt> getCollectors() {
+        return collectors;
     }
 
     public class TokenItem {
@@ -927,23 +395,5 @@ public class CoapServer {
         public String getPath() {
             return path;
         }
-    }
-
-
-    public void mqttSendPayload(final String destination, final byte[] payloadIn, final CollectorMqtt aCollector) {
-        byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
-        byte[] payloadWithDestination = new byte[payloadIn.length + 2];
-        LOGGER.debug("mqttSendPayload");
-        payloadWithDestination[0] = destinationBytes[1];
-        payloadWithDestination[1] = destinationBytes[0];
-        System.arraycopy(payloadIn, 0, payloadWithDestination, 2, payloadIn.length);
-
-        aCollector.publish(payloadWithDestination);
-    }
-
-
-    public void mqttPublish(final String topic, final String message) {
-        LOGGER.debug("mqttPublish");
-        MqttConnectionManager.getInstance().publish(topic, message);
     }
 }

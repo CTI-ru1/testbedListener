@@ -1,5 +1,7 @@
 package eu.uberdust.testbedlistener.coap;
 
+import org.apache.commons.collections.FastTreeMap;
+
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;

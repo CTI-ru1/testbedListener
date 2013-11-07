@@ -48,10 +48,7 @@ public class DeviceConnectionMqttListener extends BaseMqttListener {
                     } else {
                         LOGGER.info("Alive id:" + deviceId + " testbed:" + testbedHash);
                     }
-                    //TODO: make this report connect messages
                     CoapServer.getInstance().registerGateway(reConnect, deviceId, testbedHash);
-                    //Connect a new Listener for this Gateway
-                    MqttConnectionManager.getInstance().listen(testbedHash + MQTT_SEPARATOR + deviceId + "/#", new CollectorMqtt(deviceId, testbedHash));
                 }
             }).start();
         } catch (Exception e) {
