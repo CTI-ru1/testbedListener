@@ -1,7 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector.notify;
 
 import ch.ethz.inf.vs.californium.coap.Message;
-import com.sensorflare.mq.RabbitMQInterface;
+import com.sensorflare.mq.RabbitMQManager;
 import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 import org.apache.log4j.Logger;
 
@@ -68,7 +68,7 @@ public class RabbitMQNotify implements Runnable {
                 .setDoubleReading(value)
                 .build();
         LOGGER.info("publishing");
-        RabbitMQInterface.getInstance().publish("readings", reading.toByteArray());
+        RabbitMQManager.getInstance().publish("readings", reading.toByteArray());
     }
 
     private void sendtoRabbitMQ(final String nodeId, final String capabilityName, final String value) {
@@ -81,6 +81,6 @@ public class RabbitMQNotify implements Runnable {
                 .setTimestamp(System.currentTimeMillis())
                 .setStringReading(value)
                 .build();
-        RabbitMQInterface.getInstance().publish("readings", reading.toByteArray());
+        RabbitMQManager.getInstance().publish("readings", reading.toByteArray());
     }
 }
