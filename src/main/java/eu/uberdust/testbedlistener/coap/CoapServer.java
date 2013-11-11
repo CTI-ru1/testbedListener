@@ -34,7 +34,7 @@ public class CoapServer {
      * LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(CoapServer.class);
-    protected final static String MQTT_SEPARATOR = ",";
+    protected final static String MQTT_SEPARATOR = "-";
 
     /**
      * Singleton instance.

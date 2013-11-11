@@ -117,7 +117,7 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
                     final String deviceID = parts[2];
                     if (CoapServer.getInstance().getArduinoGateways().get(testbedHash).containsKey(deviceID)) {
                         if ("reset".equals(udpRequest.getPayloadString())) {
-                            MqttConnectionManager.getInstance().publish("s" + testbedHash + "," + deviceID, "reset");
+                            MqttConnectionManager.getInstance().publish("s" + testbedHash + "-" + deviceID, "reset");
                             response.setPayload("Sent Reset To Gateway!");
                             response.setCode(CodeRegistry.RESP_VALID);
                             return;

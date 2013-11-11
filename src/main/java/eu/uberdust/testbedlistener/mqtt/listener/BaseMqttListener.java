@@ -14,7 +14,7 @@ import org.fusesource.mqtt.client.QoS;
  * @date 04/10/2013
  */
 public class BaseMqttListener implements Listener {
-    protected final static String MQTT_SEPARATOR = ",";
+    protected final static String MQTT_SEPARATOR = "-";
     protected final String topic;
 
     protected CallbackConnection connection;
