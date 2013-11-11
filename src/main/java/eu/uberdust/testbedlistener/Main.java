@@ -1,6 +1,6 @@
 package eu.uberdust.testbedlistener;
 
-import com.sensorflare.mq.RabbitMQInterface;
+import com.sensorflare.mq.RabbitMQManager;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import eu.uberdust.testbedlistener.mqtt.listener.DeviceConnectionMqttListener;
@@ -48,7 +48,7 @@ public class Main {
 
         LOGGER.info("Starting Coap Server");
         CoapServer.getInstance();
-        RabbitMQInterface.getInstance().connect("150.140.5.11");
+        RabbitMQManager.getInstance().connect("150.140.5.11");
 //        UberdustClient.setUberdustURL("http://" + server + ":" + port + testbedBasePath);
 
 
