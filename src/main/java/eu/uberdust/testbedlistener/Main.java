@@ -6,6 +6,7 @@ import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import eu.uberdust.testbedlistener.mqtt.listener.DeviceConnectionMqttListener;
 import eu.uberdust.testbedlistener.mqtt.listener.StatsMqttListener;
 import eu.uberdust.testbedlistener.util.PropertyReader;
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.PropertyConfigurator;
 
 import java.net.DatagramSocket;
@@ -42,83 +43,36 @@ public class Main {
 //        BasicConfigurator.configure();
         PropertyConfigurator.configure("log4j.properties");
 
-        final String server = PropertyReader.getInstance().getProperties().getProperty("uberdust.server");
-        final String port = PropertyReader.getInstance().getProperties().getProperty("uberdust.port");
-        final String testbedBasePath = PropertyReader.getInstance().getProperties().getProperty("uberdust.basepath");
+        final String uberdustServer = PropertyReader.getInstance().getProperties().getProperty("uberdust.uberdustServer");
+        final String uberdustPort = PropertyReader.getInstance().getProperties().getProperty("uberdust.uberdustPort");
 
-        LOGGER.info("Starting Coap Server");
+        final String rabbitMQServer = PropertyReader.getInstance().getProperties().getProperty("rabbitmq.server");
+        final String rabbitMQPort = PropertyReader.getInstance().getProperties().getProperty("rabbitmq.port");
+        final String rabbitMQuser = PropertyReader.getInstance().getProperties().getProperty("rabbitmq.user", "guest");
+        final String rabbitMQpassword = PropertyReader.getInstance().getProperties().getProperty("rabbitmq.password", "guest");
+
+        //Connect the RabbitMQ Broker
+        RabbitMQManager.getInstance().connect(rabbitMQServer, rabbitMQPort, rabbitMQuser, rabbitMQpassword);
+        LOGGER.info("RabbitMQ connected");
+
+        //Start the CoAPServer
         CoapServer.getInstance();
-        RabbitMQManager.getInstance().connect("150.140.5.11");
-//        UberdustClient.setUberdustURL("http://" + server + ":" + port + testbedBasePath);
+        LOGGER.info("CoAPServer Started");
+
+        //Connect the MQTT Broker
+        final String myMQTTServer = PropertyReader.getInstance().getProperties().getProperty("mqtt.server");
+        final String myMQTTPort = PropertyReader.getInstance().getProperties().getProperty("mqtt.port", "1883");
+        final String myMQTTBroker = "tcp://" + myMQTTServer + ":" + myMQTTPort;
+
+        MqttConnectionManager.getInstance().connect(myMQTTBroker);
+
+        MqttConnectionManager.getInstance().listen("stats/#", new StatsMqttListener());
+        MqttConnectionManager.getInstance().listen("connect/#", new DeviceConnectionMqttListener());
+
+        LOGGER.info("MQTT Broker Connected!");
 
 
-//        if (PropertyReader.getInstance().getProperties().get("use.controller").equals("1") ||
-//                PropertyReader.getInstance().getProperties().get("use.datacollector").equals("1")) {
-//            LOGGER.info("Connecting Network Manager");
-//            JSONArray testbeds = null;
-//            NetworkManager.getInstance().start(server + ":" + port + testbedBasePath, 5);
-////            try {
-////                testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
-////                for (int i = 0; i < testbeds.length(); i++) {
-////                    NetworkManager.getInstance().listenFor(i+1);
-////                }
-////            } catch (JSONException e) {
-////                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-////            }
-//
-//        }
-
-//        //Awaits for commands from Uberdust.
-//        if (ENABLED.equals(PropertyReader.getInstance().getProperties().get("use.controller"))) {
-//            LOGGER.info("addObserver");
-//            NetworkManager.getInstance().addObserver(TestbedController.getInstance());
-//        }
-
-
-        //Listens to new Messages from the TestbedRuntime
-        if (ENABLED.equals(PropertyReader.getInstance().getProperties().get("use.datacollector"))) {
-            LOGGER.info("Starting Collectors...");
-
-            try {
-                final boolean hasMqttBroker = !PropertyReader.getInstance().getProperties().getProperty("mqtt.broker").isEmpty();
-                if (hasMqttBroker) {
-                    LOGGER.info("MqttConnector...");
-                    final String mqttBroker = PropertyReader.getInstance().getProperties().getProperty("mqtt.broker");
-                    MqttConnectionManager.getInstance().connect(mqttBroker);
-
-//                    try {
-//                        testbeds = new JSONArray(UberdustRestClient.getInstance().callRestfulWebService("http://" + server + ":" + port + testbedBasePath + "rest/testbed/json"));
-//                        for (int i = 0; i < testbeds.length(); i++) {
-////                            CollectorMqtt mqList = new CollectorMqtt(mqttBroker, i + 1);
-////                            new Thread(mqList).start();
-//                        }
-                    MqttConnectionManager.getInstance().listen("stats/#", new StatsMqttListener());
-                    MqttConnectionManager.getInstance().listen("connect/#", new DeviceConnectionMqttListener());
-
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//                    }
-//
-                }
-            } catch (NullPointerException npe) {
-                LOGGER.warn("mqtt.broker property is not defined");
-                LOGGER.error(npe, npe);
-            }
-
-            DatagramSocket ds;
-            try {
-                ds = new DatagramSocket(6665);
-            } catch (SocketException e) {
-                LOGGER.info("exiting...");
-                return;
-            }
-
-            PropertyReader.getInstance().setFile("listener.properties");
-
-        }
-
-
-        LOGGER.info("up and running");
+        LOGGER.info("All Systems up and running!");
 
     }
 }
