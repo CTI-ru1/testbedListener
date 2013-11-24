@@ -1,0 +1,16 @@
+##################################
+#MQTT related properties
+mqtt.server=
+mqtt.port=
+
+##################################
+#RabbitMQ related properties
+rabbitmq.server=
+rabbitmq.port=
+#rabbitmq.username=
+#rabbitmq.password=
+
+
+
+
+

@@ -11,7 +11,7 @@
     <name>ÜberDust - Listeners</name>
     <description>Application for collecting data from a sensor Testbed</description>
     <url>http://uberdust.cti.gr</url>
-    <version>1.MQTTN-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <properties>
         <jetty-version>8.0.4.v20111024</jetty-version>
     </properties>
@@ -65,7 +65,7 @@
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
-            <version>1.2.16</version>
+            <version>1.2.17</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -185,7 +185,6 @@
                     <execution>
                         <configuration>
                             <mainClass>eu.uberdust.testbedlistener.Main</mainClass>
-                            <filename>testbed-listener.jar</filename>
                         </configuration>
                         <goals>
                             <goal>one-jar</goal>
