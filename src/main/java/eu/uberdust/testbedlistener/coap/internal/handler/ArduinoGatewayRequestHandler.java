@@ -41,16 +41,14 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
             public void run() {
                 try {
                     //Get All Testbeds/Gateways.
-                    final Map<String, HashMap<String, Long>> gateways = CoapServer.getInstance().getArduinoGateways();
+                    final Map<String, Long> gateways = CoapServer.getInstance().getArduinoGateways();
 
-                    //Register Testbeds
-                    for (final String testbedUrn : gateways.keySet()) {
-                        internalRequestHandlers.put("/" + testbedUrn, thisObject);
-                        //RegisterGateways
-                        for (final String gatewayDevice : gateways.get(testbedUrn).keySet()) {
-                            internalRequestHandlers.put("/" + testbedUrn + "/" + gatewayDevice, thisObject);
-                        }
+                    //RegisterGateways
+                    for (final String gatewayDevice : gateways.keySet()) {
+                        LOGGER.info("registering " + "/gateway/" + gatewayDevice);
+                        internalRequestHandlers.put("/gateway/" + gatewayDevice, thisObject);
                     }
+
                 } catch (final Exception e) {
                     //Used to avoid Exceptions in the TimerTask.
                     LOGGER.error(e, e);
@@ -66,13 +64,20 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
         //Requested Path
         final String requestURIpath = udpRequest.getUriPath();
         //Top-Level
-        if ("/gateways".equals(requestURIpath)) {
+        if ("/gateway".equals(requestURIpath)) {
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
 
-                final Map<String, HashMap<String, Long>> gways = CoapServer.getInstance().getArduinoGateways();
-                for (final String gateway : gways.keySet()) {
-                    payload.append(describeTestbed(gateway, gways.get(gateway)));
+                final Map<String, Long> gateways = CoapServer.getInstance().getArduinoGateways();
+                final Map<String, Map<String, String>> gatewayStats = CoapServer.getInstance().getArduinoGatewayStats();
 
+                for (final String gateway : gateways.keySet()) {
+                    payload.append(describeGateway(gateway, gateways.get(gateway)));
+                    //add stats received
+                    if (gatewayStats.containsKey(gateway)) {
+                        for (String key : gatewayStats.get(gateway).keySet()) {
+                            payload.append("\t").append(key).append("->").append(gatewayStats.get(gateway).get(key)).append("\n");
+                        }
+                    }
                 }
                 response.setPayload(payload.toString());
                 return;
@@ -85,24 +90,17 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
 
             final String[] parts = requestURIpath.split("/");
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
-                if (parts.length == 2) {
-                    final String testbedHash = parts[1];
-                    if (CoapServer.getInstance().getArduinoGateways().containsKey(testbedHash)) {
-                        HashMap<String, Long> gways = CoapServer.getInstance().getArduinoGateways().get(testbedHash);
-                        payload.append(describeTestbed(testbedHash, gways));
-                        response.setPayload(payload.toString());
-                        return;
-                    } else {
-                        response.setCode(CodeRegistry.RESP_NOT_FOUND);
-                        return;
-                    }
-                }
                 if (parts.length == 3) {
-                    final String testbedHash = parts[1];
                     final String deviceID = parts[2];
-                    if (CoapServer.getInstance().getArduinoGateways().get(testbedHash).containsKey(deviceID)) {
-                        final Long timestamp = CoapServer.getInstance().getArduinoGateways().get(testbedHash).get(deviceID);
+                    if (CoapServer.getInstance().getArduinoGateways().containsKey(deviceID)) {
+                        final Long timestamp = CoapServer.getInstance().getArduinoGateways().get(deviceID);
                         payload.append(describeGateway(deviceID, timestamp));
+                        //add stats received
+                        if (CoapServer.getInstance().getArduinoGatewayStats().containsKey(deviceID)) {
+                            for (String key : CoapServer.getInstance().getArduinoGatewayStats().get(deviceID).keySet()) {
+                                payload.append("\t").append(key).append("->").append(CoapServer.getInstance().getArduinoGatewayStats().get(deviceID).get(key)).append("\n");
+                            }
+                        }
                         response.setPayload(payload.toString());
                         return;
                     } else {
@@ -113,11 +111,10 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
                 }
             } else if (udpRequest.getCode() == CodeRegistry.METHOD_POST) {
                 if (parts.length == 3) {
-                    final String testbedHash = parts[1];
                     final String deviceID = parts[2];
-                    if (CoapServer.getInstance().getArduinoGateways().get(testbedHash).containsKey(deviceID)) {
+                    if (CoapServer.getInstance().getArduinoGateways().containsKey(deviceID)) {
                         if ("reset".equals(udpRequest.getPayloadString())) {
-                            MqttConnectionManager.getInstance().publish("s" + testbedHash + "-" + deviceID, "reset");
+                            MqttConnectionManager.getInstance().publish("s" + deviceID, "reset");
                             response.setPayload("Sent Reset To Gateway!");
                             response.setCode(CodeRegistry.RESP_VALID);
                             return;
@@ -127,7 +124,7 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
                             return;
                         }
                     } else {
-                        response.setPayload("Gateway Device not Registed!");
+                        response.setPayload("Gateway Device {" + deviceID + "} not Registed! " + requestURIpath);
                         response.setCode(CodeRegistry.RESP_NOT_FOUND);
                         return;
                     }
@@ -161,7 +158,6 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
 
     private String describeGateway(final String deviceID, final long timestamp) {
         final StringBuilder payload = new StringBuilder()
-                .append("\t")
                 .append(deviceID)
                 .append(" @ ")
                 .append(new Date(timestamp))

@@ -38,17 +38,16 @@ public class DeviceConnectionMqttListener extends BaseMqttListener {
                     System.arraycopy(body.getData(), body.getOffset(), data, 0, data.length);
                     LOGGER.debug("Body: " + Arrays.toString(body.getData()));
                     LOGGER.debug("Data: " + Arrays.toString(data));
-                    final String[] parts = new String(data).split(MQTT_SEPARATOR);
+                    final String[] parts = new String(data).split(MQTT_SEPARATOR, 2);
                     boolean reConnect = "1".equals(parts[0]);
                     String testbedHash = parts[1];
-                    String deviceId = parts[2];
 
                     if (reConnect) {
-                        LOGGER.info("Reconnect id:" + deviceId + " testbed:" + testbedHash);
+                        LOGGER.info("Reconnect id:" + testbedHash);
                     } else {
-                        LOGGER.info("Alive id:" + deviceId + " testbed:" + testbedHash);
+                        LOGGER.info("Alive id:" + testbedHash);
                     }
-                    CoapServer.getInstance().registerGateway(reConnect, deviceId, testbedHash);
+                    CoapServer.getInstance().registerGateway(reConnect, testbedHash);
                 }
             }).start();
         } catch (Exception e) {

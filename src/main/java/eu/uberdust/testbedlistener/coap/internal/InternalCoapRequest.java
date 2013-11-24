@@ -37,7 +37,7 @@ public class InternalCoapRequest {
         internalRequestHandlers.put("/wakeup", new WakeupRequestHandler());
         //needed for hereiam registration
         internalRequestHandlers.put("/ethernet", new EthernetRequestHandler());
-        internalRequestHandlers.put("/gateways", new ArduinoGatewayRequestHandler(internalRequestHandlers));
+        internalRequestHandlers.put("/gateway", new ArduinoGatewayRequestHandler(internalRequestHandlers));
 //        internalRequestHandlers.put("/endpoints", new EndpointsRequestHandler());
 //        internalRequestHandlers.put("/activeRequests", new ActiveRequestsRequestHandler());
 //        internalRequestHandlers.put("/pendingRequests", new PendingRequestsRequestHandler());
@@ -149,9 +149,9 @@ public class InternalCoapRequest {
                     for (String device : endpoints.keySet()) {
                         for (String resource : endpoints.get(device).keySet()) {
                             if (".well-known/core".equals(resource)) {
-                                payload.append(",<").append(collector.getTestbedUrn()).append("/").append(collector.getDeviceID()).append("/").append(device).append(">");
+                                payload.append(",<gateway/").append(collector.getDeviceID()).append("/").append(device).append(">");
                             } else {
-                                payload.append(",<").append(collector.getTestbedUrn()).append("/").append(collector.getDeviceID()).append("/").append(device).append("/").append(resource).append(">");
+                                payload.append(",<gateway/").append(collector.getDeviceID()).append("/").append(device).append("/").append(resource).append(">");
                             }
                         }
                     }

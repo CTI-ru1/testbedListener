@@ -34,16 +34,16 @@ public class StatsMqttListener extends BaseMqttListener {
                     System.arraycopy(body.getData(), body.getOffset(), data, 0, data.length);
                     LOGGER.debug("Body: " + Arrays.toString(body.getData()));
                     LOGGER.debug("Data: " + Arrays.toString(data));
+                    LOGGER.info("Data: " + new String(data));
                     final String[] parts = new String(data).split(MQTT_SEPARATOR);
-                    final String testbedHash = parts[0];
-                    final String deviceId = parts[1];
-                    final String statKey = parts[2];
-                    final String statValue = parts[3];
+                    final String deviceId = parts[0];
+                    final String statKey = parts[1];
+                    final String statValue = parts[2];
 
-                    LOGGER.info("Stat Message id:" + deviceId + " testbed:" + testbedHash + " key:" + statKey + " value:" + statValue);
+                    LOGGER.info("Stat Message id:" + deviceId + " key:" + statKey + " value:" + statValue);
 
                     //TODO: make this report stats messages
-                    CoapServer.getInstance().appendGatewayStat(false, deviceId, testbedHash, statKey, statValue);
+                    CoapServer.getInstance().appendGatewayStat(deviceId, statKey, statValue);
                 }
             }).start();
         } catch (Exception e) {

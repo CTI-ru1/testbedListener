@@ -65,7 +65,6 @@ public class CoapServer {
      */
     private transient DatagramSocket socket;
 
-    private final String testbedPrefix;
     private EthernetUDPhandler ethernetUDPHandler;
 
     private final Map<Integer, String> ethernetBlockWisePending;
@@ -91,12 +90,12 @@ public class CoapServer {
     /**
      * All the Gateway Devices Connected.
      */
-    private Map<String, HashMap<String, Long>> arduinoGateways;
+    private Map<String, Long> arduinoGateways;
 
     /**
      * Key-Value store for Statistics received from Gateway Devices.
      */
-    private Map<String, Map<String, Map<String, String>>> arduinoGatewayStats;
+    private Map<String, Map<String, String>> arduinoGatewayStats;
 
     private Map<String, String> xCount, yCount;
 
@@ -121,7 +120,7 @@ public class CoapServer {
 
         xCount = new HashMap<>();
         yCount = new HashMap<>();
-        testbedPrefix = PropertyReader.getInstance().getTestbedPrefix();
+
         duplicates = new HashMap<String, Long>();
 
         //Create and Schedule a Job for the HeartBeats
@@ -152,7 +151,7 @@ public class CoapServer {
         }
 
         //TODO: needed ?
-        GatewayManager.getInstance();
+        //GatewayManager.getInstance();
 
         //Start listening for incoming CoAP requests!
         final UDPhandler thread = new UDPhandler(socket);
@@ -201,8 +200,8 @@ public class CoapServer {
     private void respondToUDP(final Message response, final ActiveRequest activeRequest, String address) {
         if (activeRequest.getSocketAddress() != null) {
             try {
-                response.setURI("/" + testbedPrefix + address + activeRequest.getUriPath());
-                LOGGER.info("/" + testbedPrefix + address + activeRequest.getUriPath());
+                response.setURI("/" + address + activeRequest.getUriPath());
+                LOGGER.info("/" + address + activeRequest.getUriPath());
                 LOGGER.info("Sending Response to: " + activeRequest.getSocketAddress());
                 socketSend(new DatagramPacket(response.toByteArray(), response.toByteArray().length, activeRequest.getSocketAddress()));
             } catch (IOException e) {
@@ -337,16 +336,14 @@ public class CoapServer {
         return ethernetUDPHandler;
     }
 
-    public void registerGateway(boolean isNew, String deviceId, String testbedHash) {
-        LOGGER.info("put " + testbedHash);
-        if (!arduinoGateways.containsKey(testbedHash)) {
-            arduinoGateways.put(testbedHash, new HashMap<String, Long>());
-        }
-        arduinoGateways.get(testbedHash).put(deviceId, System.currentTimeMillis());
+    public void registerGateway(boolean isNew, String deviceId) {
+        LOGGER.info("put " + deviceId);
 
-        final String key = testbedHash + MQTT_SEPARATOR + deviceId;
+        arduinoGateways.put(deviceId, System.currentTimeMillis());
 
-        final CollectorMqtt aCollector = new CollectorMqtt(deviceId, testbedHash);
+        final String key = deviceId;
+
+        final CollectorMqtt aCollector = new CollectorMqtt(deviceId);
 
         if (!collectors.containsKey(key)) {
             collectors.put(key, aCollector);
@@ -355,23 +352,19 @@ public class CoapServer {
         MqttConnectionManager.getInstance().listen(key + "/#", aCollector);
     }
 
-    public Map<String, Map<String, Map<String, String>>> getArduinoGatewayStats() {
+    public Map<String, Map<String, String>> getArduinoGatewayStats() {
         return arduinoGatewayStats;
     }
 
-    public void appendGatewayStat(final boolean b, final String deviceId, final String testbedHash, final String key, final String value) {
-        LOGGER.info("put " + testbedHash);
-        if (!arduinoGatewayStats.containsKey(testbedHash)) {
-            arduinoGatewayStats.put(testbedHash, new HashMap<String, Map<String, String>>());
+    public void appendGatewayStat(final String deviceId, final String key, final String value) {
+        LOGGER.info("put " + deviceId + " key: " + key + " value: " + value);
+        if (!arduinoGatewayStats.containsKey(deviceId)) {
+            arduinoGatewayStats.put(deviceId, new HashMap<String, String>());
         }
-        if (!arduinoGatewayStats.get(testbedHash).containsKey(deviceId)) {
-            arduinoGatewayStats.get(testbedHash).put(deviceId, new HashMap<String, String>());
-        }
-        arduinoGatewayStats.get(testbedHash).get(deviceId).put(key, value);
-
+        arduinoGatewayStats.get(deviceId).put(key, value);
     }
 
-    public Map<String, HashMap<String, Long>> getArduinoGateways() {
+    public Map<String, Long> getArduinoGateways() {
         return arduinoGateways;
     }
 

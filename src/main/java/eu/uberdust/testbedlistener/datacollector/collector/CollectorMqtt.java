@@ -34,8 +34,6 @@ public class CollectorMqtt extends BaseMqttListener {
     private static final int MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
     private static final long MILLIS_TO_STALE = 2 * MILLIS_IN_MINUTE;
 
-    private String testbedUrn;
-
     private final Map<Integer, ActiveRequest> activeRequestsMID;
     private final Map<String, ActiveRequest> activeRequestsTOKEN;
     /**
@@ -46,8 +44,6 @@ public class CollectorMqtt extends BaseMqttListener {
     private final Map<String, String> blockWisePending;
 
     private final ExecutorService executorService;
-    private String urnPrefix;
-    private String urnCapabilityPrefix;
     public int responseObserveCounter;
     private int currentMID;
     private int requestObserveCounter;
@@ -56,9 +52,8 @@ public class CollectorMqtt extends BaseMqttListener {
 
     private final String deviceID;
 
-    public CollectorMqtt(final String deviceID, final String testbedUrn) {
-        super(testbedUrn + MQTT_SEPARATOR + deviceID);
-        this.testbedUrn = testbedUrn;
+    public CollectorMqtt(final String deviceID) {
+        super(deviceID);
         this.deviceID = deviceID;
 
         this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
@@ -70,8 +65,6 @@ public class CollectorMqtt extends BaseMqttListener {
 
 
         this.executorService = Executors.newCachedThreadPool();
-        this.urnPrefix = "";
-        this.urnCapabilityPrefix = "";
         this.requestWellKnownCounter = 0;
         this.requestObserveCounter = 0;
         this.responseObserveCounter = 0;
@@ -122,10 +115,6 @@ public class CollectorMqtt extends BaseMqttListener {
 
     public String getDeviceID() {
         return deviceID;
-    }
-
-    public String getTestbedUrn() {
-        return testbedUrn;
     }
 
     @Override

@@ -59,7 +59,7 @@ public class RabbitMQNotify implements Runnable {
 
     private void sendtoRabbitMQ(final String nodeId, final String capabilityName, final Double value) {
 
-        final String nodeUrn = collector.getTestbedUrn() + nodeId;
+        final String nodeUrn = collector.getDeviceID() + ":" + nodeId;
 
         final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
                 .setNode(nodeUrn)
@@ -73,7 +73,7 @@ public class RabbitMQNotify implements Runnable {
 
     private void sendtoRabbitMQ(final String nodeId, final String capabilityName, final String value) {
 
-        final String nodeUrn = collector.getTestbedUrn() + nodeId;
+        final String nodeUrn = collector.getDeviceID() + ":" + nodeId;
 
         final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
                 .setNode(nodeUrn)

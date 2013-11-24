@@ -44,12 +44,13 @@ public class MqttConnectionManager {
 
     }
 
-    public void connect(String listenerHostURI) {
+    public void connect(final String listenerHostURI) {
         this.listenerHostURI = listenerHostURI;
         this.listenerSleepBeforeReAttemptInSeconds = DEFAULT_SLEEP_BEFORE_RE_ATTEMPT_IN_SECONDS;
         this.listenerMaxReAttemptDurationInSeconds = DEFAULT_MAX_RE_ATTEMPT_DURATION_IN_SECONDS;
 
         mqtt = new MQTT();
+
         listenerLastSuccessfulSubscription = System.currentTimeMillis();
 
         try {
