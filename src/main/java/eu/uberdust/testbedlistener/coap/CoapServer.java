@@ -343,13 +343,13 @@ public class CoapServer {
 
         final String key = deviceId;
 
-        final CollectorMqtt aCollector = new CollectorMqtt(deviceId);
 
         if (!collectors.containsKey(key)) {
+            final CollectorMqtt aCollector = new CollectorMqtt(deviceId);
+            MqttConnectionManager.getInstance().listen(key + "/#", aCollector);
             collectors.put(key, aCollector);
         }
 
-        MqttConnectionManager.getInstance().listen(key + "/#", aCollector);
     }
 
     public Map<String, Map<String, String>> getArduinoGatewayStats() {
