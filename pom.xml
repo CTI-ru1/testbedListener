@@ -32,6 +32,12 @@
         </repository>
 
         <repository>
+            <id>google-releases</id>
+            <name>Google Releases</name>
+            <url>https://oss.sonatype.org/content/repositories/google-releases</url>
+        </repository>
+
+        <repository>
             <id>repository.ru1</id>
             <url>http://ru1.cti.gr/maven</url>
             <snapshots>
@@ -86,6 +92,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
             <version>1.6.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>12.0</version>
         </dependency>
 
         <!--PROTOBUFS-->
