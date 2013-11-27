@@ -8,8 +8,6 @@ import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
 import org.apache.commons.collections.map.ListOrderedMap;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +56,7 @@ public class StatusRequestHandler implements InternalRequestHandlerInterface {
                 prop.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("version.properties"));
                 statusElements.put("Version", String.valueOf(prop.get("version")));
                 statusElements.put("Build", String.valueOf(prop.get("build")));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -67,12 +65,16 @@ public class StatusRequestHandler implements InternalRequestHandlerInterface {
                 payload.append(key).append(":").append("\t").append(statusElements.get(key)).append("\n");
             }
 
+            payload.append("====================================================================\n");
 
-//                payload.append(".well-known/core requests: ").append(CoapServer.getInstance().getRequestWellKnownCounter()).append("\n");
-//                payload.append("Observe Requests:").append(CoapServer.getInstance().getRequestObserveCounter()).append("\n");
-//                payload.append("Observe Responses:").append(CoapServer.getInstance().getResponseObserveCounter()).append("\n");
-//                payload.append("Observe Lost:").append(CoapServer.getInstance().getObserveLostCounter()).append("\n");
-
+            ThreadGroup currentGroup =
+                    Thread.currentThread().getThreadGroup();
+            int noThreads = currentGroup.activeCount();
+            Thread[] lstThreads = new Thread[noThreads];
+            currentGroup.enumerate(lstThreads);
+            for (int i = 0; i < noThreads; i++) {
+                payload.append("Thread No:").append(i).append(" = ").append(lstThreads[i].getName()).append("\n");
+            }
 
             response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
             response.setPayload(payload.toString());
