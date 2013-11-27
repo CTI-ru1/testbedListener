@@ -1,6 +1,7 @@
 package eu.uberdust.testbedlistener.datacollector.collector;
 
 import ch.ethz.inf.vs.californium.coap.*;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import eu.uberdust.testbedlistener.coap.ActiveRequest;
 import eu.uberdust.testbedlistener.coap.Cache;
 import eu.uberdust.testbedlistener.coap.CacheHandler;
@@ -18,6 +19,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Class used to handle messages from a specific Gateway Device.
@@ -51,6 +53,7 @@ public class CollectorMqtt extends BaseMqttListener {
     private int requestWellKnownCounter;
 
     private final String deviceID;
+    private final Timer timer;
 
     public CollectorMqtt(final String deviceID) {
         super(deviceID);
@@ -63,12 +66,14 @@ public class CollectorMqtt extends BaseMqttListener {
 
         currentMID = (int) (Math.random() * 0x10000);
 
-
-        this.executorService = Executors.newCachedThreadPool();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("MqttCollector:" + deviceID + "-Thread #%d").build();
+        this.executorService = Executors.newCachedThreadPool(threadFactory);
         this.requestWellKnownCounter = 0;
         this.requestObserveCounter = 0;
         this.responseObserveCounter = 0;
         this.observeLostCounter = 0;
+
+        this.timer = new Timer("send-request-" + deviceID);
 
     }
 
@@ -303,7 +308,6 @@ public class CollectorMqtt extends BaseMqttListener {
 //        TestbedController.getInstance().sendMessage(payload, nodeUrn);
 //        XbeeController.getInstance().sendPayload(nodeUrn,payload);
         mqttSendPayload(nodeUrn, payload);
-        Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {

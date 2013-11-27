@@ -35,7 +35,7 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
         //final variable for the Timer.
         final InternalRequestHandlerInterface thisObject = this;
 
-        Timer timer = new Timer();
+        Timer timer = new Timer("paths-updater");
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {

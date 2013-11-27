@@ -1,6 +1,7 @@
 package eu.uberdust.testbedlistener.coap.udp;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * UDP handler thread.
@@ -29,7 +31,8 @@ public class UDPhandler extends Thread {//NOPMD
 
     public UDPhandler(final DatagramSocket socket) {
         this.socket = socket;
-        executorService = Executors.newCachedThreadPool();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("UDPhandler-Thread #%d").build();
+        executorService = Executors.newCachedThreadPool(threadFactory);
     }
 
 

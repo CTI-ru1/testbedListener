@@ -2,6 +2,7 @@ package eu.uberdust.testbedlistener.coap.udp;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Response;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * UDP handler thread.
@@ -32,7 +34,8 @@ public class EthernetUDPhandler extends Thread {//NOPMD
 
     public EthernetUDPhandler(final DatagramSocket socket) {
         this.socket = socket;
-        executorService = Executors.newCachedThreadPool();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("EthernetUDPhandler-Thread #%d").build();
+        executorService = Executors.newCachedThreadPool(threadFactory);
     }
 
 
@@ -81,7 +84,7 @@ public class EthernetUDPhandler extends Thread {//NOPMD
     }
 
     public void send(Message request, InetAddress device) throws IOException {
-        DatagramPacket packet = new DatagramPacket(request.toByteArray(), request.toByteArray().length, device,5683);
+        DatagramPacket packet = new DatagramPacket(request.toByteArray(), request.toByteArray().length, device, 5683);
         socket.send(packet);
     }
 
