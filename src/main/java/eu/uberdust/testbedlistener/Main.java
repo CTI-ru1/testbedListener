@@ -6,11 +6,7 @@ import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import eu.uberdust.testbedlistener.mqtt.listener.DeviceConnectionMqttListener;
 import eu.uberdust.testbedlistener.mqtt.listener.StatsMqttListener;
 import eu.uberdust.testbedlistener.util.PropertyReader;
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.PropertyConfigurator;
-
-import java.net.DatagramSocket;
-import java.net.SocketException;
 
 /**
  * Main class for the Testbedlistener application.
@@ -63,6 +59,8 @@ public class Main {
         final String myMQTTServer = PropertyReader.getInstance().getProperties().getProperty("mqtt.server");
         final String myMQTTPort = PropertyReader.getInstance().getProperties().getProperty("mqtt.port", "1883");
         final String myMQTTBroker = "tcp://" + myMQTTServer + ":" + myMQTTPort;
+
+        LOGGER.info("Connecting to MQTT Broker {" + myMQTTBroker + "}...");
 
         MqttConnectionManager.getInstance().connect(myMQTTBroker);
 
