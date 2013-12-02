@@ -66,7 +66,7 @@ public class CollectorMqtt extends BaseMqttListener {
 
         currentMID = (int) (Math.random() * 0x10000);
 
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("MqttCollector:" + deviceID + "-Thread #%d").build();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("CoapMessageParser:" + deviceID + "-Thread #%d").build();
         this.executorService = Executors.newCachedThreadPool(threadFactory);
         this.requestWellKnownCounter = 0;
         this.requestObserveCounter = 0;
