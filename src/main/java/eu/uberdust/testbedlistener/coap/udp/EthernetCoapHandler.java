@@ -75,7 +75,7 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
                 if (capability.contains("well-known/core")) {
                     continue;
                 }
-                final Cache pair = CacheHandler.getInstance().getValue(address, capability);
+                final Cache pair = CacheHandler.getInstance().getValue(address + "/" + capability);
                 if (pair != null) {
                     if (System.currentTimeMillis() - pair.getTimestamp() < pair.getMaxAge() * 1000) {
                         LOGGER.info("Skipping " + address + "/" + capability + " as UpToDate");
@@ -236,7 +236,7 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
         capability = capability.replace("Sensor", "s");
         capability = capability.replace("I", "i");
 
-        CacheHandler.getInstance().setValue(nodeId, capability, 30, 30, value.toString());
+        CacheHandler.getInstance().setValue(nodeId + "/" + capability, 30, 30, value.toString());
 
         final String nodeUrn = testbedPrefix + nodeId;
         final String capabilityName = (capabilityPrefix + capability).toLowerCase();

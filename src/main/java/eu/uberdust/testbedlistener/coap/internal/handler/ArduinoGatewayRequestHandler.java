@@ -46,8 +46,13 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
                     //RegisterGateways
                     for (final String gatewayDevice : gateways.keySet()) {
                         LOGGER.info("registering " + "/gateway/" + gatewayDevice);
-                        internalRequestHandlers.put("/gateway/" + gatewayDevice, thisObject);
                     }
+//                    Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
+//                    for (String device : cache.keySet()) {
+//                        for (String resource : cache.get(device).keySet()) {
+//                            internalRequestHandlers.put("/gateway/" + gatewayDevice+"/"+device+"/"+resource, thisObject);
+//                        }
+//                    }
 
                 } catch (final Exception e) {
                     //Used to avoid Exceptions in the TimerTask.
@@ -111,10 +116,10 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
                 }
             } else if (udpRequest.getCode() == CodeRegistry.METHOD_POST) {
                 if (parts.length == 3) {
-                    final String deviceID = parts[2];
-                    if (CoapServer.getInstance().getArduinoGateways().containsKey(deviceID)) {
+                    final String gatewayID = parts[2];
+                    if (CoapServer.getInstance().getArduinoGateways().containsKey(gatewayID)) {
                         if ("reset".equals(udpRequest.getPayloadString())) {
-                            MqttConnectionManager.getInstance().publish("s" + deviceID, "reset");
+                            MqttConnectionManager.getInstance().publish("s" + gatewayID, "reset");
                             response.setPayload("Sent Reset To Gateway!");
                             response.setCode(CodeRegistry.RESP_VALID);
                             return;
@@ -124,7 +129,7 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
                             return;
                         }
                     } else {
-                        response.setPayload("Gateway Device {" + deviceID + "} not Registed! " + requestURIpath);
+                        response.setPayload("Gateway Device {" + gatewayID + "} not Registed! " + requestURIpath);
                         response.setCode(CodeRegistry.RESP_NOT_FOUND);
                         return;
                     }

@@ -7,6 +7,7 @@ import eu.uberdust.testbedlistener.coap.CacheHandler;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Internal Request Handler used to show the contents of the Cache for all the registered IoT devices.
@@ -19,22 +20,25 @@ public class CacheRequestHandler implements InternalRequestHandlerInterface {
     public void handle(Message udpRequest, Message response) {
         if (udpRequest.getCode() == CodeRegistry.METHOD_GET) {
             StringBuilder payload = new StringBuilder("");
-            final Map<String, Map<String, Cache>> cache = CacheHandler.getInstance().getCache();
-            payload.append("Host\tPath\tValue\tTimestamp\t\t\tAge\tObserves lost\n");
+            final Map<String, Cache> cache = CacheHandler.getInstance().getCache();
+            payload.append("Host\t\t\t\t\tValue\tTimestamp\t\t\tAge\tObserves lost\n");
+
             List<Option> uriHostsOptions = udpRequest.getOptions(OptionNumberRegistry.URI_HOST);
             String uriHost = "";
             if (uriHostsOptions.size() > 0) {
                 uriHost = uriHostsOptions.get(0).getStringValue();
             }
-            for (String device : cache.keySet()) {
-                if (!"".equals(uriHost) && !device.equals(uriHost)) {
+            final Pattern pattern = Pattern.compile(uriHost);
+            for (final String resourceURIString : cache.keySet()) {
+
+                if (!"".equals(uriHost) && !(pattern.matcher(resourceURIString).find())) {
                     continue;
                 }
-                for (String uriPath : cache.get(device).keySet()) {
-                    final Cache pair = cache.get(device).get(uriPath);
-                    final long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
-                    payload.append(device).append("\t").append(uriPath).append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\t").append(pair.getLostCounter()).append("\n");
-                }
+
+                final Cache pair = cache.get(resourceURIString);
+                final long timediff = (System.currentTimeMillis() - pair.getTimestamp()) / 1000;
+                payload.append(resourceURIString).append("\t").append("\t").append(pair.getValue()).append("\t").append(new Date(pair.getTimestamp())).append("\t").append(timediff).append("sec").append(timediff > pair.getMaxAge() ? " *" : "").append("\t").append(pair.getLostCounter()).append("\n");
+
             }
             response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
             response.setPayload(payload.toString());

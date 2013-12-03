@@ -13,14 +13,13 @@ import eu.uberdust.testbedlistener.coap.CacheHandler;
 public class CacheNotify implements Runnable {
 
     private transient final Message response;
-    private transient final String requestType;
-    private transient final String mac;
+    private transient final String resourceURIString;
 
-    public CacheNotify(final String mac, final String requestType, final Message response) {
-        System.out.println("saving to cache " + mac);
+
+    public CacheNotify(final String resourceURIString, final Message response) {
+        System.out.println("saving to cache " + resourceURIString);
         this.response = response;
-        this.requestType = requestType;
-        this.mac = mac;
+        this.resourceURIString = resourceURIString;
     }
 
     @Override
@@ -31,6 +30,6 @@ public class CacheNotify implements Runnable {
         } else {
             maxAge = 60;
         }
-        CacheHandler.getInstance().setValue(mac, "/" + requestType, maxAge, response.getContentType(), response.getPayloadString());
+        CacheHandler.getInstance().setValue(resourceURIString, maxAge, response.getContentType(), response.getPayloadString());
     }
 }

@@ -1,7 +1,5 @@
 package eu.uberdust.testbedlistener.coap;
 
-import org.apache.commons.collections.FastTreeMap;
-
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -14,32 +12,16 @@ import java.util.TreeMap;
  * To change this template use File | Settings | File Templates.
  */
 public class CacheHandler {
-    private transient final Map<String, Map<String, Cache>> cache;
+    private transient final Map<String, Cache> cache;
     private static CacheHandler instance = null;
 
     public CacheHandler() {
-        cache = new TreeMap<String, Map<String, Cache>>(new Comparator<String>() {
+        cache = new TreeMap<>(new Comparator<String>() {
             @Override
             public int compare(final String s, final String s1) {
                 return s.compareTo(s1);
             }
         });
-
-//        timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                for (String node : cache.keySet()) {
-//                    for (String capability : cache.get(node).keySet()) {
-//                        if (System.currentTimeMillis() - cache.get(node).get(capability).getTimestamp() < 120000) {
-//                            System.out.println("CacheCheck " + node + " @ " + capability + " : outofdate");
-//
-//                        }
-//                    }
-//                }
-//
-//            }
-//        }, 60000, 60000);
     }
 
     public static CacheHandler getInstance() {
@@ -51,37 +33,25 @@ public class CacheHandler {
         }
     }
 
-    public Cache getValue(final String uriHost, final String uriPath) {
-        if (cache.containsKey(uriHost)) {
-            if (cache.get(uriHost).containsKey(uriPath)) {
-                return cache.get(uriHost).get(uriPath);
+    public Cache getValue(final String resourceURIString) {
+        if (cache.containsKey(resourceURIString)) {
+            if (cache.containsKey(resourceURIString)) {
+                return cache.get(resourceURIString);
             }
         }
         return null;
     }
 
-    public void setValue(final String uriHost, final String uriPath, final int maxAge, final int contentType, final String value) {
-        if (cache.containsKey(uriHost)) {
-            if (cache.get(uriHost).containsKey(uriPath)) {
-                cache.get(uriHost).get(uriPath).put(value, System.currentTimeMillis(), maxAge, contentType);
-            } else {
-                Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
-                cache.get(uriHost).put(uriPath, pair);
-            }
-        } else {
+    public void setValue(final String resourceURIString, final int maxAge, final int contentType, final String value) {
+        if (!cache.containsKey(resourceURIString)) {
             final Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
-            final TreeMap<String, Cache> map = new TreeMap<String, Cache>(new Comparator<String>() {
-                @Override
-                public int compare(final String s, final String s1) {
-                    return s.compareTo(s1);
-                }
-            });
-            map.put(uriPath, pair);
-            cache.put(uriHost, map);
+            cache.put(resourceURIString, pair);
+        } else {
+            cache.get(resourceURIString).put(value, System.currentTimeMillis(), maxAge, contentType);
         }
     }
 
-    public Map<String, Map<String, Cache>> getCache() {
+    public Map<String, Cache> getCache() {
         return cache;
     }
 

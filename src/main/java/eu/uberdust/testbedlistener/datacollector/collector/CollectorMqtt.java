@@ -381,7 +381,8 @@ public class CollectorMqtt extends BaseMqttListener {
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
-                    Cache pair = CacheHandler.getInstance().getValue(address, path);
+                    final String resourceURIString = deviceID + "/" + address + "/" + path;
+                    final Cache pair = CacheHandler.getInstance().getValue(resourceURIString);
                     long millis;
                     if (pair == null) {
                         millis = MILLIS_TO_STALE;
@@ -422,7 +423,8 @@ public class CollectorMqtt extends BaseMqttListener {
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
-                    Cache pair = CacheHandler.getInstance().getValue(address, "/" + path);
+                    final String resourceURIString = deviceID + "/" + address + "/" + path;
+                    final Cache pair = CacheHandler.getInstance().getValue(resourceURIString);
                     long millis;
                     if (pair == null) {
                         millis = MILLIS_TO_STALE;

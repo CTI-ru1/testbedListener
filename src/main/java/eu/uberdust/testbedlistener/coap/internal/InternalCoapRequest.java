@@ -22,7 +22,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class InternalCoapRequest {
-    private static final Logger LOGGER = Logger.getLogger(InternalRequestHandlerInterface.class);
+    private static final Logger LOGGER = Logger.getLogger(InternalCoapRequest.class);
 
     private static InternalCoapRequest instance = null;
     private HashMap<String, InternalRequestHandlerInterface> internalRequestHandlers;
@@ -76,24 +76,21 @@ public class InternalCoapRequest {
         }
         LOGGER.info("here");
 
-        if (path.contains("/device/")) {
+        if (!"/gateway/".equals(path) && path.contains("/gateway/")) {
             //forward to device or respond from cache
             StringBuilder payload = new StringBuilder("");
 
-            String[] temp = path.split("/device/");
+            String[] temp = path.split("/gateway/");
             temp = temp[1].split("/");
-            final String device = temp[0];
-            final StringBuilder uriPath = new StringBuilder();
-            for (int i = 1; i < temp.length; i++) {
-                uriPath.append("/").append(temp[i]);
-            }
-            udpRequest.setURI(uriPath.toString());
-            final Option host = new Option(OptionNumberRegistry.URI_HOST);
-            host.setStringValue(device);
-            udpRequest.setOption(host);
+            final String resourceURIString = path.replaceAll("/gateway/", "");
+
+            udpRequest.setURI(resourceURIString);
+//            final Option host = new Option(OptionNumberRegistry.URI_HOST);
+//            host.setStringValue(device);
+//            udpRequest.setOption(host);
 
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET && !udpRequest.hasOption(OptionNumberRegistry.OBSERVE)) {
-                final Cache pair = CacheHandler.getInstance().getValue(device, uriPath.toString());
+                final Cache pair = CacheHandler.getInstance().getValue(resourceURIString);
                 if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge() * 1000) {
                     return udpRequest;
                 } else {
@@ -108,16 +105,11 @@ public class InternalCoapRequest {
                                 "  xmlns:ns2=\"http://spitfire-project.eu/cc/spitfireCC_n3.owl#\"\n" +
                                 "  xmlns:ns3=\"http://www.loa-cnr.it/ontologies/DUL.owl#\"\n" +
                                 "  xmlns:ns4=\"http://purl.org/dc/terms/\">\n" + "\n" +
-                                "  <rdf:Description rdf:about=\"http://spitfire-project.eu/sensor/" + device + "\">\n");
-                        payload.append("    <ns0:type rdf:resource=\"http://purl.oclc.org/NET/ssnx/ssn#Sensor\"/>\n" +
-                                "    <ns1:observedProperty rdf:resource=\"http://spitfire-project.eu/property/" + uriPath.toString().substring(1) + "\"/>\n");
-
+                                "  <rdf:Description rdf:about=\"coap://ip:5683" + udpRequest.getUriPath() + "\">\n");
                         payload.append("    <ns3:hasValue>" + pair.getValue() + "</ns3:hasValue>\n");
 
                         SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yy-MM-dd'T'HH:mm'Z'");
                         dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
-
-
                         payload.append("    <ns4:date>" + dateFormatGmt.format(new Date(pair.getTimestamp())) + "</ns4:date>\n");
                         payload.append("  </rdf:Description>\n" +
                                 "\n" +

@@ -82,40 +82,27 @@ public class CoapMessageParser extends AbstractMessageParser {
 //        LOGGER.info("from " + address + " {" + mac + "} with payload length " + payload.length + " fistByte " + payload[0]);
 //        LOGGER.info(Converter.getInstance().payloadToString(payload));
         LOGGER.info(Converter.getInstance().payloadToString(payload));
-//        System.out.println("has Type :"+address);
 
         HereIamMessage hereIamMessage = new HereIamMessage(payload);
 
         if (hereIamMessage.isValid())   // check for broadcasting message
         {
-//            if (CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
-//                LOGGER.info("Rejecting here I am");
-//                return;
-//            }
+
             handleHereIAm();
         } else {
 
             final Message response = Message.fromByteArray(payload);
-//            System.out.println(Arrays.toString(payload)+"MID:"+response.getMID());
 
-//            if (!response.hasOption(OptionNumberRegistry.OBSERVE) && CoapServer.getInstance().rejectDuplicate(Message.fromByteArray(payload).toString())) {
-//            if (!response.hasOption(OptionNumberRegistry.OBSERVE)) {
-//                LOGGER.info("Rejecting normal response");
-//                return;
-//            }
-//            response.prettyPrint();
             SocketAddress originSocketAddress = PendingRequestHandler.getInstance().isPending(response);
             LOGGER.info(originSocketAddress);
             if (originSocketAddress != null) {
                 LOGGER.info("External Coap Message from:" + mac);
-//                System.out.println("Valid External Coap Response Message from " + mac);
-//                CoapServer.getInstance().sendReply(response.toByteArray(), originSocketAddress);
+
                 mqttCollector.sendReply(response.toByteArray(), originSocketAddress);
             } else {  //getting .well-known/core autoconfig phase
                 LOGGER.info("Coap Observe Response from: " + mac);
 
 
-//                String parts = CoapServer.getInstance().matchResponse(response);
                 String parts = mqttCollector.matchResponse(response);
                 if ((parts == null) || ("".equals(parts))) {
                     return;
@@ -132,7 +119,6 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info("WELL-KNOWN " + mac);
 
 
-//                    CoapServer.getInstance().updateEndpoint(mac, requestType.substring(1));
                     mqttCollector.updateEndpoint(mac, requestType.substring(1));
 
                     final String payloadStr = response.getPayloadString();
@@ -145,12 +131,10 @@ public class CoapMessageParser extends AbstractMessageParser {
                         isBlockwise = true;
                         String remainder = Converter.extractRemainder(payloadStr);
                         LOGGER.info(remainder);
-//                        CoapServer.getInstance().addPending(address, remainder);
                         mqttCollector.addPending(address, remainder);
                     }
 
                     LOGGER.info(capabilities.size());
-//                    reportToUberdustCapability(capabilities, mac);
 
                     for (String capability : capabilities) {
                         if (!capability.equals(".well-known/core")) {
@@ -161,7 +145,6 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info(capabilities.size());
                     for (String capability : capabilities) {
                         if (!capability.equals(".well-known/core")) {
-//                            if (CoapServer.getInstance().isAlive(capability, mac)) {
                             if (mqttCollector.isAlive(capability, mac)) {
                                 continue;
                             }
@@ -170,7 +153,6 @@ public class CoapMessageParser extends AbstractMessageParser {
                             } catch (Exception e) {
                                 LOGGER.error(e, e);
                             }
-//                            CoapServer.getInstance().requestForResource(capability, mac, true, mqttCollector);
                             mqttCollector.requestForResource(capability, mac, true);
                         }
                     }
@@ -209,64 +191,15 @@ public class CoapMessageParser extends AbstractMessageParser {
                         LOGGER.info("Sending ack message...");
                         mqttCollector.sendAck(response.getMID(), mac);
                     }
-//                    CoapServer.getInstance().registerEndpoint(requestType, mac);
                     mqttCollector.registerEndpoint(requestType, mac);
 
-//                    Thread d = new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            sendToUberdust(finalRequestType, mac, response);
-//                        }
-//                    });
-//                    d.start();
-
-//                    new Thread(new UberdustNotify(mac, requestType, response, testbedPrefix, capabilityPrefix)).start();
                     LOGGER.info("Notify: " + mac + " " + requestType);
                     new Thread(new RabbitMQNotify(mac, requestType, response, mqttCollector)).start();
-                    new Thread(new CacheNotify(mac, requestType, response)).start();
-//                    CoapServer.getInstance().incResponseObserveCounter();
+                    new Thread(new CacheNotify(mqttCollector.getDeviceID() + "/" + mac + "/" + requestType, response)).start();
                     mqttCollector.incResponseObserveCounter();
-
-
-//                if (response.hasOption(OptionNumberRegistry.BLOCK2)) {
-//                    LOGGER.debug("Broadcast Message from server");
-//                    Request request = new Request(CodeRegistry.METHOD_GET, false);
-//                    request.setURI("/.well-known/core");
-//                    Option opt = new Option(OptionNumberRegistry.BLOCK2);
-//                    opt.setIntValue(1);
-//                    request.addOption(opt);
-////            LOGGER.info(Converter.getInstance().payloadToString(request.toByteArray()));
-//                    try {
-//                        int[] zpayloap = new int[1 + request.toByteArray().length];
-//                        zpayloap[0] = 51;
-//                        System.arraycopy(Converter.getInstance().ByteToInt(request.toByteArray()), 0, zpayloap, 1, Converter.getInstance().ByteToInt(request.toByteArray()).length);
-//                        LOGGER.info(Converter.getInstance().payloadToString(zpayloap));
-//                        XBeeRadio.getInstance().send(remoteAddress, 112, zpayloap);
-//                    } catch (Exception e) {     //NOPMD
-//                        LOGGER.error(e.getMessage(), e);
-//                    }
-//            }
-
-//                }
                 }
             }
-// else {
-//                LOGGER.info("was sent here? ? ");
-//                /**TODO: fix response to uberdust to store readings
-//
-//                 LOGGER.info("from" + address);
-//
-//                 String uriPath = CoapServer.getInstance().matchMID(mess.getMID()).substring(1).replaceAll("/", ":");
-//                 StringBuilder stringReading = new StringBuilder();
-//                 int[] conts = Converter.getInstance().ByteToInt(mess.getPayload());
-//                 for (int cont : conts) {
-//                 stringReading.append((char) cont);
-//                 }
-//                 LOGGER.info("new Reading : " + address + " @ " + uriPath + ": " + stringReading.toString());
-//
-//                 sendToUberdust(uriPath, address, mess);
-//                 **/
-//            }
+
         }
 
         new Evaluator("TRCoAPMessageParser", (System.currentTimeMillis() - timeStart), "millis");

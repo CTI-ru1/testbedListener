@@ -62,7 +62,6 @@ public class UDPhandler extends Thread {//NOPMD
      */
     private void processNewRequest(final DatagramPacket packet) {
         final byte[] inData = cleanupData(packet.getData());
-
 //        try {
 //        final Request udpRequest = (Request) Message.fromByteArray(inData);
         executorService.submit(new CoapUdpRequestHandler(packet));
