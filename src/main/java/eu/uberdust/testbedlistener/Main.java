@@ -2,11 +2,14 @@ package eu.uberdust.testbedlistener;
 
 import com.sensorflare.mq.RabbitMQManager;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.mq.listener.RabbitMQCommandsListener;
 import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import eu.uberdust.testbedlistener.mqtt.listener.DeviceConnectionMqttListener;
 import eu.uberdust.testbedlistener.mqtt.listener.StatsMqttListener;
 import eu.uberdust.testbedlistener.util.PropertyReader;
 import org.apache.log4j.PropertyConfigurator;
+
+import java.io.IOException;
 
 /**
  * Main class for the Testbedlistener application.
@@ -50,6 +53,11 @@ public class Main {
         //Connect the RabbitMQ Broker
         RabbitMQManager.getInstance().connect(rabbitMQServer, rabbitMQPort, rabbitMQuser, rabbitMQpassword);
         LOGGER.info("RabbitMQ connected");
+        try {
+            RabbitMQManager.getInstance().registerObserver("commands", new RabbitMQCommandsListener());
+        } catch (IOException e) {
+            LOGGER.error(e, e);
+        }
 
         //Start the CoAPServer
         CoapServer.getInstance();
@@ -66,7 +74,6 @@ public class Main {
 
         MqttConnectionManager.getInstance().listen("stats/#", new StatsMqttListener());
         MqttConnectionManager.getInstance().listen("connect/#", new DeviceConnectionMqttListener());
-
         LOGGER.info("MQTT Broker Connected!");
 
 

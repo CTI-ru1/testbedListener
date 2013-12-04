@@ -236,7 +236,7 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
         capability = capability.replace("Sensor", "s");
         capability = capability.replace("I", "i");
 
-        CacheHandler.getInstance().setValue(nodeId + "/" + capability, 30, 30, value.toString());
+        CacheHandler.getInstance().setValue(nodeId + "/" + capability, 30, 30, value.toString(), null);
 
         final String nodeUrn = testbedPrefix + nodeId;
         final String capabilityName = (capabilityPrefix + capability).toLowerCase();

@@ -16,7 +16,10 @@ import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.QoS;
 
 import java.net.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -128,6 +131,7 @@ public class CollectorMqtt extends BaseMqttListener {
 
             @Override
             public void onSuccess(Void value) {
+
             }
 
             @Override
@@ -307,28 +311,34 @@ public class CollectorMqtt extends BaseMqttListener {
         LOGGER.info("sending request");
 //        TestbedController.getInstance().sendMessage(payload, nodeUrn);
 //        XbeeController.getInstance().sendPayload(nodeUrn,payload);
-        mqttSendPayload(nodeUrn, payload);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                mqttSendPayload(nodeUrn, payload);
-            }
-        }, 100);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                mqttSendPayload(nodeUrn, payload);
-            }
-        }, 250);
+        mqttSengBytes(nodeUrn, payload);
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                mqttSengBytes(nodeUrn, payload);
+//            }
+//        }, 100);
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                mqttSengBytes(nodeUrn, payload);
+//            }
+//        }, 250);
     }
 
-    public void mqttSendPayload(final String destination, final byte[] payloadIn) {
-        byte[] destinationBytes = Converter.getInstance().addressToByte(destination);
-        byte[] payloadWithDestination = new byte[payloadIn.length + 2];
-        LOGGER.debug("mqttSendPayload");
+    /**
+     * Publish the bytes to the MQTT for the specific destinationMAC.
+     *
+     * @param destinationMAC the destinationMAC device MAC address.
+     * @param bytesToSend    the bytes to send.
+     */
+    public void mqttSengBytes(final String destinationMAC, final byte[] bytesToSend) {
+        LOGGER.debug("mqttSengBytes");
+        byte[] destinationBytes = Converter.getInstance().addressToByte(destinationMAC);
+        byte[] payloadWithDestination = new byte[bytesToSend.length + 2];
         payloadWithDestination[0] = destinationBytes[1];
         payloadWithDestination[1] = destinationBytes[0];
-        System.arraycopy(payloadIn, 0, payloadWithDestination, 2, payloadIn.length);
+        System.arraycopy(bytesToSend, 0, payloadWithDestination, 2, bytesToSend.length);
 
         publish(payloadWithDestination);
     }
@@ -486,7 +496,7 @@ public class CollectorMqtt extends BaseMqttListener {
             replyPacket = new DatagramPacket(localBuf, 0, buf.length, socketAddress);
             CoapServer.getInstance().socketSend(replyPacket);
         } catch (SocketException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            LOGGER.error(e, e);
         }
     }
 
@@ -503,4 +513,21 @@ public class CollectorMqtt extends BaseMqttListener {
         return "";
     }
 
+    public void postMessage(final String key, final String payloadString) {
+        final String[] parts = key.split("/");
+        final String destinationMAC = parts[1].replaceAll("0x", "");
+        final String capabilityString = "/" + parts[2];
+        LOGGER.info("postToResource:" + Arrays.toString(parts) + "");
+
+        final Request request = new Request(CodeRegistry.METHOD_POST, false);
+        request.setMID(nextMID());
+
+        final Option uriHostOption = new Option(OptionNumberRegistry.URI_HOST);
+        uriHostOption.setStringValue(destinationMAC);
+        request.addOption(uriHostOption);
+        request.setURI(capabilityString);
+        request.setPayload(payloadString);
+        sendRequest(request.toByteArray(), destinationMAC);
+
+    }
 }

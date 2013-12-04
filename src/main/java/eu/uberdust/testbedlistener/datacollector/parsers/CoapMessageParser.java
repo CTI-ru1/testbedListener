@@ -195,7 +195,7 @@ public class CoapMessageParser extends AbstractMessageParser {
 
                     LOGGER.info("Notify: " + mac + " " + requestType);
                     new Thread(new RabbitMQNotify(mac, requestType, response, mqttCollector)).start();
-                    new Thread(new CacheNotify(mqttCollector.getDeviceID() + "/" + mac + "/" + requestType, response)).start();
+                    new Thread(new CacheNotify(mqttCollector.getDeviceID() + "/" + mac + "/" + requestType, response,mqttCollector)).start();
                     mqttCollector.incResponseObserveCounter();
                 }
             }

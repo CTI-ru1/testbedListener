@@ -1,5 +1,7 @@
 package eu.uberdust.testbedlistener.coap;
 
+import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
+
 /**
  * Contains all information about an active request from a source.
  */
@@ -7,6 +9,12 @@ public class Cache {
 
     private String value;
     private int observeLostCounter;
+
+    public CollectorMqtt getCollector() {
+        return collector;
+    }
+
+    private CollectorMqtt collector;
 
     public int getContentType() {
         return contentType;
@@ -34,22 +42,21 @@ public class Cache {
 
     private Long timestamp;
 
-    public Cache(final String value, final Long timestamp, final int maxAge, final int contentType) {
+    public Cache(final String value, final Long timestamp, final int maxAge, final int contentType, final CollectorMqtt collector) {
         this.value = value;
         this.timestamp = timestamp;
         this.maxAge = maxAge;
         this.contentType = contentType;
         this.observeLostCounter = 0;
+        this.collector = collector;
     }
 
-    public void put(final String value, final long timestamp, final int maxAge, final int contentType) {
+    public void put(final String value, final long timestamp, final int maxAge, final int contentType, final CollectorMqtt collector) {
         this.value = value;
         this.timestamp = timestamp;
         this.maxAge = maxAge;
         this.contentType = contentType;
-//        if (System.currentTimeMillis() -timestamp > maxAge*1000) {
-//            this.observelostCounter++;
-//        }
+        this.collector = collector;
     }
 
     public int getLostCounter() {

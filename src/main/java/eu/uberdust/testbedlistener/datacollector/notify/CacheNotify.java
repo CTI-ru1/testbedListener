@@ -3,6 +3,7 @@ package eu.uberdust.testbedlistener.datacollector.notify;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import eu.uberdust.testbedlistener.coap.CacheHandler;
+import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,12 +15,14 @@ public class CacheNotify implements Runnable {
 
     private transient final Message response;
     private transient final String resourceURIString;
+    private transient final CollectorMqtt collector;
 
 
-    public CacheNotify(final String resourceURIString, final Message response) {
+    public CacheNotify(final String resourceURIString, final Message response, final CollectorMqtt collector) {
         System.out.println("saving to cache " + resourceURIString);
         this.response = response;
         this.resourceURIString = resourceURIString;
+        this.collector = collector;
     }
 
     @Override
@@ -30,6 +33,6 @@ public class CacheNotify implements Runnable {
         } else {
             maxAge = 60;
         }
-        CacheHandler.getInstance().setValue(resourceURIString, maxAge, response.getContentType(), response.getPayloadString());
+        CacheHandler.getInstance().setValue(resourceURIString, maxAge, response.getContentType(), response.getPayloadString(),collector);
     }
 }

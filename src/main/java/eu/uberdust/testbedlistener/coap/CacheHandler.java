@@ -1,5 +1,7 @@
 package eu.uberdust.testbedlistener.coap;
 
+import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
+
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -42,12 +44,12 @@ public class CacheHandler {
         return null;
     }
 
-    public void setValue(final String resourceURIString, final int maxAge, final int contentType, final String value) {
+    public void setValue(final String resourceURIString, final int maxAge, final int contentType, final String value,final CollectorMqtt collector) {
         if (!cache.containsKey(resourceURIString)) {
-            final Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType);
+            final Cache pair = new Cache(value, System.currentTimeMillis(), maxAge, contentType,collector);
             cache.put(resourceURIString, pair);
         } else {
-            cache.get(resourceURIString).put(value, System.currentTimeMillis(), maxAge, contentType);
+            cache.get(resourceURIString).put(value, System.currentTimeMillis(), maxAge, contentType,collector);
         }
     }
 
