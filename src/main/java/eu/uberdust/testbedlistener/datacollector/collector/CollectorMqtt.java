@@ -3,9 +3,9 @@ package eu.uberdust.testbedlistener.datacollector.collector;
 import ch.ethz.inf.vs.californium.coap.*;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import eu.uberdust.testbedlistener.coap.ActiveRequest;
-import eu.uberdust.testbedlistener.coap.Cache;
-import eu.uberdust.testbedlistener.coap.CacheHandler;
+import eu.uberdust.testbedlistener.coap.CacheEntry;
 import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.coap.ResourceCache;
 import eu.uberdust.testbedlistener.datacollector.parsers.CoapMessageParser;
 import eu.uberdust.testbedlistener.mqtt.listener.BaseMqttListener;
 import eu.uberdust.testbedlistener.util.Converter;
@@ -392,7 +392,7 @@ public class CollectorMqtt extends BaseMqttListener {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
                     final String resourceURIString = deviceID + "/" + address + "/" + path;
-                    final Cache pair = CacheHandler.getInstance().getValue(resourceURIString);
+                    final CacheEntry pair = ResourceCache.getInstance().getValue(resourceURIString);
                     long millis;
                     if (pair == null) {
                         millis = MILLIS_TO_STALE;
@@ -434,7 +434,7 @@ public class CollectorMqtt extends BaseMqttListener {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
                     final String resourceURIString = deviceID + "/" + address + "/" + path;
-                    final Cache pair = CacheHandler.getInstance().getValue(resourceURIString);
+                    final CacheEntry pair = ResourceCache.getInstance().getValue(resourceURIString);
                     long millis;
                     if (pair == null) {
                         millis = MILLIS_TO_STALE;
@@ -444,7 +444,7 @@ public class CollectorMqtt extends BaseMqttListener {
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
                         LOGGER.info("address was stale " + address + " " + path);
                         if (pair != null) {
-                            pair.incLostCounter();
+                            pair.setObserveLostCounter(pair.getLostCounter() + 1);
                         }
                         observeLostCounter++;
                         return false;

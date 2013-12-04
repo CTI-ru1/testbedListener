@@ -126,7 +126,7 @@ public class PendingRequestHandler {
                     maxAge = 120;
                 }
 //                try {
-//                    CacheHandler.getInstance().setValue(mp.getUriHost(), mp.getUriPath(), maxAge, response.getContentType(), response.getPayloadString());
+//                    ResourceCache.getInstance().setValue(mp.getUriHost(), mp.getUriPath(), maxAge, response.getContentType(), response.getPayloadString());
 //                } catch (NullPointerException e) {
 //                    LOGGER.error(e, e);
 //                }

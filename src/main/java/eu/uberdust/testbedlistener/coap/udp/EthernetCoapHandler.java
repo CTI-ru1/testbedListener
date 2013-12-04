@@ -1,8 +1,8 @@
 package eu.uberdust.testbedlistener.coap.udp;
 
 import ch.ethz.inf.vs.californium.coap.*;
-import eu.uberdust.testbedlistener.coap.Cache;
-import eu.uberdust.testbedlistener.coap.CacheHandler;
+import eu.uberdust.testbedlistener.coap.CacheEntry;
+import eu.uberdust.testbedlistener.coap.ResourceCache;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.util.Converter;
 import eu.uberdust.testbedlistener.util.PropertyReader;
@@ -75,7 +75,7 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
                 if (capability.contains("well-known/core")) {
                     continue;
                 }
-                final Cache pair = CacheHandler.getInstance().getValue(address + "/" + capability);
+                final CacheEntry pair = ResourceCache.getInstance().getValue(address + "/" + capability);
                 if (pair != null) {
                     if (System.currentTimeMillis() - pair.getTimestamp() < pair.getMaxAge() * 1000) {
                         LOGGER.info("Skipping " + address + "/" + capability + " as UpToDate");
@@ -236,7 +236,7 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
         capability = capability.replace("Sensor", "s");
         capability = capability.replace("I", "i");
 
-        CacheHandler.getInstance().setValue(nodeId + "/" + capability, 30, 30, value.toString(), null);
+        ResourceCache.getInstance().setValue(nodeId + "/" + capability, 30, 30, value.toString(), null);
 
         final String nodeUrn = testbedPrefix + nodeId;
         final String capabilityName = (capabilityPrefix + capability).toLowerCase();

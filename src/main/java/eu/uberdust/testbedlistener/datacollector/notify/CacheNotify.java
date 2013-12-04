@@ -2,7 +2,7 @@ package eu.uberdust.testbedlistener.datacollector.notify;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
-import eu.uberdust.testbedlistener.coap.CacheHandler;
+import eu.uberdust.testbedlistener.coap.ResourceCache;
 import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 
 /**
@@ -33,6 +33,6 @@ public class CacheNotify implements Runnable {
         } else {
             maxAge = 60;
         }
-        CacheHandler.getInstance().setValue(resourceURIString, maxAge, response.getContentType(), response.getPayloadString(),collector);
+        ResourceCache.getInstance().setValue(resourceURIString, maxAge, response.getContentType(), response.getPayloadString(),collector);
     }
 }

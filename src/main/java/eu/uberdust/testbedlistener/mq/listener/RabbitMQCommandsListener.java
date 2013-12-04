@@ -1,8 +1,8 @@
 package eu.uberdust.testbedlistener.mq.listener;
 
 import com.sensorflare.mq.RabbitMQListener;
-import eu.uberdust.testbedlistener.coap.Cache;
-import eu.uberdust.testbedlistener.coap.CacheHandler;
+import eu.uberdust.testbedlistener.coap.CacheEntry;
+import eu.uberdust.testbedlistener.coap.ResourceCache;
 
 /**
  * A {@see RabbitMQListener} Class that receives command requests and forwards them to the gateways (if available).
@@ -22,7 +22,7 @@ public class RabbitMQCommandsListener implements RabbitMQListener {
         if (command.contains(",")) {
             final String key = command.split(",")[0].replaceAll("0x", "");
             final String payload = command.split(",")[1];
-            final Cache item = CacheHandler.getInstance().getValue(key);
+            final CacheEntry item = ResourceCache.getInstance().getValue(key);
             if (item != null) {
                 item.getCollector().postMessage(key, payload);
             }

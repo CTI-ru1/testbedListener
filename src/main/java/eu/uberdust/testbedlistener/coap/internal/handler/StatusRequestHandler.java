@@ -3,7 +3,7 @@ package eu.uberdust.testbedlistener.coap.internal.handler;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
-import eu.uberdust.testbedlistener.coap.CacheHandler;
+import eu.uberdust.testbedlistener.coap.ResourceCache;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
 import org.apache.commons.collections.map.ListOrderedMap;
@@ -35,7 +35,7 @@ public class StatusRequestHandler implements InternalRequestHandlerInterface {
             );
             statusElements.put("Uptime", elapsedString);
             statusElements.put("Running Threads", String.valueOf(Thread.activeCount()));
-            statusElements.put("Cache Size", CacheHandler.getInstance().getCache().keySet().size() + " nodes");
+            statusElements.put("CacheEntry Size", ResourceCache.getInstance().getCache().keySet().size() + " nodes");
             statusElements.put("Pending", String.valueOf(PendingRequestHandler.getInstance().getPendingRequestList().size()));
 
 

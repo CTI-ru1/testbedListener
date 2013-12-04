@@ -1,8 +1,8 @@
 package eu.uberdust.testbedlistener.coap.internal;
 
 import ch.ethz.inf.vs.californium.coap.*;
-import eu.uberdust.testbedlistener.coap.Cache;
-import eu.uberdust.testbedlistener.coap.CacheHandler;
+import eu.uberdust.testbedlistener.coap.CacheEntry;
+import eu.uberdust.testbedlistener.coap.ResourceCache;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.internal.handler.*;
 import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
@@ -90,7 +90,7 @@ public class InternalCoapRequest {
 //            udpRequest.setOption(host);
 
             if (udpRequest.getCode() == CodeRegistry.METHOD_GET && !udpRequest.hasOption(OptionNumberRegistry.OBSERVE)) {
-                final Cache pair = CacheHandler.getInstance().getValue(resourceURIString);
+                final CacheEntry pair = ResourceCache.getInstance().getValue(resourceURIString);
                 if (System.currentTimeMillis() - pair.getTimestamp() > pair.getMaxAge() * 1000) {
                     return udpRequest;
                 } else {
