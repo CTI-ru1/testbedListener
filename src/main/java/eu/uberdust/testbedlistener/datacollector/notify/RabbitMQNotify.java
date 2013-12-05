@@ -34,24 +34,12 @@ public class RabbitMQNotify implements Runnable {
     public void run() {
 //        LOGGER.info(uriPath);
         if (uriPath != null) {
-            String myuripath = "";
-            myuripath = uriPath.replaceAll("\\/", ":");
-            if (':' == myuripath.charAt(0)) {
-                myuripath = myuripath.substring(1);
-            }
-
-            if (myuripath.length() > 3) {
-
-                LOGGER.info(myuripath);
-                LOGGER.info(myuripath.length());
-            }
-
             try {
                 Double capabilityValue = Double.valueOf(response.getPayloadString());
-                sendtoRabbitMQ("0x" + mac, myuripath, capabilityValue);
+                sendtoRabbitMQ("0x" + mac, uriPath, capabilityValue);
             } catch (final NumberFormatException e) {
                 String res = response.getPayloadString();
-                sendtoRabbitMQ("0x" + mac, myuripath, res);
+                sendtoRabbitMQ("0x" + mac, uriPath, res);
             }
         }
     }
