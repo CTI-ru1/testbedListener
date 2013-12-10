@@ -26,6 +26,7 @@ public class HeartbeatMqttListener extends BaseMqttListener {
             (new Thread() {
                 @Override
                 public void run() {
+                    LOGGER.info(body.toString());
                 }
             }).start();
         } catch (Exception e) {

@@ -33,12 +33,12 @@ public class BaseMqttListener implements Listener {
 
     @Override
     public void onConnected() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        System.out.println("Connected!");
     }
 
     @Override
     public void onDisconnected() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        System.out.println("Disconnected!");
     }
 
     @Override

@@ -514,7 +514,7 @@ public class CollectorMqtt extends BaseMqttListener {
     }
 
     public void postMessage(final String key, final String payloadString) {
-        final String[] parts = key.split("/");
+        final String[] parts = key.split("/",3);
         final String destinationMAC = parts[1].replaceAll("0x", "");
         final String capabilityString = "/" + parts[2];
         LOGGER.info("postToResource:" + Arrays.toString(parts) + "");

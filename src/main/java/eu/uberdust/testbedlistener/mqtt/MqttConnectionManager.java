@@ -58,6 +58,7 @@ public class MqttConnectionManager {
         } catch (URISyntaxException e) {
             LOGGER.error("setHost failed", e);
         }
+        LOGGER.info("MQTT connected!");
     }
 
     private void subscriptionSuccessful() {
