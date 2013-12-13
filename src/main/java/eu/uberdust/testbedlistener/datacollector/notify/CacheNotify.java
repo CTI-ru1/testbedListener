@@ -19,7 +19,6 @@ public class CacheNotify implements Runnable {
 
 
     public CacheNotify(final String resourceURIString, final Message response, final CollectorMqtt collector) {
-        System.out.println("saving to cache " + resourceURIString);
         this.response = response;
         this.resourceURIString = resourceURIString;
         this.collector = collector;

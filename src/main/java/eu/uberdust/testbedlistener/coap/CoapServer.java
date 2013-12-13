@@ -183,7 +183,7 @@ public class CoapServer {
             byte fbyte = (byte) (replyPacket.getData()[0] & 0xc0);
             if (fbyte == 0x40) {
                 socket.send(replyPacket);
-                LOGGER.info("socketSend(" + replyPacket.getAddress().getHostAddress() + ":" + replyPacket.getPort());
+                LOGGER.debug("socketSend(" + replyPacket.getAddress().getHostAddress() + ":" + replyPacket.getPort());
             }
         } catch (IOException e) {
             LOGGER.error("socketSend(", e);
@@ -201,8 +201,7 @@ public class CoapServer {
         if (activeRequest.getSocketAddress() != null) {
             try {
                 response.setURI("/" + address + activeRequest.getUriPath());
-                LOGGER.info("/" + address + activeRequest.getUriPath());
-                LOGGER.info("Sending Response to: " + activeRequest.getSocketAddress());
+                LOGGER.debug("Sending Response to: " + activeRequest.getSocketAddress() + "/" + address + activeRequest.getUriPath());
                 socketSend(new DatagramPacket(response.toByteArray(), response.toByteArray().length, activeRequest.getSocketAddress()));
             } catch (IOException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -225,7 +224,7 @@ public class CoapServer {
     }
 
     public String checkEthernet(int mid) {
-        LOGGER.info("Checking by mid " + mid);
+        LOGGER.debug("Checking by mid " + mid);
         if (ownRequests.containsKey(mid)) {
             String eth = ownRequests.get(mid);
             ownRequests.remove(mid);
@@ -235,12 +234,12 @@ public class CoapServer {
     }
 
     public void addEthernet(String payload, String token) {
-        LOGGER.info("Adding by token " + token + " \"" + payload + "\"");
+        LOGGER.debug("Adding by token " + token + " \"" + payload + "\"");
         ownObserves.add(new TokenItem(token, payload));
     }
 
     public String checkEthernet(String token) {
-        LOGGER.info("Checking by token " + token);
+        LOGGER.debug("Checking by token " + token);
         for (TokenItem tokenItem : ownObserves) {
             if (tokenItem.getBytes().equals(token)) {
                 return tokenItem.getPath();
@@ -337,7 +336,7 @@ public class CoapServer {
     }
 
     public void registerGateway(boolean isNew, String deviceId) {
-        LOGGER.info("put " + deviceId);
+        LOGGER.debug("put " + deviceId);
 
         arduinoGateways.put(deviceId, System.currentTimeMillis());
 

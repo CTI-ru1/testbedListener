@@ -2,6 +2,7 @@ package eu.uberdust.testbedlistener.util;
 
 import org.apache.log4j.Logger;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -102,10 +103,8 @@ public class Converter {
     public static List<String> extractCapabilities(final String message) {
         LOGGER.debug(message);
         String[] capabilities = message.split(",");
-        LOGGER.debug("capabilities found: " + capabilities.length);
         List caps = new LinkedList();
         for (String capability : capabilities) {
-            LOGGER.info(capability);
             if (capability.contains("<") && capability.contains(">")) {
                 String newCap = capability.replaceAll("<", "").replaceAll(">", "");
                 StringBuilder validCap = new StringBuilder();
@@ -117,6 +116,7 @@ public class Converter {
                 caps.add(validCap.toString());
             }
         }
+        LOGGER.debug(Arrays.toString(caps.toArray()));
         return caps;
     }
 

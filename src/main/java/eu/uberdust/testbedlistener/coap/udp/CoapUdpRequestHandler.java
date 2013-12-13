@@ -41,14 +41,11 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         this.timeStart = System.currentTimeMillis();
         this.packet = packet;
         inData = cleanupData(packet.getData());
-        LOGGER.info("Inco" + inData.length);
         udpRequest = Message.fromByteArray(inData);
     }
 
     @Override
     public void run() {
-//        Message mes = Message.fromByteArray(inData);
-//        LOGGER.info("MESSAGE TYPE:" + mes.getType() + " " + mes.isAcknowledgement());
         if (udpRequest.isAcknowledgement()) { //handle CoAP ACK
             handleCoAPAcknowledgement();
             new Evaluator("UDPRequestAckHandler", (System.currentTimeMillis() - timeStart), "millis");
@@ -93,14 +90,8 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         //print all options of packet
         printOptions(udpRequest);
 
-
-//        LOGGER.info("COAP uriPath: " + coapRequest.getUriPath());
-//        LOGGER.info("COAP uriQuery: " + coapRequest.getQuery());
-//
-//        printOptions(coapRequest);
-
         String uriHost = getURIHost(udpRequest);
-        LOGGER.info("UDP path:" + udpRequest.getUriPath());
+        LOGGER.debug("UDP path:" + udpRequest.getUriPath());
         udpRequest.setPeerAddress(new EndpointAddress(packet.getAddress()));
         udpRequest = InternalCoapRequest.getInstance().handleRequest(uriHost, udpRequest, packet.getSocketAddress());
         if ("".equals(uriHost)) {
@@ -111,8 +102,8 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
 //            udpRequest = InternalCoapRequest.getInstance().handleRequest(udpRequest, packet.getSocketAddress());
 //            uriHost = getURIHost(udpRequest);
 //        }
-        if (udpRequest == null)   {
-            LOGGER.info("UDP null");
+        if (udpRequest == null) {
+            LOGGER.warn("UDP null");
             return;
         }
 
@@ -151,7 +142,7 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
     private void printOptions(final Message udpRequest) {
         List<Option> udpOptions = udpRequest.getOptions();
         for (Option udpOption : udpOptions) {
-            LOGGER.info("CoAPoption: " + udpOption.getName());
+            LOGGER.info("CoAPOption: " + udpOption.getName());
         }
     }
 
@@ -162,7 +153,6 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
      * @return the data from the udp packet without tailing zeros.
      */
     private byte[] cleanupData(final byte[] data) {
-        LOGGER.info(data.length);
         int myLen = data.length;
         for (int i = data.length - 1; i >= 0; i--) {
             if (data[i] != 0) {
@@ -172,7 +162,6 @@ public class CoapUdpRequestHandler implements Runnable {//NOPMD
         }
         final byte[] adata = new byte[myLen];
         System.arraycopy(data, 0, adata, 0, myLen);
-        LOGGER.info(adata.length);
         return adata;
     }
 }

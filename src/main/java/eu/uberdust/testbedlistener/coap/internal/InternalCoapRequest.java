@@ -74,7 +74,6 @@ public class InternalCoapRequest {
         if (!"".equals(uriHost) && !"/cache".equals(path)) {
             return udpRequest;
         }
-        LOGGER.info("here");
 
         if (!"/gateway/".equals(path) && path.contains("/gateway/")) {
             //forward to device or respond from cache
@@ -158,14 +157,12 @@ public class InternalCoapRequest {
             LOGGER.info("checking " + path + ":" + Arrays.toString(internalRequestHandlers.keySet().toArray()));
             if (internalRequestHandlers.containsKey(path)) {
                 InternalRequestHandlerInterface handler = internalRequestHandlers.get(path);
-                LOGGER.info("checking : handling");
                 handler.handle(udpRequest, response);
             } else {
                 boolean matched = false;
                 for (String handlerKey : internalRequestHandlers.keySet()) {
                     if (path.startsWith(handlerKey)) {
                         InternalRequestHandlerInterface handler = internalRequestHandlers.get(path);
-                        LOGGER.info("checking : handling");
                         handler.handle(udpRequest, response);
                         matched = true;
                         break;

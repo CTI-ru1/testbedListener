@@ -18,15 +18,12 @@ public class EthernetRequestHandler implements InternalRequestHandlerInterface {
     @Override
     public void handle(Message udpRequest, Message response) {
         StringBuilder payload = new StringBuilder("");
-        LOGGER.info("request");
         if (udpRequest.getCode() == 2) {
-            LOGGER.info("request=2");
             try {
                 new EthernetSupport(CoapServer.getInstance().getEthernetUDPHandler(), udpRequest).start();
             } catch (Exception e) {
                 LOGGER.error("request", e);
             }
-            LOGGER.info("request=2+");
         } else {
             for (CoapServer.TokenItem item : CoapServer.getInstance().getObservers()) {
                 payload.append(item.getBytes()).append(" > ").append(item.getPath()).append("\n");

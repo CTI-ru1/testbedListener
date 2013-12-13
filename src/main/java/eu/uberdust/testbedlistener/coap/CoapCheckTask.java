@@ -33,7 +33,6 @@ public class CoapCheckTask {
         mess.setAccept(MediaTypeRegistry.TEXT_PLAIN);
 
 
-        mess.prettyPrint();
 //        System.out.println(Arrays.toString(mess.toByteArray()));
         //Start the udp socket
 //        try {

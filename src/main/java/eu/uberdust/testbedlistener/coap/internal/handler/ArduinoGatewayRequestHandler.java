@@ -45,15 +45,8 @@ public class ArduinoGatewayRequestHandler implements InternalRequestHandlerInter
 
                     //RegisterGateways
                     for (final String gatewayDevice : gateways.keySet()) {
-                        LOGGER.info("registering " + "/gateway/" + gatewayDevice);
+                        LOGGER.debug("registering " + "/gateway/" + gatewayDevice);
                     }
-//                    Map<String, Map<String, CacheEntry>> cache = ResourceCache.getInstance().getCache();
-//                    for (String device : cache.keySet()) {
-//                        for (String resource : cache.get(device).keySet()) {
-//                            internalRequestHandlers.put("/gateway/" + gatewayDevice+"/"+device+"/"+resource, thisObject);
-//                        }
-//                    }
-
                 } catch (final Exception e) {
                     //Used to avoid Exceptions in the TimerTask.
                     LOGGER.error(e, e);

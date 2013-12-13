@@ -150,7 +150,7 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
     }
 
     private void requestBlock2(final String remainder) {
-        LOGGER.info("needs blockwise");
+        LOGGER.warn("need BlockWise");
 
         for (Option option : response.getOptions()) {
             if (OptionNumberRegistry.BLOCK2 == option.getOptionNumber() && (option.getIntValue() == 18)) {
@@ -163,11 +163,10 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
         request.setMID(response.getMID() + 1);
         Option blockOption = new Option(0x12, OptionNumberRegistry.BLOCK2);
         request.addOption(blockOption);
-        request.prettyPrint(System.out);
         CoapServer.getInstance().addEthernet(address + request.getUriPath(), request.getMID());
         CoapServer.getInstance().addPending(request.getMID(), remainder);
 
-        LOGGER.info(request.getUriPath());
+        LOGGER.debug(request.getUriPath());
         try {
             udPhandler.send(request, address);
         } catch (IOException e) {
@@ -189,7 +188,6 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
         request.setMID(response.getMID() + 1);
         Option blockOption = new Option(0x13, OptionNumberRegistry.BLOCK2);
         request.addOption(blockOption);
-        request.prettyPrint(System.out);
         CoapServer.getInstance().addEthernet(address + request.getUriPath(), request.getMID());
         CoapServer.getInstance().addPending(request.getMID(), remainder);
 
@@ -215,7 +213,6 @@ public class EthernetCoapHandler implements Runnable {//NOPMD
         request.setMID(response.getMID() + 1);
         Option blockOption = new Option(0x14, OptionNumberRegistry.BLOCK2);
         request.addOption(blockOption);
-        request.prettyPrint(System.out);
         CoapServer.getInstance().addEthernet(address + request.getUriPath(), request.getMID());
         CoapServer.getInstance().addPending(request.getMID(), remainder);
 

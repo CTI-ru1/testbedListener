@@ -22,7 +22,7 @@ public class EthernetSupport extends Thread {
      */
     private static final Logger LOGGER = Logger.getLogger(EthernetSupport.class);
     private EthernetUDPhandler udphandler;
-//    private Random rand;
+    //    private Random rand;
     private Message udpRequest;
 
     public EthernetSupport(final EthernetUDPhandler udphandler, Message udpRequest) {
@@ -34,19 +34,16 @@ public class EthernetSupport extends Thread {
 
     @Override
     public void run() {
-        LOGGER.error("polling");
 
         Request request = new Request(CodeRegistry.METHOD_GET, false);
         request.setURI("/.well-known/core");
-        int newMID = 0% 35000;
+        int newMID = 0 % 35000;
         if (newMID < 0) newMID = -newMID;
         request.setMID(newMID);
-        LOGGER.info(udpRequest.getPeerAddress().getAddress().getHostAddress() + request.getUriPath());
+        LOGGER.debug(udpRequest.getPeerAddress().getAddress().getHostAddress() + request.getUriPath());
         CoapServer.getInstance().addEthernet(udpRequest.getPeerAddress().getAddress().getHostAddress() + request.getUriPath(), request.getMID());
         try {
             udphandler.send(request, udpRequest.getPeerAddress().getAddress());
-        } catch (UnknownHostException e) {
-            LOGGER.error(e, e);
         } catch (IOException e) {
             LOGGER.error(e, e);
         }

@@ -48,7 +48,6 @@ public class RabbitMQNotify implements Runnable {
     private void sendtoRabbitMQ(final String nodeId, final String capabilityName, final Double value) {
 
         final String nodeUrn = collector.getDeviceID() + "/" + nodeId;
-        LOGGER.info(nodeUrn);
 
         final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
                 .setNode(nodeUrn)
@@ -56,14 +55,13 @@ public class RabbitMQNotify implements Runnable {
                 .setTimestamp(System.currentTimeMillis())
                 .setDoubleReading(value)
                 .build();
-        LOGGER.info("publishing");
         RabbitMQManager.getInstance().publish("readings", reading.toByteArray());
+        LOGGER.info("Publish " + nodeUrn + "/" + capabilityName + ":" + value);
     }
 
     private void sendtoRabbitMQ(final String nodeId, final String capabilityName, final String value) {
 
         final String nodeUrn = collector.getDeviceID() + "/" + nodeId;
-        LOGGER.info(nodeUrn);
 
         final eu.uberdust.communication.protobuf.Message.NodeReadings.Reading reading = eu.uberdust.communication.protobuf.Message.NodeReadings.Reading.newBuilder()
                 .setNode(nodeUrn)
@@ -72,5 +70,6 @@ public class RabbitMQNotify implements Runnable {
                 .setStringReading(value)
                 .build();
         RabbitMQManager.getInstance().publish("readings", reading.toByteArray());
+        LOGGER.info("Publish " + nodeUrn + "/" + capabilityName + ":" + value);
     }
 }

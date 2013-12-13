@@ -16,10 +16,7 @@ import org.fusesource.mqtt.client.Callback;
 import org.fusesource.mqtt.client.QoS;
 
 import java.net.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -50,24 +47,24 @@ public class CollectorMqtt extends BaseMqttListener {
 
     private final ExecutorService executorService;
     public int responseObserveCounter;
-    private int currentMID;
     private int requestObserveCounter;
     private int observeLostCounter;
     private int requestWellKnownCounter;
 
     private final String deviceID;
     private final Timer timer;
+    private final Random rand;
 
     public CollectorMqtt(final String deviceID) {
         super(deviceID);
         this.deviceID = deviceID;
 
-        this.activeRequestsMID = new HashMap<Integer, ActiveRequest>();
-        this.activeRequestsTOKEN = new HashMap<String, ActiveRequest>();
-        this.endpoints = new HashMap<String, Map<String, Long>>();
-        this.blockWisePending = new HashMap<String, String>();
+        this.activeRequestsMID = new HashMap<>();
+        this.activeRequestsTOKEN = new HashMap<>();
+        this.endpoints = new HashMap<>();
+        this.blockWisePending = new HashMap<>();
+        rand = new Random();
 
-        currentMID = (int) (Math.random() * 0x10000);
 
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("CoapMessageParser:" + deviceID + "-Thread #%d").build();
         this.executorService = Executors.newCachedThreadPool(threadFactory);
@@ -83,6 +80,7 @@ public class CollectorMqtt extends BaseMqttListener {
 
     public void onPublish(final UTF8Buffer topic, final Buffer body, Runnable ack) {
         try {
+
             LOGGER.debug("onPublish: " + topic + " --> " + Arrays.toString(body.toByteArray()));
 
             String macAddress = "0x"
@@ -127,6 +125,7 @@ public class CollectorMqtt extends BaseMqttListener {
 
     @Override
     public void publish(final byte[] messageBytes) {
+        LOGGER.info("Publish s" + topic);
         connection.publish("s" + topic, messageBytes, QoS.AT_MOST_ONCE, false, new Callback<Void>() {
 
             @Override
@@ -220,26 +219,8 @@ public class CollectorMqtt extends BaseMqttListener {
         }
     }
 
-    public void cleanActiveRequests() {
-        LOGGER.info("Cleaning active Requests");
-        for (int key : activeRequestsMID.keySet()) {
-            if (System.currentTimeMillis() - activeRequestsMID.get(key).getTimestamp() > 2 * MILLIS_IN_MINUTE + 20 * MILLIS_IN_SECOND) {
-
-//                try {
-//                    TokenManager.getInstance().releaseToken(Hex.decodeHex(activeRequest.getToken().toCharArray()));
-//                } catch (DecoderException e) {
-//
-//                }
-                activeRequestsMID.remove(key);
-            }
-        }
-    }
-
     public int nextMID() {
-        do {
-            currentMID = ++currentMID % 0x10000;
-        } while (isReservedMID(currentMID));
-        return currentMID;
+        return rand.nextInt() % 0x10000;
     }
 
     private boolean isReservedMID(int currentMID) {
@@ -247,9 +228,9 @@ public class CollectorMqtt extends BaseMqttListener {
         return false;
     }
 
-    public void requestForResource(String capability, String address, boolean observe) {
+    public void requestForResource(final String capability, final String address, final boolean observe) {
         synchronized (this) {
-            LOGGER.info("requestForResource:" + address);
+            LOGGER.info("Register for " + address + "/" + capability);
 //        if (!capability.equals("pir")) return;
             URI uri = null;
             try {
@@ -271,10 +252,8 @@ public class CollectorMqtt extends BaseMqttListener {
                 requestObserveCounter++;
 //                request.setToken(TokenManager.getInstance().acquireToken());
             }
-            request.prettyPrint();
 //            ownRequests.put(request.getMID(), uri.toString());
             addRequest(address, request, false);
-            LOGGER.info(request.getMID());
             sendRequest(request.toByteArray(), address);
 
 
@@ -308,22 +287,7 @@ public class CollectorMqtt extends BaseMqttListener {
         final byte[] payload = new byte[data.length + 1];
         payload[0] = 51;
         System.arraycopy(data, 0, payload, 1, data.length);
-        LOGGER.info("sending request");
-//        TestbedController.getInstance().sendMessage(payload, nodeUrn);
-//        XbeeController.getInstance().sendPayload(nodeUrn,payload);
         mqttSengBytes(nodeUrn, payload);
-//        timer.schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//                mqttSengBytes(nodeUrn, payload);
-//            }
-//        }, 100);
-//        timer.schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//                mqttSengBytes(nodeUrn, payload);
-//            }
-//        }, 250);
     }
 
     /**
@@ -333,7 +297,6 @@ public class CollectorMqtt extends BaseMqttListener {
      * @param bytesToSend    the bytes to send.
      */
     public void mqttSengBytes(final String destinationMAC, final byte[] bytesToSend) {
-        LOGGER.debug("mqttSengBytes");
         byte[] destinationBytes = Converter.getInstance().addressToByte(destinationMAC);
         byte[] payloadWithDestination = new byte[bytesToSend.length + 2];
         payloadWithDestination[0] = destinationBytes[1];
@@ -353,21 +316,6 @@ public class CollectorMqtt extends BaseMqttListener {
         final Message ack = new Message(Message.messageType.ACK, 0);
         ack.setMID(mid);
         sendRequest(ack.toByteArray(), nodeUrn);
-//        final byte[] data = ack.toByteArray();
-//        final int[] bytes = new int[data.length + 1];
-//        bytes[0] = 51;
-//        for (int i = 0; i < data.length; i++) {
-//            final short read = (short) ((short) data[i] & 0xff);
-//            bytes[i + 1] = read;
-//        }
-//        final int[] macAddress = Converter.getInstance().addressToInteger(nodeUrn);
-//        final XBeeAddress16 address16 = new XBeeAddress16(macAddress[0], macAddress[1]);
-//        LOGGER.info("Sending Ack to " + nodeUrn);
-//        try {
-//            XBeeRadio.getInstance().send(address16, 112, bytes);
-//        } catch (Exception e) {//NOPMD
-//            LOGGER.error(e.getMessage(), e);
-//        }
     }
 
     public void incResponseObserveCounter() {
@@ -386,7 +334,6 @@ public class CollectorMqtt extends BaseMqttListener {
      * @return if the endoint existed in the server.
      */
     public boolean registerEndpoint(final String path, final String address) {
-        LOGGER.error("Register resource" + path + " from device " + address);
 
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
@@ -401,19 +348,20 @@ public class CollectorMqtt extends BaseMqttListener {
                     }
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
                         endpoints.get(address).put(path, System.currentTimeMillis());
-                        LOGGER.info("Resource was out of date " + address + "/" + path);
+                        LOGGER.info("Stale " + address + "/" + path);
                         return true;
                     } else {
                         endpoints.get(address).put(path, System.currentTimeMillis());
                         return false;
                     }
                 } else {
+                    LOGGER.debug("Register " + address + "/" + path);
                     endpoints.get(address).put(path, System.currentTimeMillis());
                     return true;
                 }
             } else {
-                LOGGER.info("Adding new device: " + address);
-                HashMap<String, Long> map = new HashMap<String, Long>();
+                LOGGER.debug("Register " + address + "/" + path);
+                final HashMap<String, Long> map = new HashMap<String, Long>();
                 map.put(path, System.currentTimeMillis());
                 endpoints.put(address, map);
                 return true;
@@ -429,7 +377,6 @@ public class CollectorMqtt extends BaseMqttListener {
      * @return if the endoint existed in the server.
      */
     public boolean isAlive(final String path, final String address) {
-        LOGGER.error("isAlive-" + address + path);
         synchronized (CoapServer.class) {
             if (endpoints.containsKey(address)) {
                 if (endpoints.get(address).containsKey(path)) {
@@ -442,7 +389,7 @@ public class CollectorMqtt extends BaseMqttListener {
                         millis = pair.getMaxAge() * 1000;
                     }
                     if (System.currentTimeMillis() - endpoints.get(address).get(path) > millis) {
-                        LOGGER.info("address was stale " + address + " " + path);
+                        LOGGER.warn("Stale " + address + "/" + path);
                         if (pair != null) {
                             pair.setObserveLostCounter(pair.getLostCounter() + 1);
                         }
@@ -490,7 +437,7 @@ public class CollectorMqtt extends BaseMqttListener {
     public void sendReply(final byte[] buf, final SocketAddress socketAddress) {
         byte[] localBuf = buf.clone();
 
-        LOGGER.info("sending reply to " + socketAddress + " len: " + buf.length);
+        LOGGER.debug("Reply " + socketAddress);
         final DatagramPacket replyPacket;
         try {
             replyPacket = new DatagramPacket(localBuf, 0, buf.length, socketAddress);
@@ -514,7 +461,7 @@ public class CollectorMqtt extends BaseMqttListener {
     }
 
     public void postMessage(final String key, final String payloadString) {
-        final String[] parts = key.split("/",3);
+        final String[] parts = key.split("/", 3);
         final String destinationMAC = parts[1].replaceAll("0x", "");
         final String capabilityString = "/" + parts[2];
         LOGGER.info("postToResource:" + Arrays.toString(parts) + "");

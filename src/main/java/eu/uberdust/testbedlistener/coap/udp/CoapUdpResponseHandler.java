@@ -134,7 +134,6 @@ public class CoapUdpResponseHandler implements Runnable {//NOPMD
         request.setMID(response.getMID() + 1);
         Option blockOption = new Option(0x12, OptionNumberRegistry.BLOCK2);
         request.addOption(blockOption);
-        request.prettyPrint(System.out);
         CoapServer.getInstance().addEthernet(address + request.getUriPath(), request.getMID());
         CoapServer.getInstance().addPending(request.getMID(), remainder);
 

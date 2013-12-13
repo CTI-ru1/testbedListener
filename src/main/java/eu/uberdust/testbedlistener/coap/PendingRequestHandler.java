@@ -78,14 +78,13 @@ public class PendingRequestHandler {
                 socketAddress,
                 coapRequest.hasOption(OptionNumberRegistry.OBSERVE),
                 coapRequest.isConfirmable()));
-        LOGGER.info("added new pending ");
     }
 
     public synchronized SocketAddress isPending(final Message response) {
         final int messageMID = response.getMID();
         final String messageTOKEN = response.getTokenString();
 
-        LOGGER.info("Looking for " + messageMID + "/" + messageTOKEN);
+        LOGGER.debug("Looking for " + messageMID + "/" + messageTOKEN);
         SocketAddress socket = null;
 
         synchronized (PendingRequestHandler.class) {
@@ -143,14 +142,14 @@ public class PendingRequestHandler {
     public String matchMID4Host(final Message udpRequest) {
         final int messageMID = udpRequest.getMID();
 
-        LOGGER.info("Looking for " + messageMID);
+        LOGGER.debug("Looking for " + messageMID);
 
         synchronized (PendingRequestHandler.class) {
             if (pendingRequestList.isEmpty()) {
                 return "";
             }
             for (PendingRequest pendingRequest : pendingRequestList) {
-                LOGGER.info("Looking for " + messageMID + "@" + pendingRequest.getMid());
+                LOGGER.debug("Looking for " + messageMID + "@" + pendingRequest.getMid());
                 if (messageMID == pendingRequest.getMid()) {
                     return pendingRequest.getUriHost();
                 }
@@ -166,14 +165,14 @@ public class PendingRequestHandler {
     public void removeRequest(Message udpRequest) {
         final int messageMID = udpRequest.getMID();
 
-        LOGGER.info("Looking for " + messageMID);
+        LOGGER.debug("Looking for " + messageMID);
 
         synchronized (PendingRequestHandler.class) {
             if (pendingRequestList.isEmpty()) {
                 return;
             }
             for (PendingRequest pendingRequest : pendingRequestList) {
-                LOGGER.info("Looking for " + messageMID + "@" + pendingRequest.getMid());
+                LOGGER.debug("Looking for " + messageMID + "@" + pendingRequest.getMid());
                 if (messageMID == pendingRequest.getMid()) {
                     pendingRequestList.remove(pendingRequest);
                 }

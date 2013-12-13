@@ -34,8 +34,6 @@ public class GatewayManager {
      */
     public GatewayManager() {
         gateways = new HashMap<String, String>();
-//        loadGatewaysFromUberdust();
-//        loadGatewaysFromFile();
     }
 
     /**
@@ -86,35 +84,6 @@ public class GatewayManager {
             LOGGER.error(e, e);
         } catch (IOException e) {
             LOGGER.error("There are no gateways defined on the server");
-        }
-    }
-
-    private void loadGatewaysFromFile() {
-        BufferedReader bin = null;
-        try {
-            bin = new BufferedReader(new FileReader("gateways"));
-            String str = bin.readLine();
-            while (str != null) {
-                if (!str.startsWith("#")) {
-                    if (str.contains(",")) {
-                        final String source = str.split(",")[0].substring(str.split(",")[0].lastIndexOf(":0x") + 3);
-                        final String from = str.split(",")[1].substring(str.split(",")[1].lastIndexOf(":0x") + 3);
-                        gateways.put(source, from);
-
-                    } else {
-                        if (str.contains(":")) {
-                            str = str.substring(str.lastIndexOf(":0x") + 3);
-                        }
-                        gateways.put(str, str);
-                    }
-                    LOGGER.info("adding " + str);
-                }
-                str = bin.readLine();
-            }
-        } catch (FileNotFoundException e) {
-            LOGGER.error(e, e);
-        } catch (IOException e) {
-            LOGGER.error(e, e);
         }
     }
 

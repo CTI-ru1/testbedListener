@@ -93,6 +93,6 @@ public final class PropertyReader {
             LOGGER.error("No properties file found! " + propertyFile + " not found!");
             return;
         }
-        LOGGER.info("Loaded properties from file: " + propertyFile);
+        LOGGER.debug("Loaded properties from file: " + propertyFile);
     }
 }

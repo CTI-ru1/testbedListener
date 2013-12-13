@@ -48,7 +48,6 @@ public class CoapHelper {
             urihostOption.setStringValue(macStr);
             request.addOption(urihostOption);
             request.setMID(mID);
-            request.prettyPrint();
             return request;
         }
     }
