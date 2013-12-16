@@ -144,17 +144,20 @@ public class CoapMessageParser extends AbstractMessageParser {
                     LOGGER.info("Capabilities {" + mac + "}" + Arrays.toString(capabilities.toArray()));
 
                     for (String capability : capabilities) {
-                        if (!capability.equals(".well-known/core")) {
-                            if (mqttCollector.isAlive(capability, mac)) {
-                                continue;
-                            }
-                            try {
-                                Thread.sleep(250);
-                            } catch (Exception e) {
-                                LOGGER.error(e, e);
-                            }
-                            mqttCollector.requestForResource(capability, mac, true);
+                        if (capability.equals(".well-known/core")) continue;
+                        if (capability.equals("r")) continue;
+                        if (capability.equals("rdf")) continue;
+
+                        if (mqttCollector.isAlive(capability, mac)) {
+                            continue;
                         }
+                        try {
+                            Thread.sleep(250);
+                        } catch (Exception e) {
+                            LOGGER.error(e, e);
+                        }
+                        mqttCollector.requestForResource(capability, mac, true);
+
                     }
 
 
