@@ -35,7 +35,7 @@ public class EthernetUDPhandler extends Thread {//NOPMD
     public EthernetUDPhandler(final DatagramSocket socket) {
         this.socket = socket;
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("EthernetUDPhandler-Thread #%d").build();
-        executorService = Executors.newCachedThreadPool(threadFactory);
+        executorService = Executors.newFixedThreadPool(5, threadFactory);
     }
 
 

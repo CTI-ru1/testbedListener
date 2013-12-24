@@ -32,7 +32,7 @@ public class UDPhandler extends Thread {//NOPMD
     public UDPhandler(final DatagramSocket socket) {
         this.socket = socket;
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("UDPhandler-Thread #%d").build();
-        executorService = Executors.newCachedThreadPool(threadFactory);
+        executorService = Executors.newFixedThreadPool(5, threadFactory);
     }
 
 
