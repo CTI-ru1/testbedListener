@@ -3,9 +3,9 @@ package eu.uberdust.testbedlistener.coap.internal.handler;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
-import eu.uberdust.testbedlistener.coap.ResourceCache;
 import eu.uberdust.testbedlistener.coap.CoapServer;
 import eu.uberdust.testbedlistener.coap.PendingRequestHandler;
+import eu.uberdust.testbedlistener.coap.ResourceCache;
 import org.apache.commons.collections.map.ListOrderedMap;
 
 import java.util.Map;

@@ -6,7 +6,6 @@ import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.mqtt.client.*;
 
-import java.io.IOException;
 import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -24,10 +23,28 @@ public class MqttTest {
     public static void main(String[] args) throws SocketException {
 
         PropertyReader.getInstance().setFile("listener.properties");
-        MqttTestClient mqList = new MqttTestClient("tcp://150.140.5.11:61616", "heartbeat/#", true);
+//        MqttTestClient mqList = new MqttTestClient("tcp://150.140.5.11:1883", "0006667245fc/#",true);
+        MqttTestClient mqList = new MqttTestClient("tcp://console.sensorflare.com:1883", "connect/#", true);
+        MqttTestClient mqList1 = new MqttTestClient("tcp://console.sensorflare.com:1883", "heartbeat/#", true);
+//        MqttTestClient mqList2 = new MqttTestClient("tcp://150.140.5.11:1883", "00066680a622/#", true);
         new Thread(mqList).start();
-
-
+        new Thread(mqList1).start();
+//        new Thread(mqList2).start();
+//        MqttTestClient mqList1 = new MqttTestClient("tcp://150.140.5.11:1883", "connect/#", true);
+//        new Thread(mqList1).start();
+//        MqttConnectionManager.getInstance().connect("tcp://192.168.1.5:1883");
+//        new Runnable() {
+//            @Override
+//            public void run() {
+//                while (true) {
+//                    MqttConnectionManager.getInstance().publish("heartbeat", "reset");
+//                    try {
+//                        Thread.sleep(500);
+//                    } catch (InterruptedException e) {
+//                    }
+//                }
+//            }
+//        }.run();
 
     }
 

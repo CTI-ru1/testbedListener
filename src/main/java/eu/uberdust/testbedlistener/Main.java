@@ -1,7 +1,7 @@
 package eu.uberdust.testbedlistener;
 
 import com.sensorflare.mq.RabbitMQManager;
-import eu.uberdust.testbedlistener.coap.CoapServer;
+import eu.uberdust.testbedlistener.coap.HttpServer;
 import eu.uberdust.testbedlistener.mq.listener.RabbitMQCommandsListener;
 import eu.uberdust.testbedlistener.mqtt.MqttConnectionManager;
 import eu.uberdust.testbedlistener.mqtt.listener.DeviceConnectionMqttListener;
@@ -60,7 +60,8 @@ public class Main {
         }
 
         //Start the CoAPServer
-        CoapServer.getInstance();
+//        CoapServer.getInstance();
+        HttpServer.getInstance();
         LOGGER.info("CoAPServer Started");
 
         //Connect the MQTT Broker

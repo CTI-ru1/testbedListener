@@ -45,6 +45,11 @@
             </snapshots>
             <layout>default</layout>
         </repository>
+        <repository>
+            <id>maven-restlet</id>
+            <name>Public online Restlet repository</name>
+            <url>http://maven.restlet.org</url>
+        </repository>
 
     </repositories>
 
@@ -154,6 +159,13 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.8.2</version>
+        </dependency>
+        <!--#################################################################################################-->
+        <!--RESTLET-->
+        <dependency>
+            <groupId>org.restlet.jse</groupId>
+            <artifactId>org.restlet</artifactId>
+            <version>2.0.0</version>
         </dependency>
 
     </dependencies>
