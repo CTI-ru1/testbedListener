@@ -2,9 +2,7 @@ package eu.uberdust.testbedlistener.coap;
 
 import eu.uberdust.testbedlistener.datacollector.collector.CollectorMqtt;
 
-import java.util.Comparator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * An in Memory Data Structure used to store the latest values of all the IoT resources registered in the Listener.
@@ -101,5 +99,13 @@ public class ResourceCache {
      */
     public void clearCache() {
         cache.clear();
+    }
+
+    public Set<String> getCacheGateways() {
+        Set<String> gateways = new HashSet<>();
+        for (String s : cache.keySet()) {
+            gateways.add(s.split("/")[0]);
+        }
+        return gateways;
     }
 }

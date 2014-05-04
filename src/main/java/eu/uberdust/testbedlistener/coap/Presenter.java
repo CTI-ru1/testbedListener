@@ -11,6 +11,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -33,14 +34,15 @@ public class Presenter extends ServerResource {
 
             return handleStatus();
         } else {
-            return handleCache();
+            return handleCache(path);
         }
 //        return new StringRepresentation("not found");
     }
 
-    private StringRepresentation handleCache() {
+    private StringRepresentation handleCache(final String uriHost) {
         StringBuilder payload = new StringBuilder("");
         final Map<String, CacheEntry> cache = ResourceCache.getInstance().getCache();
+        final Set<String> gateways = ResourceCache.getInstance().getCacheGateways();
         payload.append("" +
                 "<html>" +
                 "   <head>" +
@@ -48,23 +50,36 @@ public class Presenter extends ServerResource {
                 "       <script type=\"text/javascript\" language=\"javascript\" src=\"https://code.jquery.com/jquery-1.11.0.min.js\"></script>" +
                 "       <script type=\"text/javascript\" language=\"javascript\" src=\"https://datatables.net/release-datatables/media/js/jquery.dataTables.js\"></script>" +
                 "       <script src=\"//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js\"></script>" +
-                "       <script type=\"text/javascript\" charset=\"utf-8\">\n" +
-                "           $(document).ready(function() {\n" +
-                "               $('#table').dataTable();\n" +
-                "           } );" +
-                "       </script>" +
+                "       <script type=\"text/javascript\" charset=\"utf-8\">\n");
+        if (uriHost.equals("")) {
+            payload.append("           $(document).ready(function() {$('#table').dataTable({ \"aLengthMenu\": [[25, 50, 100, 200, -1],[25, 50, 100, 200, \"All\"]], \"iDisplayLength\" : -1 }); } );");
+        } else {
+            payload.append("           $(document).ready(function() {$('#table').dataTable({ \"aLengthMenu\": [[25, 50, 100, 200, -1],[25, 50, 100, 200, \"All\"]], \"iDisplayLength\" : -1 }); setTimeout(\"location.reload(true);\",10000);} );");
+        }
+        payload.append("       </script>" +
                 "   </head>" +
-                "   <body>" +
-                "   <div style='width:80%;text-align: center;'>" +
-                "       <table id='table' style='text-align: right;width: 100%;'>" +
-                "           <thead>" +
-                "               <tr>" +
-                "                   <td>Host<td>Value<td>Timestamp<td>Age<td>Observes lost" +
-                "               </tr>" +
-                "           </thead>" +
-                "           <tbody>");
+                "   <body>");
+        payload.append("<nav class=\"navbar navbar-default\" role=\"navigation\">" +
+                "<ul class=\"nav navbar-nav navbar-left\"> " +
+                "   <li class=\"dropdown\">" +
+                "   <a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\">Show Gateway <b class=\"caret\"></b></a>\n" +
+                "          <ul class=\"dropdown-menu\">");
+        for (String gateway : gateways) {
+            payload.append("        <li><a href=\"" + gateway + "\">" + gateway + "</a></li>\n");
+        }
+        payload.append("        </ul></li></ul>\n" +
+                "        </div></nav>");
 
-        String uriHost = "";
+
+        payload.append(
+                "   <div id='container' class='container' style='width:100%;text-align:center'>" +
+                        "       <table id='table' style='width:80%; text-align:center'>" +
+                        "           <thead>" +
+                        "               <tr>" +
+                        "                   <td>Host<td>Value<td>Timestamp<td>Age<td>Observes lost" +
+                        "               </tr>" +
+                        "           </thead>" +
+                        "           <tbody>");
         final Pattern pattern = Pattern.compile(uriHost);
         for (final String resourceURIString : cache.keySet()) {
 
